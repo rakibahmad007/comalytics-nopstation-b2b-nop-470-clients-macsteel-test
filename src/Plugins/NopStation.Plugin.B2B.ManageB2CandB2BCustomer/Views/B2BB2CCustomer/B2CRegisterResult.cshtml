@@ -1,0 +1,223 @@
+﻿@model B2CRegisterResultModel
+@{
+    Layout = "_ColumnsOne";
+
+    //title
+    NopHtml.AddTitleParts(T("PageTitle.Register").Text);
+    //page class
+    NopHtml.AppendPageCssClassParts("html-registration-result-page");
+
+    var addressLine = "";
+    var email = "";
+    var latitude = "";
+    var longitude = "";
+    var phoneNumber = "";
+}
+
+<style>
+    /**
+        /*
+         * Always set the map height explicitly to define the size of the div element
+         * that contains the map.
+         */
+    #map {
+        height: 500px;
+        margin-bottom: 30px;
+    }
+
+    #description {
+        font-family: Roboto;
+        font-size: 15px;
+        font-weight: 300;
+    }
+
+    #infowindow-content .title {
+        font-weight: bold;
+    }
+
+    #map .gm-style .gm-style-iw-c, #map .gm-style-iw-tc {
+        display: none;
+    }
+
+    .address-input-card {
+        margin: 10px;
+        overflow: hidden;
+        padding: 0;
+        width: 92%;
+        height: 40px;
+        border-radius: 2px;
+        box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+    }
+
+    .pac-controls, .map-controls {
+        display: inline-block;
+        padding: 5px 11px;
+    }
+
+        .pac-controls label, .map-controls label {
+            font-family: Roboto;
+            font-size: 13px;
+            font-weight: 300;
+        }
+
+    #address-input {
+        background-color: #fff;
+        text-overflow: ellipsis;
+        width: 100%;
+        border: none !important;
+        border-radius: 0px !important;
+        padding-bottom: 6px;
+    }
+
+    #title {
+        color: #fff;
+        background-color: #4d90fe;
+        font-size: 25px;
+        font-weight: 500;
+        padding: 6px 12px;
+    }
+
+    .registration-result-page .page-title,
+    .registration-result-page .message {
+        text-align: left !important;
+    }
+
+    .registration-result-page .page-title {
+        display: block !important;
+        padding: 0px !important;
+    }
+
+    .registration-result-page .message {
+        margin-bottom: 35px;
+    }
+
+    .warehouse-address-google-map {
+        position: relative;
+    }
+
+    #infowindow-content {
+        max-width: 245px;
+        display: block;
+        height: auto;
+        background: white;
+        position: absolute;
+        top: 0%;
+        margin-left: 5px;
+        text-align: left;
+        padding: 15px;
+        position: absolute;
+        top: 0%;
+        height: auto;
+    }
+
+    #place-name {
+        font-weight: bold;
+        text-decoration: underline;
+    }
+</style>
+
+<form asp-route="B2CRegisterResult" asp-route-returnurl="@Context.Request.Query["ReturnUrl"]" method="post">
+    <div asp-validation-summary="ModelOnly" class="message-error"></div>
+    <div class="page registration-page registration-result-page">
+        <div class="col message">
+            <div class="page-title">
+                <h1>@Model.Title</h1>
+            </div>
+            @if (Model.IsRegistrationSuccessful)
+            {
+                <div class="page-body">
+                    <div class="result">
+                        <div class="message">
+                            @Model.Result
+                        </div>
+                        @if (!Model.IsCustomerOnDeliveryRoute)
+                        {
+                            addressLine = Model.WarehouseAddress == null ? "" :
+                            $"{Model.WarehouseAddress.Address1}, {Model.WarehouseAddress.County}, {Model.WarehouseAddress.City}, {Model.WarehouseAddress.ZipPostalCode}";
+                            email = string.IsNullOrEmpty(Model.WarehouseEmail) ? "" : $"{Model.WarehouseEmail}";
+                            latitude = string.IsNullOrEmpty(Model.WarehouseLatitude) ? "" : $"{Model.WarehouseLatitude}";
+                            longitude = string.IsNullOrEmpty(Model.WarehouseLongitude) ? "" : $"{Model.WarehouseLongitude}";
+                            phoneNumber = Model.WarehouseAddress == null ? "" :
+                            (string.IsNullOrEmpty(Model.WarehouseAddress.PhoneNumber) ? "" : $"{Model.WarehouseAddress.PhoneNumber}");
+
+                            <div class="warehouse-address-google-map">
+                                <div id="map"></div>
+                                <div id="infowindow-content">
+                                    <span id="place-name"></span><br />
+                                    <span id="place-address"></span><br />
+                                    <span id="place-email"></span><br />
+                                    <span id="place-phone"></span><br />
+                                </div>
+                            </div>
+                            <!--
+                            The `defer` attribute causes the callback to execute after the full HTML
+                            document has been parsed. For non-blocking uses, avoiding race conditions,
+                            and consistent behavior across browsers, consider loading using Promises
+                            with-->
+
+                            <script defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDKtIRU8pgWIOf8PNPnOsbP4DDD8ohIfrE&callback=initMap&libraries=places&v=weekly"></script>
+                        }
+                    </div>
+                    <div class="buttons">
+                        <input type="submit" name="register-continue" class="button-1 register-continue-button" value="@T("Plugins.B2B.ManageB2BCustomer.B2C.Register.Result.Continue")" />
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="page-body">
+                    <div class="result">
+                        <div class="message">
+                            @Html.Raw(Model.Result)
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+        <div class="col image">
+            <div class="image-block">
+                <img src="/images/uploaded/register-result.png">
+            </div>
+        </div>
+    </div>
+</form>
+
+<script>
+    function initMap() {
+    @*console.log("lat: ", @latitude);
+            console.log("lng: ", @longitude);*@
+
+            if ('@latitude' != '' && '@longitude' != '') {
+            const map = new google.maps.Map(document.getElementById("map"), {
+                center: { lat: @latitude, lng: @longitude },
+                zoom: 13,
+                mapTypeControl: false,
+                draggableCursor: 'default'
+            });
+
+            const marker = new google.maps.Marker({
+                map,
+                anchorPoint: new google.maps.Point(0, -29),
+            });
+
+            marker.setPosition(new google.maps.LatLng(@latitude, @longitude));
+            marker.setVisible(true);
+
+            const infowindowContent = document.getElementById("infowindow-content");
+
+            if ('@Model.WarehouseName' != "")
+                infowindowContent.children["place-name"].textContent = '@Model.WarehouseName';
+
+            if ('@addressLine' != "")
+                infowindowContent.children["place-address"].textContent = '@addressLine';
+
+            if ('@email' != "")
+                infowindowContent.children["place-email"].textContent = '@email';
+
+            if ('@phoneNumber' != "")
+                infowindowContent.children["place-phone"].textContent = '@phoneNumber';
+        }
+    }
+
+    window.initMap = initMap;
+</script>

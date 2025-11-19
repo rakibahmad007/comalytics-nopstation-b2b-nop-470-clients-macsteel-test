@@ -1,0 +1,104 @@
+
+
+
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<!--<AssemblyName>Nop.Plugin.Widgets.AdditionalCategoryInfo</AssemblyName>
+		<GenerateAssemblyInfo>False</GenerateAssemblyInfo>
+		<OutputType>Library</OutputType>-->
+		<TargetFramework>net8.0</TargetFramework>
+		<Copyright>Copyright © Comalytics</Copyright>
+		<Company>Comalytics</Company>
+		<Authors>Comalytics</Authors>
+		<PackageLicenseUrl></PackageLicenseUrl>
+		<PackageProjectUrl>https://www.nopcommerce.com/</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/nopSolutions/nopCommerce</RepositoryUrl>
+		<RepositoryType>Git</RepositoryType>
+		<OutputPath>..\..\Presentation\Nop.Web\Plugins\Nop.Plugin.Widgets.AdditionalCategoryInfo</OutputPath>
+		<OutDir>$(OutputPath)</OutDir>
+		<CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+	</PropertyGroup>
+	
+	
+	<ItemGroup>
+	  <None Remove="Areas\Admin\Views\AdditionalTab.cshtml" />
+	  <None Remove="Areas\Admin\Views\_AdditionalTab.cshtml" />
+	  <None Remove="Areas\Admin\Views\_ViewImports.cshtml" />
+	  <None Remove="logo.jpg" />
+	  <None Remove="plugin.json" />
+	  <None Remove="Themes\Emporium\AdditionalSupportedWidgetZones.xml" />
+	  <None Remove="Themes\Emporium\Content\JCarousel.css" />
+	  <None Remove="Themes\Emporium\Content\JCarousel.rtl.css" />
+	  <None Remove="Themes\Emporium\Views\Components\JCarouselCategoryBox\CategoryBox.cshtml" />
+	  <None Remove="Themes\Emporium\Views\_ViewImports.cshtml" />
+	</ItemGroup>
+	
+
+	<ItemGroup>
+	  <Content Include="Areas\Admin\Views\AdditionalTab.cshtml" />
+	  <Content Include="Areas\Admin\Views\_AdditionalTab.cshtml" />
+	  <Content Include="Areas\Admin\Views\_ViewImports.cshtml" />
+	  <Content Include="logo.jpg">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </Content>
+	  <Content Include="plugin.json">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </Content>
+	  <Content Include="Themes\Emporium\AdditionalSupportedWidgetZones.xml" />
+	  <Content Include="Themes\Emporium\Content\JCarousel.css">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </Content>
+	  <Content Include="Themes\Emporium\Content\JCarousel.rtl.css">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </Content>
+	  <Content Include="Themes\Emporium\Views\Components\JCarouselCategoryBox\CategoryBox.cshtml" />
+	  <Content Include="Themes\Emporium\Views\_ViewImports.cshtml" />
+	</ItemGroup>
+	
+
+	<ItemGroup>
+	  <Folder Include="Dll\" />
+	</ItemGroup>
+	
+
+	<ItemGroup>
+	  <Content Update="Areas\Admin\Views\AdditionalTab.cshtml">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </Content>
+	  <Content Update="Areas\Admin\Views\_AdditionalTab.cshtml">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </Content>
+	  <Content Update="Areas\Admin\Views\_ViewImports.cshtml">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </Content>
+	  <Content Update="Themes\Emporium\Views\Components\JCarouselCategoryBox\CategoryBox.cshtml">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </Content>
+	  <Content Update="Themes\Emporium\Views\_ViewImports.cshtml">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </Content>
+	</ItemGroup>
+
+	<ItemGroup>
+		<ClearPluginAssemblies Include="$(MSBuildProjectDirectory)\..\..\Build\ClearPluginAssemblies.proj" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\..\Presentation\Nop.Web\Nop.Web.csproj">
+	    <Private>False</Private>
+	  </ProjectReference>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Reference Include="SevenSpikes.Nop.Plugins.JCarousel">
+	    <HintPath>Dll\SevenSpikes.Nop.Plugins.JCarousel.dll</HintPath>
+	  </Reference>
+	</ItemGroup>
+
+	<!-- This target execute after "Build" target -->
+	<Target Name="NopTarget" AfterTargets="Build">
+		<!-- Delete unnecessary libraries from plugins path -->
+		<MSBuild Projects="@(ClearPluginAssemblies)" Properties="PluginPath=$(MSBuildProjectDirectory)\$(OutDir)" Targets="NopClear" />
+	</Target>
+  
+</Project>

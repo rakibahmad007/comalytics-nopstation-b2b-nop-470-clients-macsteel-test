@@ -1,0 +1,225 @@
+@model ErpPriceListSearchModel
+
+@{
+    Layout = "_AdminLayout";
+    //page title
+    NopHtml.AddTitleParts(T("NopStation.Plugin.B2B.B2BB2CFeatures.SiteMapNode.Title.ERPPriceListDownloadTrack").Text);
+    ViewBag.Title = T("NopStation.Plugin.B2B.B2BB2CFeatures.SiteMapNode.Title.ERPPriceListDownloadTrack").Text;
+    //active menu item (system name)
+    NopHtml.SetActiveMenuItemSystemName(B2BB2CFeaturesDefaults.ERPPriceListDownloadTrack_SiteMapNode_SystemName);
+}
+
+@{
+    const string hideSearchBlockAttributeName = "ERPPriceListDownloadTrack.HideSearchBlock";
+    var hideSearchBlock = await genericAttributeService.GetAttributeAsync<bool>(await workContext.GetCurrentCustomerAsync(), hideSearchBlockAttributeName);
+}
+
+<form asp-controller="ERPPriceListDownloadTrack" asp-action="List" method="post">
+    <div class="content-header clearfix">
+        <h1 class="float-left">
+            @T("NopStation.Plugin.B2B.B2BB2CFeatures.ERPPriceListDownloadTracks.ERPPriceListDownloadTrack")
+        </h1>
+        <div class="float-right">
+            <div class="btn-group">
+                <button type="button" title="Export" class="btn btn-success">
+                    <i class="fa fa-download"></i>
+                    @T("Admin.Common.Export")
+                </button>
+                <button type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                    <span class="caret"></span>
+                    <span class="sr-only">&nbsp;</span>
+                </button>
+                <ul class="dropdown-menu" role="menu">
+                    <li>
+                        <a asp-action="submit" name="exportexcel-all">
+                            <i class="fa fa-file-excel-o"></i>
+                            @T("Admin.Common.ExportToExcel.All")
+                        </a>
+                    </li>
+                    <li>
+                        <a asp-action="button" id="exportexcel-selected">
+                            <i class="fa fa-file-excel-o"></i>
+                            @T("Admin.Common.ExportToExcel.Selected")
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <section class="content">
+        <div class="container-fluid">
+            <div class="form-horizontal">
+                <div class="cards-group">
+                    <div class="card card-default card-search">
+                        <div class="card-body">
+                            <div class="row search-row @(!hideSearchBlock ? "opened" : "")" data-hideAttribute="@hideSearchBlockAttributeName">
+                                <div class="search-text">@T("Admin.Common.Search")</div>
+                                <div class="icon-search"><i class="fa fa-search" aria-hidden="true"></i></div>
+                                <div class="icon-collapse"><i class="fa fa-angle-down" aria-hidden="true"></i></div>
+                            </div>
+                            <div class="search-body @(hideSearchBlock ? "closed" : "")">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group row">
+                                            <div class="col-md-4">
+                                                <nop-label asp-for="SearchB2BAccountId" />
+                                            </div>
+                                            <div class="col-md-8">
+                                                <input type="text" id="search-account-code" autocomplete="off" class="form-control" />
+                                                <span id="search-account-by-code"></span>
+                                                <button type="button" id="search-account-clear" class="btn bg-gray" style="display: none; margin-top: 5px;">@T("Admin.Common.Clear")</button>
+                                                <input asp-for="SearchB2BAccountId" autocomplete="off" style="display: none;" />
+                                                <script>
+                                                    $(document).ready(function () {
+                                                        $('#search-account-code').autocomplete({
+                                                            delay: 500,
+                                                            minLength: 3,
+                                                            source: '@(Url.Action("ErpAccountSearchAutoComplete", "ErpAccount"))',
+                                                            select: function (event, ui) {
+                                                                $('#@Html.IdFor(model => model.SearchB2BAccountId)').val(ui.item.erpaccountid);
+                                                                $('#search-account-by-code').text(ui.item.label);
+                                                                $('#search-account-clear').show();
+                                                                return false;
+                                                            }
+                                                        });
+
+                                                        //remove button
+                                                        $('#search-account-clear').click(function () {
+                                                            $('#@Html.IdFor(model => model.SearchB2BAccountId)').val('0');
+                                                            $('#search-account-by-code').text('');
+                                                            $('#search-account-clear').hide();
+                                                            return false;
+                                                        });
+                                                    });
+                                                </script>
+                                            </div>
+                                        </div>
+                                        <div class="form-group row">
+                                            <div class="col-md-4">
+                                                <nop-label asp-for="SearchPriceListDownloadTypeId" />
+                                            </div>
+                                            <div class="col-md-8">
+                                                <nop-select asp-for="SearchPriceListDownloadTypeId" asp-items="Model.AvailablPriceListTypeOptions" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group row">
+                                            <div class="col-md-4">
+                                                <nop-label asp-for="SearchDownloadedFrom" />
+                                            </div>
+                                            <div class="col-md-8">
+                                                <nop-editor asp-for="SearchDownloadedFrom" />
+                                            </div>
+                                        </div>
+                                        <div class="form-group row">
+                                            <div class="col-md-4">
+                                                <nop-label asp-for="SearchDownloadedTo" />
+                                            </div>
+                                            <div class="col-md-8">
+                                                <nop-editor asp-for="SearchDownloadedTo" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="text-center col-12">
+                                        <button type="button" id="search-b2bpricelist" class="btn btn-primary btn-search">
+                                            <i class="fas fa-search"></i>
+                                            @T("Admin.Common.Search")
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card card-default">
+                        <div class="card-body">
+                            @{
+                                var gridModel = new DataTablesModel
+                                {
+                                    Name = "b2bpricelist-grid",
+                                    UrlRead = new DataUrl("ListData", "ERPPriceListDownloadTrack", null),
+                                    SearchButtonId = "search-b2bpricelist",
+                                    Length = Model.PageSize,
+                                    LengthMenu = Model.AvailablePageSizes,
+                                    Filters = new List<FilterParameter>
+                                        {
+                                            new FilterParameter(nameof(Model.SearchB2BAccountId)),
+                                            new FilterParameter(nameof(Model.SearchPriceListDownloadTypeId)),
+                                            new FilterParameter(nameof(Model.SearchDownloadedFrom)),
+                                            new FilterParameter(nameof(Model.SearchDownloadedTo)),
+                                        }
+                                };
+                                gridModel.ColumnCollection.Add(new ColumnProperty(nameof(ErpPriceListModel.Id))
+                                {
+                                    IsMasterCheckBox = true,
+                                    Render = new RenderCheckBox("checkbox_b2bshiptoaddresses"),
+                                    ClassName = NopColumnClassDefaults.CenterAll,
+                                    Width = "50",
+                                });
+                                gridModel.ColumnCollection.Add(new ColumnProperty(nameof(ErpPriceListModel.CustomerName))
+                                {
+                                    Title = T("NopStation.Plugin.B2B.B2BB2CFeatures.ErpPriceListModel.Fields.CustomerName").Text,
+                                    Width = "200"
+                                });
+                                gridModel.ColumnCollection.Add(new ColumnProperty(nameof(ErpPriceListModel.CustomerEmail))
+                                {
+                                    Title = T("NopStation.Plugin.B2B.B2BB2CFeatures.ErpPriceListModel.Fields.CustomerEmail").Text,
+                                    Width = "200"
+                                });
+                                gridModel.ColumnCollection.Add(new ColumnProperty(nameof(ErpPriceListModel.B2BAccountName))
+                                {
+                                    Title = T("NopStation.Plugin.B2B.B2BB2CFeatures.ErpPriceListModel.Fields.B2BAccountName").Text,
+                                    Width = "200"
+                                });
+                                gridModel.ColumnCollection.Add(new ColumnProperty(nameof(ErpPriceListModel.B2BAccountNumber))
+                                {
+                                    Title = T("NopStation.Plugin.B2B.B2BB2CFeatures.ErpPriceListModel.Fields.B2BAccountNumber").Text,
+                                    Width = "200"
+                                });
+                                gridModel.ColumnCollection.Add(new ColumnProperty(nameof(ErpPriceListModel.B2BSalesOrganisationName))
+                                {
+                                    Title = T("NopStation.Plugin.B2B.B2BB2CFeatures.ErpPriceListModel.Fields.B2BSalesOrganisationName").Text,
+                                    Width = "200"
+                                });
+                                gridModel.ColumnCollection.Add(new ColumnProperty(nameof(ErpPriceListModel.DownloadedOn))
+                                {
+                                    Title = T("NopStation.Plugin.B2B.B2BB2CFeatures.ErpPriceListModel.Fields.DownloadedOn").Text,
+                                    Width = "200",
+                                    Render = new RenderDate()
+                                });
+                                gridModel.ColumnCollection.Add(new ColumnProperty(nameof(ErpPriceListModel.PriceListDownloadType))
+                                {
+                                    Title = T("NopStation.Plugin.B2B.B2BB2CFeatures.ErpPriceListModel.Fields.PriceListDownloadType").Text,
+                                    Width = "200",
+                                });
+                            }
+                            @await Html.PartialAsync("Table", gridModel)
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</form>
+
+@*export selected (Excel). We don't use GET approach because it's limited to 2K-4K chars and won't work for large number of entities*@
+<form asp-controller="ERPPriceListDownloadTrack" asp-action="ExportExcelSelected" method="post" id="export-excel-selected-form">
+    <input type="hidden" id="selectedIds" name="selectedIds" value="" />
+</form>
+<script>
+    $(document).ready(function () {
+        $('#exportexcel-selected').click(function (e) {
+            e.preventDefault();
+            var ids = selectedIds.join(",");
+            $('#export-excel-selected-form #selectedIds').val(ids);
+            $('#export-excel-selected-form').submit();
+            updateTable('#b2bpricelist-grid');
+            return false;
+        });
+    });
+</script>
+

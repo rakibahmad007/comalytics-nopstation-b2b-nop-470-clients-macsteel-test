@@ -1,0 +1,116 @@
+﻿@model AllowedWebhookManagerIpAddressSearchModel
+@{
+    Layout = "_AdminLayout";
+    NopHtml.SetActiveMenuItemSystemName("IpAddressesConfigure");
+}
+
+<div class="content-header clearfix">
+    <h1 class="pull-left">
+        @T("Plugins.Misc.ErpWebhook.Allowed.IpAddress")
+    </h1>
+    <div class="pull-right">
+    </div>
+</div>
+
+<div class="content">
+    <div class="form-horizontal">
+        <div class="card-group">
+            <div class="card card-default">
+                <div class="card-body">
+                    @await Html.PartialAsync("Table", new DataTablesModel
+                       {
+                           Name = "ip-grid",
+                           UrlRead = new DataUrl("IpAddressesList", "IpAddress"),
+                           UrlUpdate = new DataUrl("IpAddressUpdate", "IpAddress", null),
+                           UrlDelete = new DataUrl("IpAddressDelete", "IpAddress", null),
+                           SearchButtonId = "search-ipddress",
+                           Length = Model.PageSize,
+                           LengthMenu = Model.AvailablePageSizes,
+                           Filters = new List<FilterParameter>
+                            {
+                                new FilterParameter(nameof(Model.IpAddress), nameof(AllowedWebhookManagerIpAddressSearchModel)),
+                            },
+                           ColumnCollection = new List<ColumnProperty>
+                            {
+                                new ColumnProperty(nameof(AllowedWebhookManagerIpAddressModel.IpAddress))
+                                {
+                                    Title = T("Plugins.Misc.ErpWebhook.Fields.IpAddress").Text,
+                                    Width = "300",
+                                    Editable = true,
+                                    EditType = EditType.String
+                                },
+                                new ColumnProperty(nameof(AllowedWebhookManagerIpAddressModel.Id))
+                                {
+                                    Title = T("Admin.Common.Edit").Text,
+                                    Width = "200",
+                                    ClassName =  NopColumnClassDefaults.Button,
+                                    Render = new RenderButtonsInlineEdit()
+                                },
+                                new ColumnProperty(nameof(AllowedWebhookManagerIpAddressModel.Id))
+                                {
+                                    Title = T("Admin.Common.Delete").Text,
+                                    Width = "100",
+                                    ClassName =  NopColumnClassDefaults.Button,
+                                    Render = new RenderButtonRemove(T("Admin.Common.Delete").Text)
+                                }
+                            }
+                       })
+                    <div class="card card-default no-margin">
+                        <div class="card-header">
+                            @T("Admin.Common.AddNewRecord")
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group row">
+                                <div class="col-md-3">
+                                    <nop-label asp-for="@Model.IpAddress" />
+                                </div>
+                                <div class="col-md-9">
+                                    <nop-editor asp-for="@Model.IpAddress" />
+                                    <span asp-validation-for="@Model.IpAddress"></span>
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <div class="col-md-9 offset-md-3">
+                                    <button type="button" id="addIpAddress" class="btn btn-primary">@T("Admin.Common.AddNewRecord")</button>
+                                </div>
+                            </div>
+                        </div>
+                        <script>
+                            $(document).ready(function () {
+                                $('#addIpAddress').click(function () {
+                                    $('#addIpAddress').attr('disabled', true);
+                                    var postData = {
+                                        IpAddress: $("#@Html.IdFor(model => model.IpAddress)").val()
+                                    };
+                                    addAntiForgeryToken(postData);
+
+                                    $.ajax({
+                                        cache: false,
+                                        type: "POST",
+                                        url: "@Html.Raw(Url.Action("IpAddressAdd", "IpAddress"))",
+                                        data: postData,
+                                        success: function (data, textStatus, jqXHR) {
+                                            if (data.Result) {
+                                                //reload grid
+                                                updateTable('#ip-grid');
+
+                                                //clear input value
+                                                $("#@Html.IdFor(model => model.IpAddress)").val('');
+                                            } else {
+                                                //display errors if returned
+                                                display_nop_error(data);
+                                            }
+                                        },
+                                        complete: function (jqXHR, textStatus) {
+                                            $('#addIpAddress').attr('disabled', false);
+                                        }
+                                    });
+                                });
+                            });
+                        </script>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

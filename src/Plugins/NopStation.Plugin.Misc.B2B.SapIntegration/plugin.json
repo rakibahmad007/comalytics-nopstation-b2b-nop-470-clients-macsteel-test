@@ -1,0 +1,11 @@
+﻿{
+  "Group": "Nopstation_ErpIntegration",
+  "FriendlyName": "SapIntegration",
+  "SystemName": "Misc.B2B.SapIntegration",
+  "Version": "4.70.2.11",
+  "SupportedVersions": [ "4.70" ],
+  "Author": "comalytics team",
+  "DisplayOrder": 5,
+  "FileName": "NopStation.Plugin.Misc.B2B.SapIntegration.dll",
+  "Description": "This plugin allows to integrate with SapIntegration service"
+}

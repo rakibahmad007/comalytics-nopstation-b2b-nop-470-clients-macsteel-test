@@ -1,0 +1,121 @@
+﻿@model PictureAndSEOExportImportSearchModel
+@{
+    ViewBag.Title = T("Plugins.Comalytics.PictureAndSEOExportImport.Admin.Configure.PageTitle").Text;
+    NopHtml.SetActiveMenuItemSystemName("Comalytics.PictureAndSEOExportImport");
+}
+
+
+<style>
+    .panel-body {
+        padding: 15px;
+        background-color: #fff;
+    }
+</style>
+
+<form asp-controller="PictureAndSEOExportImport" asp-action="Configure" method="post">
+    <div class="content-header clearfix">
+        <div class="float-right">
+            <button type="button" class="btn bg-olive" data-toggle="modal" data-target="#importexcel-window">
+                <i class="fa fa-upload"></i>
+                @T("Plugins.Comalytics.PictureAndSEOExportImport.Import")
+            </button>
+
+            <button type="submit" class="btn btn-success" name="export-excel-file">
+                <i class="fa fa-file-excel-o"></i>
+                @T("Plugins.Comalytics.PictureAndSEOExportImport.Export")
+            </button>
+        </div>
+    </div>
+</form>
+
+
+<div class="content">
+    <div class="form-horizontal">
+        <div class="panel-group">
+
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    @Html.Raw("Check System Log if any error occured while updating")
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div id="importexcel-window" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="importexcel-window-title">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="importexcel-window-title">@T("Admin.Common.ImportFromExcel")</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <form asp-controller="PictureAndSEOExportImport" asp-action="ImportExcel" method="post" enctype="multipart/form-data">
+                <div class="form-horizontal">
+                    <div class="modal-body">
+                        <ul class="common-list">
+                            <li>
+                                <em>@T("Plugins.Comalytics.PictureAndSEOExportImport.ImportFromExcelTip")</em>
+                            </li>
+
+                        </ul>
+                        <div class="form-group row">
+                            <div class="col-md-2">
+                                <div class="label-wrapper">
+                                    <label class="col-form-label">
+                                        @T("Admin.Common.ExcelFile")
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-10">
+                                <input type="file" id="importexcelfile" name="importexcelfile" class="form-control" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary">
+                            @T("Admin.Common.ImportFromExcel")
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<button type="button" data-toggle="modal" data-target="#import-successfull-window" style="display: none;" id="importSuccessfull">
+    notification
+</button>
+
+<div id="import-successfull-window" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="import-successfull-window-title">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Notification</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            </div>
+
+            <div class="modal-body">
+                <ul class="common-list">
+                    <li>@Model.Message</li>
+                </ul>
+            </div>
+            <div class="modal-footer">
+                @if (Model.LogId != 0)
+                {
+                    <a href="~/Admin/Log/View/@Model.LogId" class="btn btn-primary">View Error Log</a>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        var uploaded = @Model.IsUploaded;
+        if (uploaded != 0) {
+            $('#importSuccessfull').click();
+            uploaded = 0;
+        }
+    });
+</script>

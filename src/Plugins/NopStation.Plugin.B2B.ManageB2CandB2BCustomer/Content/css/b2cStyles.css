@@ -1,0 +1,223 @@
+﻿.delete-button {
+  background: transparent !important;
+  border: none !important;
+}
+
+  .delete-button:hover:before {
+    background-color: #e0e0e0;
+    color: #ff0000;
+  }
+
+.ship-to-address-selector-button-responsive {
+  background-color: transparent;
+  color: white;
+  border: none;
+  font-size: 13px !important;
+  line-height: 17px;
+  color: #fff;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-family: 'Source Sans Pro';
+}
+
+
+/* B2C Ship To Address Selector || begin */
+
+.ship-to-address-selector-button {
+  vertical-align: bottom;
+  font-size: 12px !important;
+  margin-right: 7px;
+  padding: 0 15px 0;
+}
+
+.ship-to-address-select-radio .checkmark {
+  position: absolute;
+  top: 50%;
+  left: 0px;
+  height: 20px;
+  width: 20px;
+  background-color: #fff;
+  border-radius: 50%;
+  transform: translateY(-50%);
+  border: 1px solid #0270d3;
+}
+
+.ship-to-address-select-radio input:checked ~ .checkmark {
+  background-color: #fff;
+  border: 1px solid #0270d3;
+}
+
+.ship-to-address-select-radio .checkmark:after {
+  content: "";
+  position: absolute;
+  display: none;
+}
+
+.ship-to-address-select-radio input:checked ~ .checkmark:after {
+  display: block;
+}
+
+.ship-to-address-select-radio .checkmark:after {
+  top: 50%;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #0270d3;
+  transform: translate(-50%, -50%);
+}
+
+.ship-to-address-select-radio .address-line {
+  width: 90%;
+}
+
+.ship-to-address-select-radio .ui-dialog-content button {
+  margin-top: 0px !important;
+}
+
+.ui-dialog-content button {
+  margin-top: 0px;
+}
+
+.ship-to-address-select-radio {
+  display: flex;
+  position: relative;
+  cursor: pointer;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  text-align: left;
+  padding: 10px 0px 10px 45px;
+  justify-content: space-between;
+}
+
+.ship-to-address-selector, .ship-to-address-selector label {
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  font-family: 'Source Sans Pro', sans-serif;
+}
+
+.ship-to-address-selector-buttons .button-1 {
+  border: none;
+  height: 45px;
+  padding: 0 25px;
+  border-radius: 3px;
+  color: #fff;
+  font-weight: 700;
+  transition: all .2s ease;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 0px !important;
+}
+
+.ship-to-address-selector {
+  padding: 30px 30px 0px !important;
+}
+
+.ship-to-address-selector-buttons {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+  .ship-to-address-selector-buttons .button-1 {
+    border: none;
+    height: 45px;
+    padding: 0 25px;
+    border-radius: 3px;
+    color: #fff;
+    font-weight: 700;
+    transition: all .2s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 0px !important;
+  }
+
+.ship-to-address-selector {
+  padding: 30px 30px 0px !important;
+}
+
+.ship-to-address-selector-buttons {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+td.ui-datepicker-unselectable.ui-state-disabled {
+  color: #8c8c8c;
+}
+
+.ui-datepicker-calendar th span, .ui-datepicker-calendar td a {
+  color: #000;
+}
+
+.checkout-page .section {
+  margin: 0px 0 35px;
+}
+
+  .checkout-page .section .title {
+    margin: 20px 0 30px;
+  }
+
+
+div[aria-describedby="ShipToAddressSelectorDialog"] ~ .ui-widget-overlay {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  background: rgba(165, 165, 165, .55);
+}
+
+.shipping-address-body {
+  margin-bottom: 30px;
+  margin-top: 30px;
+}
+
+#CreateShippingAddress #nearestWarehouseCode,
+#CreateShippingAddress #RouteCode,
+#CreateShippingAddress #distanceToNearestWarehouse {
+  display: none;
+}
+
+.b2c-shipping-address-create-page .shipping-address-google-map {
+  width: 100% !important;
+  height: 500px !important;
+  margin: auto auto !important;
+}
+
+.ui-dialog-titlebar .ui-dialog-title {
+  text-wrap: auto;
+  color: #fff;
+}
+
+@media (max-width: 1024px) {
+  .ship-to-address-selector-button-big-screen {
+    display: none !important;
+  }
+
+  .b2c-shipping-address-create-page .page-title {
+    margin-bottom: 0px !important;
+  }
+
+  .b2c-shipping-address-create-page .page-body {
+    padding: 10px !important;
+  }
+
+  .b2c-shipping-address-create-page .fieldset {
+    justify-content: center !important;
+    flex-wrap: wrap !important;
+  }
+
+  .b2c-shipping-address-create-page .address-form-area {
+    width: 100% !important;
+    margin-top: 20px !important;
+  }
+
+  .b2c-shipping-address-create-page .buttons {
+    text-align: center !important;
+  }
+}

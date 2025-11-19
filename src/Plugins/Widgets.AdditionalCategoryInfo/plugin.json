@@ -1,0 +1,16 @@
+﻿{
+    "Group": "Widgets",
+    "FriendlyName": "Additional Edit Category Tab",
+    "SystemName": "Widgets.AdditionalCategoryInfo",
+    "Version": "4.70.2.1",
+    "SupportedVersions": [
+        "4.70"
+    ],
+    "Author": "NopStation Team",
+    "DisplayOrder": 1,
+    "FileName": "Nop.Plugin.Widgets.AdditionalCategoryInfo.dll",
+    "Description": "This plugin allows you to add additional tab in edit category page",
+    "LimitedToStores": [],
+    "LimitedToCustomerRoles": [],
+    "DependsOnSystemNames": null
+}

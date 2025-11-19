@@ -1,0 +1,198 @@
+@using NopStation.Plugin.B2B.B2BB2CFeatures.Model;
+@model B2BHeaderLinkModel
+
+@*
+need to work on this controller missing
+    @if (Model.IsB2BSalesRepImpersonating)
+{
+    <style>
+        .admin-header-links {
+            display: none;
+        }
+    </style>
+    <li>
+        <a href="@Url.Action("ChangeBuyer", "B2BSalesRepPublic")"
+           class="ico-account">@T("Plugins.Payments.B2BCustomerAccount.B2BUserInformations.B2BUserChangeBuyer")</a>
+        <script asp-location="Footer">
+            addChangeUser();
+            function addChangeUser() {
+                $(".admin-header-links .impersonate .finish-impersonation").remove()
+                var str = '<a href="@Url.Action("ChangeBuyer", "B2BSalesRepPublic")"class="finish-impersonation">@T("Plugins.Payments.B2BCustomerAccount.B2BUserInformations.B2BUserChangeBuyer")</a>'
+                $(".admin-header-links .impersonate").append(str)
+            }
+        </script>
+    </li>
+}
+@if (Model.IsSalesRep)
+{
+    <style>
+        .admin-header-links {
+            display: none;
+        }
+    </style>
+
+}
+
+
+@if (Model.HasB2BCustomerAccountManagerRole)
+{
+    <li>
+        <a href="@Url.Action("B2BUsersManage", "B2BCustomerAccountManager", new RouteValueDictionary() { { "area", "Admin" } })"
+           class="ico-account">@T("Plugins.Payments.B2BCustomerAccount.B2BUserInformations.B2BUserAccountManagerListHeaderLink")</a>
+    </li>
+}
+ *@
+@if (Model.IsShowYearlySavings || Model.IsShowAllTimeSavings)
+{
+    <style>
+        .savings-amount {
+            background-color: #002169;
+            color: white;
+            padding: 5px;
+            border-radius: 5px;
+            border-color: black;
+            border: 1px solid black;
+            font-size: 10px;
+            font-weight: normal;
+            margin: 0px !important;
+            margin-bottom: 4px !important;
+        }
+
+        .saving-message h6 {
+            line-height: 0.8;
+        }
+
+        .current-year {
+            margin-bottom: 2px !important;
+        }
+
+        #savings-amount-text {
+            margin: 0 !important;
+            font-size: 12px !important;
+            margin-right: 2px !important;
+            text-decoration: none;
+        }
+    </style>
+
+    <li id="saving-message saving-message-hide" class="saving-message" style="position:relative;">
+        <a class="saving-message-link" onclick="javascript:void(0)">
+            @if (Model.IsShowYearlySavings)
+            {
+                <h6 id="current-year-savings-amount" class="savings-amount current-year">@T("Plugins.Payments.B2BCustomerAccount.B2BUserInformations.CurrentYearSavingsText") @Model.CurrentYearOnlineSavings</h6>
+
+                <script asp-location="Footer">
+                    $(document).ready(function () {
+                        loadCurrentYearSavingsInfo();
+                    });
+
+                    currentYearSavingsOnResponsive();
+
+                    function currentYearSavingsOnResponsive() {
+                        $("#current-year-savings-info-responsive").remove();
+                        var savingInfoMenu = '<li id="current-year-savings-info-responsive"><a onclick="javascript:void(0)" title="Savings"><div style="display:inline">'
+                        savingInfoMenu = savingInfoMenu + '<span id="current-year-savings-amount-responsive" class="current-year-savings-amount-responsive"></span></div></a></li>'
+
+                        $(".mega-menu-responsive").append(savingInfoMenu)
+                        $("#current-year-savings-amount-responsive").text("@T("B2B.B2BAccountPublic.Cart.CustomerAccountSavingsBtn") @T("Plugins.Payments.B2BCustomerAccount.B2BUserInformations.CurrentYearSavingsText") @Model.CurrentYearOnlineSavings")
+                    }
+
+                    function loadCurrentYearSavingsInfo() {
+                        $.ajax({
+                            cache: true,
+                            type: "GET",
+                            url: "@Url.Action("GetCustomerAccountSavingsForthisYear", "ErpAccountPublic")",
+                            dataType: "json",
+                            success: function (data, textStatus, jqXHR) {
+                                if (data.success) {
+                                    //console.log("CurrentYearOnlineSavings: " + data.totalSavings);
+                                    if (data.totalSavings) {
+                                        $('.saving-message').removeClass("saving-message-hide")
+                                        $('#current-year-savings-amount').text("@T("Plugins.Payments.B2BCustomerAccount.B2BUserInformations.CurrentYearSavingsText") " + data.totalSavings.slice(0, -3));
+                                        $('.current-year-savings-amount-responsive').text("@T("B2B.B2BAccountPublic.Cart.CustomerAccountSavingsBtn") @T("Plugins.Payments.B2BCustomerAccount.B2BUserInformations.CurrentYearSavingsText") " + data.totalSavings.slice(0, -3));
+                                    }
+                                }
+                            },
+                            error: function (jqXHR, textStatus, errorThrown) {
+                                console.log("customer savings data sync failed for current year online savings");
+                            }
+                        });
+                    }
+
+                </script>
+            }
+            @if (Model.IsShowAllTimeSavings)
+            {
+                <h6 id="all-time-savings-amount" class="savings-amount all-time">@T("Plugins.Payments.B2BCustomerAccount.B2BUserInformations.TotalSavingsText") @Model.AllTimeOnlineSavings</h6>
+
+                <script asp-location="Footer">
+                    $(document).ready(function () {
+                        loadAllTimeOnlineSavingsInfo();
+                    });
+
+                    allTimeSavingsOnResponsive();
+
+                    function allTimeSavingsOnResponsive() {
+                        $("#all-time-savings-info-responsive").remove();
+                        var savingInfoMenu = '<li id="all-time-savings-info-responsive"><a onclick="javascript:void(0)" title="Savings"><div style="display:inline">'
+                        savingInfoMenu = savingInfoMenu + '<span id="all-time-savings-amount-responsive" class="all-time-savings-amount-responsive"></span></div></a></li>'
+
+                        $(".mega-menu-responsive").append(savingInfoMenu)
+                        $("#all-time-savings-amount-responsive").text("@T("B2B.B2BAccountPublic.Cart.CustomerAccountSavingsBtn") @T("Plugins.Payments.B2BCustomerAccount.B2BUserInformations.TotalSavingsText") @Model.AllTimeOnlineSavings")
+                    }
+
+                    function loadAllTimeOnlineSavingsInfo() {
+                        $.ajax({
+                            cache: true,
+                            type: "GET",
+                            url: "@Url.Action("GetCustomerAccountSavingsForAllTime", "ErpAccountPublic")",
+                            dataType: "json",
+                            success: function (data, textStatus, jqXHR) {
+                                if (data.success) {
+                                    //console.log("AllTimeOnlineSavings: " + data.totalSavings);
+                                    if (data.totalSavings) {
+                                        $('.all-time-saving-message').removeClass("all-time-saving-message-hide")
+                                        $('#all-time-savings-amount').text("@T("Plugins.Payments.B2BCustomerAccount.B2BUserInformations.TotalSavingsText") " + data.totalSavings.slice(0, -3));
+                                        $('.all-time-savings-amount-responsive').text("@T("B2B.B2BAccountPublic.Cart.CustomerAccountSavingsBtn") @T("Plugins.Payments.B2BCustomerAccount.B2BUserInformations.TotalSavingsText") " + data.totalSavings.slice(0, -3));
+                                    }
+                                }
+                            },
+                            error: function (jqXHR, textStatus, errorThrown) {
+                                console.log("customer savings data sync failed for all time online savings");
+                            }
+                        });
+                    }
+                </script>
+            }
+
+            <div id="saving-amount-info-div" class="saving-amount-info-div savings-amount-icon ico-help" title="@T("B2B.B2BAccountPublic.Cart.CustomerAccountSavingsHint")" data-toggle="tooltip">
+                <div style="display: flex; align-items: center;">
+                    <h5 id="savings-amount-text">@T("B2B.B2BAccountPublic.Cart.CustomerAccountSavingsBtn")</h5>
+                    <img id="savings-amount-hint-img" src="/Plugins/NopStation.Plugin.B2B.B2BB2CFeatures/Themes/Emporium/Content/img/question_icon.svg" height="12" style="margin-left: 2px;">
+                </div>
+            </div>
+        </a>
+    </li>
+}
+<div id="ChangeDefaultShipToAddressToNoShopWarningDialog" class="custom-modal" title="@T("Plugins.Payments.B2BCustomerAccount.B2CShipToAddressSelector.NoShop.Warning.Title")" style="display: none;">
+    <div class="popup-content">
+        @T("NopStation.Plugin.B2B.ManageB2CandB2BCustomer.B2CShipToAddressSelector.NoShop.Warning.Details")
+    </div>
+    <script asp-location="Footer">
+        $('ChangeDefaultShipToAddressToNoShopWarningDialog').on('dialogclose', function (event) {
+            window.location.href = "@Url.RouteUrl("CreateShippingAddress")";
+        });
+    </script>
+</div>
+
+<script asp-location="Footer">
+
+    $(document).ready(function () {
+        $("#customTermsAndConditionAcceptDialog").dialog({
+            modal: true,
+            draggable: false,
+            closeOnEscape: false,
+            open: function (event, ui) { $(".ui-dialog-titlebar-close").hide(); }
+        });
+    });
+
+</script>

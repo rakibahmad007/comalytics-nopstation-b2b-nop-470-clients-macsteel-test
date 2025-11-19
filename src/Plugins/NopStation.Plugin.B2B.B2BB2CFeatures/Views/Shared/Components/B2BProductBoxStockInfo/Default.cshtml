@@ -1,0 +1,29 @@
+﻿@model NopStation.Plugin.B2B.B2BB2CFeatures.Model.B2BProductBoxStockInfoModel
+
+@if (!string.IsNullOrWhiteSpace(Model.UOM))
+{
+    <div class="uom">
+        <span class="value">@Model.UOM</span>
+    </div>
+}
+@if (!string.IsNullOrWhiteSpace(Model.StockAvailability) || Model.DisplayBackInStockSubscription)
+{
+    <div class="availability">
+        <div class="stock">
+            <span class="label">@T("Products.Availability"):</span>
+            <span class="value" id="stock-availability-value-@Model.ProductId">@Model.StockAvailability</span>
+            @if (Model.DisplayBackInStockSubscription)
+            {
+                <div class="back-in-stock-subscription product-box-back-in-stock-subscription" id="back-in-stock-subscribe-@Model.ProductId">
+                    <script asp-location="Footer">
+                    $(document).ready(function () {
+                        $("#back-in-stock-subscribe-@Model.ProductId").on('click', function() {
+                            displayPopupContentFromUrl('@Url.RouteUrl("BackInStockSubscribePopup", new { productId = Model.ProductId })', '@T("BackInStockSubscriptions.NotifyMeWhenAvailable")');
+                        });
+                    });
+                    </script>
+                </div>
+            }
+        </div>
+    </div>
+}

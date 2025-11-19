@@ -1,0 +1,115 @@
+@model SpecialIncludeExcludeModel
+
+<div asp-validation-summary="All"></div>
+<input asp-for="Id" type="hidden" />
+
+<script>
+    $(document).ready(function () {
+        toggleRemoveButton();
+    });
+
+    function toggleRemoveButton() {
+        if ($('#@Html.IdFor(model => model.ProductId)').val() > 0) {
+            $('#product-name-remove').show();
+        } else {
+            $('#product-name-remove').hide();
+        }
+    }
+</script>
+
+<div class="content">
+    <div class="form-horizontal">
+        <div class="cards-group">
+            <div class="card card-default">
+                <div class="card-body">
+                    <div class="form-group row">
+                        <div class="col-md-3">
+                            <nop-label asp-for="ErpAccountId" />
+                        </div>
+                        <div class="col-md-9">
+                            <input type="text" id="search-account-code" autocomplete="off" class="form-control" placeholder="auto complete search" value="@Model.AccountNumber" />
+                            <span id="search-account-by-code"></span>
+                            <button type="button" id="search-account-clear" class="btn bg-gray" style="display: none; margin-top: 5px;">@T("Admin.Common.Clear")</button>
+                            <input asp-for="ErpAccountId" autocomplete="off" style="display: none;" />
+                            <script>
+                                $(document).ready(function () {
+                                    $('#search-account-code').autocomplete({
+                                        delay: 500,
+                                        minLength: 3,
+                                        source: '@(Url.Action("ErpAccountSearchAutoComplete", "ErpAccount"))',
+                                        select: function (event, ui) {
+                                            $('#@Html.IdFor(model => model.ErpAccountId)').val(ui.item.erpaccountid);
+                                            $('#search-account-by-code').text(ui.item.label);
+
+                                            $('#search-account-clear').show();
+
+                                            $("#@Html.IdFor(model => model.ErpAccountId)").change();
+                                            return false;
+                                        }
+                                    });
+
+                                    //remove button
+                                    $('#search-account-clear').click(function () {
+                                        $('#@Html.IdFor(model => model.ErpAccountId)').val('0');
+                                        $('#search-account-by-code').text('');
+                                        $('#search-account-clear').hide();
+
+                                        $("#@Html.IdFor(model => model.ErpAccountId)").change();
+                                        return false;
+                                    });
+                                });
+                            </script>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-md-3">
+                            <nop-label asp-for="ProductId" />
+                        </div>
+                        <div class="col-md-9">
+                            <input type="hidden" asp-for="ProductId" />
+                            <span id="product-name">@Model.ProductName</span>
+                            <span asp-validation-for="ProductId"></span>
+                            <button type="submit" onclick="javascript:OpenWindow('@(Url.Action("AssociateProductToCustomerRolePopup", "CustomerRole",
+                                new {productIdInput = Html.IdFor(model => model.ProductId), productNameInput = "product-name",
+                                btnId = "btnRefreshProduct"}))', 800, 850, true); return false;" class="btn btn-primary">
+                                @T("Admin.Catalog.Products.Fields.Name.Choose")
+                            </button>
+                            <button type="submit" id="product-name-remove" class="btn bg-red">
+                                @T("Admin.Catalog.Products.Fields.Name.Remove")
+                            </button>
+                            <input type="submit" id="btnRefreshProduct" style="display: none" />
+
+                            <script>
+                                $(document).ready(function () {
+                                    $('#product-name-remove').click(function () {
+                                        $('#product-name').text('');
+                                        $("#@Html.IdFor(model => model.ProductId)").val(0);
+                                        toggleRemoveButton();
+                                        //return false to don't reload a page
+                                        return false;
+                                    });
+
+                                    $('#btnRefreshProduct').click(function () {
+                                        toggleRemoveButton();
+
+                                        //return false to don't reload a page
+                                        return false;
+                                    });
+                                });
+                            </script>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-md-3">
+                            <nop-label asp-for="IsActive" />
+                        </div>
+                        <div class="col-md-9">
+                            <nop-editor asp-for="IsActive" />
+                            <span asp-validation-for="IsActive"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

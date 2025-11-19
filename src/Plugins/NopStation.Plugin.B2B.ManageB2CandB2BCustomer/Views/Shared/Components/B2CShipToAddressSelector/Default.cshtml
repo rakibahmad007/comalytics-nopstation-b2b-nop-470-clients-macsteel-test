@@ -1,0 +1,326 @@
+@using Newtonsoft.Json
+@using NopStation.Plugin.B2B.ManageB2CandB2BCustomer.Models
+
+@inject IWebHelper webHelper
+
+@model B2CShipToAddressSelectorModel
+
+@{
+    NopHtml.AppendCssFileParts("~/Plugins/NopStation.Plugin.B2B.ManageB2CandB2BCustomer/Content/css/b2cStyles.css");
+    NopHtml.AddCssFileParts("https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.6.0/css/fontawesome.min.css");
+    NopHtml.AppendScriptParts(ResourceLocation.Footer, "~/Plugins/NopStation.Plugin.B2B.B2BB2CFeatures/Content/scripts/b2bajaxcart.js");
+    NopHtml.AddCssFileParts("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css");
+
+    var defaultShipToAddressId = Model.SelectedErpShipToAddressId;
+    var nextDefaultAddressLine = "";
+    var returnUrl = Context.Request.Path;
+    var title = T("NopStation.Plugin.B2B.ManageB2CandB2BCustomer.B2CShipToAddressSelector.SelectShippingAddress");
+    if (Model.DefaultAddressChanged == 1)
+    {
+        title = T("NopStation.Plugin.B2B.ManageB2CandB2BCustomer.B2CShipToAddressSelector.NoShop.Warning.Details");
+    }
+}
+
+<input type="button" value="@T("NopStation.Plugin.B2B.ManageB2CandB2BCustomer.B2CShipToAddressSelector")"
+       class="button-1 ship-to-address-selector-button ship-to-address-selector-button-big-screen b2c-address-selector-button" onclick="DisplayShipToAddresses('@Model.ErpNopUserId')" />
+
+<script asp-location="Footer">
+    addressResponsive();
+
+    function addressResponsive() {
+        $("#address-info-responsive").remove();
+        var selectorButton = '<li id="address-info-responsive"><a onclick="javascript:void(0)" title="Savings"><div style="display:inline">'
+        selectorButton = selectorButton +
+            '<input type="button" style="display:block" value="@T("NopStation.Plugin.B2B.ManageB2CandB2BCustomer.B2CShipToAddressSelector")" class="ship-to-address-selector-button-responsive b2c-address-selector-button" onclick="DisplayShipToAddresses()" />'
+
+        $(".mega-menu-responsive").append(selectorButton)
+    }
+</script>
+
+<div id="ShipToAddressSelectorDialog" class="ship-to-address-selector custom-modal" style="display: none;" title='@title'>
+    <div class="section select-shipping-address">
+        <div class="shipping-address-body">
+            @foreach (var b2CShipTo in Model.AvailableShipToAddresses)
+            {
+                var addressLine = "";
+
+                if (!string.IsNullOrEmpty(b2CShipTo.HouseNumber))
+                { addressLine += b2CShipTo.HouseNumber; }
+
+                if (!string.IsNullOrEmpty(b2CShipTo.Street))
+                { addressLine += (addressLine != "" ? ", " : "") + b2CShipTo.Street; }
+
+                if (!string.IsNullOrEmpty(b2CShipTo.Suburb))
+                { addressLine += (addressLine != "" ? ", " : "") + b2CShipTo.Suburb; }
+
+                if (!string.IsNullOrEmpty(b2CShipTo.City))
+                { addressLine += (addressLine != "" ? ", " : "") + b2CShipTo.City; }
+
+                if (!string.IsNullOrEmpty(b2CShipTo.StateProvince))
+                { addressLine += (addressLine != "" ? ", " : "") + b2CShipTo.StateProvince; }
+
+                if (!string.IsNullOrEmpty(b2CShipTo.PostalCode))
+                { addressLine += (addressLine != "" ? ", " : "") + b2CShipTo.PostalCode; }
+
+                if (b2CShipTo.IsSelected == 1)
+                {
+                    addressLine += " " + T("NopStation.Plugin.B2B.ManageB2CandB2BCustomer.B2CShipToAddressSelector.Default").ToString();
+                }
+                if (b2CShipTo.Id == Model.NextDefaultErpShipToAddressId)
+                {
+                    nextDefaultAddressLine = T("NopStation.Plugin.B2B.ManageB2CandB2BCustomer.B2CShipToAddressSelector.NextDefault").ToString() + "\n" + addressLine + "\n\n"
+                    + (Model.IsSalesOrgDifferent ? T("NopStation.Plugin.B2B.ManageB2CandB2BCustomer.B2CShipToAddressSelector.NextDefault.DifferentSalesOrg").ToString() : "")
+                    + "\n\n" + T("NopStation.Plugin.B2B.ManageB2CandB2BCustomer.B2CShipToAddressSelector.NextDefault.ContinueOrCancel").ToString();
+                }
+                <label id="shipping-address-select" class="ship-to-address-select-radio">
+                    <div class="address-line">
+                        @(addressLine)
+                        <input type="radio" checked="@(b2CShipTo.IsSelected == 1)" asp-for="@Model.SelectedErpShipToAddressId" value="@b2CShipTo.Id" />
+                        <span class="checkmark"></span>
+                    </div>
+                    <div class="delete-ship-to">
+                        <button class="delete-button" onclick="ProcessAddressDeletion(@Model.ErpNopUserId, @b2CShipTo.Id)"></button>
+                    </div>
+                </label>
+            }
+        </div>
+
+        <div class="collection-message">@T("NopStation.Plugin.B2B.ManageB2CandB2BCustomer.B2CShipToAddressSelector.CollectionMessage")</div>
+    </div>
+
+    <div class="ship-to-address-selector-buttons popup-button-wrapper">
+        <a asp-route="CreateShippingAddress" asp-route-returnurl="@returnUrl" class="button-1 popup-button">
+            <span>@T("NopStation.Plugin.B2B.ManageB2CandB2BCustomer.B2CShipToAddressSelector.Add")</span>
+        </a>
+        <button type="button" class="button-1 popup-button" onclick="CompareOldAndNewShippingAddress(@Model.ErpNopUserId);">
+            <span>@T("NopStation.Plugin.B2B.ManageB2CandB2BCustomer.B2CShipToAddressSelector.Continue")</span>
+        </button>
+    </div>
+</div>
+
+<div id="UpdateShipToAddressWarningDialog" class="custom-modal" title="@T("NopStation.Plugin.B2B.ManageB2CandB2BCustomer.B2CShipToAddressSelector.Warning")" style="display: none;">
+    <div class="popup-content">
+        @T("NopStation.Plugin.B2B.ManageB2CandB2BCustomer.B2CShipToAddressSelector.Update.Warning.Text")
+    </div>
+    <div class="ship-to-address-selector-buttons ship-to-address-selector-warning-buttons popup-button-wrapper">
+        <button type="button" value="@T("NopStation.Plugin.B2B.ManageB2CandB2BCustomer.B2CShipToAddressSelector.Cancel")" class="button-1 popup-button"
+                onclick="CloseUpdateShipToAddressWarningDialog()">
+            <span>@T("NopStation.Plugin.B2B.ManageB2CandB2BCustomer.B2CShipToAddressSelector.Cancel")</span>
+        </button>
+        <button type="button" value="@T("NopStation.Plugin.B2B.ManageB2CandB2BCustomer.B2CShipToAddressSelector.Delete.Warning.Continue")" class="button-1 popup-button"
+                onclick="UpdateShipToAddressOfB2CUser(@Model.ErpNopUserId, true)">
+            <span>@T("NopStation.Plugin.B2B.ManageB2CandB2BCustomer.B2CShipToAddressSelector.Continue")</span>
+        </button>
+    </div>
+
+    <script asp-location="Footer">
+        function CloseUpdateShipToAddressWarningDialog() {
+            $("#UpdateShipToAddressWarningDialog").dialog("destroy");
+            DisplayShipToAddresses('@Model.ErpNopUserId');
+        }
+    </script>
+</div>
+
+<div id="SameShipToAddressDialog" class="custom-modal" title="@T("NopStation.Plugin.B2B.ManageB2CandB2BCustomer.B2CShipToAddressSelector.Notification")" style="display: none;">
+    <div class="popup-content">
+        @T("NopStation.Plugin.B2B.ManageB2CandB2BCustomer.B2CShipToAddressSelector.Update.Same.Text")
+    </div>
+</div>
+
+<div id="OnlyOneAddressDialog" class="custom-modal" title="@T("NopStation.Plugin.B2B.ManageB2CandB2BCustomer.B2CShipToAddressSelector.Warning")" style="display: none;">
+    <div class="popup-content">
+        @T("NopStation.Plugin.B2B.ManageB2CandB2BCustomer.B2CShipToAddressSelector.Only.One.Address.Text")
+    </div>
+    <div class="ship-to-address-selector-buttons address-delete-popup-cancel-button popup-button-wrapper">
+        <button type="button" class="button-1 popup-button" onclick="CloseOnlyOneAddressDialog()">
+            @T("NopStation.Plugin.B2B.ManageB2CandB2BCustomer.B2CShipToAddressSelector.Cancel")
+        </button>
+    </div>
+    <script asp-location="Footer">
+        function CloseOnlyOneAddressDialog() {
+            $("#OnlyOneAddressDialog").dialog("destroy");
+            DisplayShipToAddresses('@Model.ErpNopUserId');
+        }
+    </script>
+</div>
+
+<div id="DeleteDefaultShipToAddressWarningDialog" class="custom-modal" title="@T("NopStation.Plugin.B2B.ManageB2CandB2BCustomer.B2CShipToAddressSelector.Warning")" style="display: none;">
+    <div class="popup-content">
+        @nextDefaultAddressLine
+    </div>
+    <div class="ship-to-address-selector-buttons ship-to-address-selector-warning-buttons popup-button-wrapper">
+        <button type="button" class="button-1 popup-button" onclick="CloseDeleteDefaultShipToAddressWarningDialog()">
+            <span>@T("NopStation.Plugin.B2B.ManageB2CandB2BCustomer.B2CShipToAddressSelector.Cancel")</span>
+        </button>
+        <button type="button" class="button-1 popup-button" onclick="DeleteDefaultAddress()">
+            <span>@T("NopStation.Plugin.B2B.ManageB2CandB2BCustomer.B2CShipToAddressSelector.Continue")</span>
+        </button>
+    </div>
+
+    <script asp-location="Footer">
+        function CloseDeleteDefaultShipToAddressWarningDialog() {
+            $("#DeleteDefaultShipToAddressWarningDialog").dialog("destroy");
+            DisplayShipToAddresses('@Model.ErpNopUserId');
+        }
+    </script>
+</div>
+
+<script asp-location="Footer">
+    if (@Model.DefaultAddressChanged == 1 && !document.URL.toLowerCase().includes("createshippingaddress?returnurl".toLowerCase())) {
+        DisplayShipToAddresses('@Model.ErpNopUserId')
+        $('body').css({ "pointer-events": "none" });
+        $("#ShipToAddressSelectorDialog").css({ "pointer-events": "auto" });
+        $("#UpdateShipToAddressWarningDialog").css({ "pointer-events": "auto" });
+        $("#DeleteDefaultShipToAddressWarningDialog").css({ "pointer-events": "auto" });
+        $("#SameShipToAddressDialog").css({ "pointer-events": "auto" });
+        $("#OnlyOneAddressDialog").css({ "pointer-events": "auto" });
+    }
+    function DisplayShipToAddresses(erpUserId) {
+
+        $("#ShipToAddressSelectorDialog").dialog({
+            modal: true,
+            draggable: false,
+            closeOnEscape: true
+        });
+    }
+
+    function CompareOldAndNewShippingAddress(erpUserId) {
+        var newShipToAddressId = $("input:radio[name='SelectedErpShipToAddressId']:checked").val();
+        var defaultShipToAddressId = @Model.SelectedErpShipToAddressId;
+
+        if (newShipToAddressId == defaultShipToAddressId) {
+            //console.log("new and old address is same");
+            if (@Model.DefaultAddressChanged== 1)
+                return;
+            $("#ShipToAddressSelectorDialog").dialog("destroy");
+            $("#SameShipToAddressDialog").dialog({
+                modal: true,
+                draggable: false,
+                closeOnEscape: true
+            });
+        }
+        else {
+            console.log(erpUserId, newShipToAddressId, "IsSalesOrgSameForOldAndNewB2CShipToAddress");
+            $.ajax({
+                cache: false,
+                type: "GET",
+                dataType: "json",
+                url: "@Url.RouteUrl("IsSalesOrgSameForOldAndNewB2CShipToAddress")",
+                data: { erpUserId: erpUserId, newErpShipToAddressId: newShipToAddressId },
+                success: function (response) {
+                    if (response.success) {
+                        //console.log("IsSalesOrgSameForOldAndNewB2CShipToAddress success true");
+                        $("#ShipToAddressSelectorDialog").dialog("destroy");
+
+                        UpdateShipToAddressOfB2CUser(erpUserId, false);
+                    }
+                    else {
+                        //console.log("IsSalesOrgSameForOldAndNewB2CShipToAddress success false");
+                        $("#ShipToAddressSelectorDialog").dialog("destroy");
+                        $("#UpdateShipToAddressWarningDialog").dialog({
+                            modal: true,
+                            draggable: false,
+                            closeOnEscape: true
+                        });
+                    }
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    console.log("Error. Please Reload");
+                }
+            });
+        }
+    }
+
+    function UpdateShipToAddressOfB2CUser(erpUserId, clearCart) {
+        var newShipToAddressId = $("input:radio[name='SelectedErpShipToAddressId']:checked").val();
+
+        //console.log("erpUserId: " + erpUserId);
+        //console.log("newShipToAddress: " + newShipToAddressId);
+
+        if (clearCart == true) {
+            //console.log("diff sales og. clear cart");
+            B2BAjaxCart.b2BClearCart(true);
+        }
+
+        //console.log("update ship to");
+        var url2 = '/UpdateDefaultShipToAddressOfB2CUser?erpUserId=' + erpUserId + '&newErpShipToAddressId=' + newShipToAddressId + '&returnUrl=@returnUrl';
+        //console.log("url 2: " + url2);
+        setLocation(url2);
+    }
+
+    function ProcessAddressDeletion(erpUserId, b2CShipToAddressId) {
+        //console.log('Deleting AddressId: ' + b2CShipToAddressId);
+
+        $.ajax({
+            cache: false,
+            type: "GET",
+            dataType: "json",
+            url: "/IsShipToAddressOnlyOne/",
+            data: { erpUserId: erpUserId },
+            success: function (response) {
+                if (response.success) {
+                    $('body').css({ "pointer-events": "auto" });
+                    //console.log("IsShipToAddressOnlyOne success");
+                    $("#ShipToAddressSelectorDialog").dialog("destroy");
+                    $("#OnlyOneAddressDialog").dialog({
+                        modal: true,
+                        draggable: false,
+                        closeOnEscape: true
+                    });
+                }
+                else if (b2CShipToAddressId == @Model.SelectedErpShipToAddressId) {
+                    $('body').css({ "pointer-events": "auto" });
+                    //console.log("deleting default address");
+                    $("#ShipToAddressSelectorDialog").dialog("destroy");
+                    $("#DeleteDefaultShipToAddressWarningDialog").dialog({
+                        modal: true,
+                        draggable: false,
+                        closeOnEscape: true
+                    });
+                }
+                else {
+                    //console.log("deleting other address");
+                    var url = '/DeleteB2CShipToAddress?b2CShipToAddressId=' + b2CShipToAddressId + '&returnUrl=@returnUrl';
+                    //console.log("delete url: " + url);
+                    setLocation(url);
+                }
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+                //console.log("Error. Please Reload");
+            }
+        });
+    }
+
+    function DeleteDefaultAddress() {
+        if ('@Model.IsSalesOrgDifferent'.toLowerCase() == 'true') {
+            //console.log("diff sales org. clear cart");
+            B2BAjaxCart.b2BClearCart(true);
+        }
+
+        //console.log("delete default");
+
+        var url = '/DeleteDefaultB2CShipToAddress?returnUrl=@returnUrl';
+        //console.log("url: " + url);
+        setLocation(url);
+    }
+</script>
+
+<style>
+    .delete-button:before {
+        content: "\f1f8" !important;
+        display: inline-block !important;
+        font: normal normal normal 14px/1 FontAwesome !important;
+        font-size: 13px !important;
+        text-rendering: auto !important;
+        border: none !important;
+        height: unset !important;
+        width: unset !important;
+        margin-right: 0 !important;
+        background-color: transparent !important;
+        font-family: FontAwesome !important;
+    }
+
+    .shipping-address-body {
+        margin-top: 0;
+    }
+</style>

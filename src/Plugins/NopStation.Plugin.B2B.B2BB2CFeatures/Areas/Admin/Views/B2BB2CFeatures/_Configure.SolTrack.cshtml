@@ -1,0 +1,113 @@
+@model ConfigurationModel
+
+<div class="card-body">
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-override-store-checkbox asp-for="SoltrackBaseUrl_OverrideForStore" asp-input="SoltrackBaseUrl" asp-store-scope="@Model.ActiveStoreScopeConfiguration" />
+			<nop-label asp-for="SoltrackBaseUrl" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="SoltrackBaseUrl" />
+			<span asp-validation-for="SoltrackBaseUrl"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-override-store-checkbox asp-for="SoltrackUserName_OverrideForStore" asp-input="SoltrackUserName" asp-store-scope="@Model.ActiveStoreScopeConfiguration" />
+			<nop-label asp-for="SoltrackUserName" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="SoltrackUserName" />
+			<span asp-validation-for="SoltrackUserName"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-override-store-checkbox asp-for="SoltrackPassword_OverrideForStore" asp-input="SoltrackPassword" asp-store-scope="@Model.ActiveStoreScopeConfiguration" />
+			<nop-label asp-for="SoltrackPassword" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="SoltrackPassword" />
+			<span asp-validation-for="SoltrackPassword"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-override-store-checkbox asp-for="DistributionAreaType_OverrideForStore" asp-input="DistributionAreaType" asp-store-scope="@Model.ActiveStoreScopeConfiguration" />
+			<nop-label asp-for="DistributionAreaType" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="DistributionAreaType" />
+			<span asp-validation-for="DistributionAreaType"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-override-store-checkbox asp-for="NoGoAreaType_OverrideForStore" asp-input="NoGoAreaType" asp-store-scope="@Model.ActiveStoreScopeConfiguration" />
+			<nop-label asp-for="NoGoAreaType" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="NoGoAreaType" />
+			<span asp-validation-for="NoGoAreaType"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-override-store-checkbox asp-for="GoRoutsAreaType_OverrideForStore" asp-input="GoRoutsAreaType" asp-store-scope="@Model.ActiveStoreScopeConfiguration" />
+			<nop-label asp-for="GoRoutsAreaType" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="GoRoutsAreaType" />
+			<span asp-validation-for="GoRoutsAreaType"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-override-store-checkbox asp-for="BranchAreaType_OverrideForStore" asp-input="BranchAreaType" asp-store-scope="@Model.ActiveStoreScopeConfiguration" />
+			<nop-label asp-for="BranchAreaType" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="BranchAreaType" />
+			<span asp-validation-for="BranchAreaType"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-override-store-checkbox asp-for="MainHubAreaType_OverrideForStore" asp-input="MainHubAreaType" asp-store-scope="@Model.ActiveStoreScopeConfiguration" />
+			<nop-label asp-for="MainHubAreaType" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="MainHubAreaType" />
+			<span asp-validation-for="MainHubAreaType"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-override-store-checkbox asp-for="ExpressStoreAreaType_OverrideForStore" asp-input="ExpressStoreAreaType" asp-store-scope="@Model.ActiveStoreScopeConfiguration" />
+			<nop-label asp-for="ExpressStoreAreaType" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="ExpressStoreAreaType" />
+			<span asp-validation-for="ExpressStoreAreaType"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-override-store-checkbox asp-for="SoltrackTimeOutMilliseconds_OverrideForStore" asp-input="SoltrackTimeOutMilliseconds" asp-store-scope="@Model.ActiveStoreScopeConfiguration" />
+			<nop-label asp-for="SoltrackTimeOutMilliseconds" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="SoltrackTimeOutMilliseconds" />
+			<span asp-validation-for="SoltrackTimeOutMilliseconds"></span>
+		</div>
+	</div>
+</div>

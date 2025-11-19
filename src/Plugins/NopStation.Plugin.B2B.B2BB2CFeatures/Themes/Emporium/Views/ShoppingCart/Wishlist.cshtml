@@ -1,0 +1,392 @@
+﻿@model WishlistModel
+
+@using Nop.Core
+@using Nop.Core.Domain.Catalog
+@using Nop.Core.Domain.Media
+@using Nop.Core.Domain.Tax
+@using Nop.Web.Models.ShoppingCart
+
+@inject MediaSettings mediaSettings
+@inject IThemeContext themeContext
+
+@{
+	Layout = "_ColumnsOne";
+
+	NopHtml.AddTitleParts(T("PageTitle.Wishlist").Text);
+	NopHtml.AppendPageCssClassParts("html-wishlist-page");
+	NopHtml.AddCssFileParts("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css");
+
+	await Html.PartialAsync("~/Plugins/NopStation.Plugin.B2B.B2BB2CFeatures/Views/Shared/_DatatableScripts.cshtml");
+	NopHtml.AddCssFileParts("https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css");
+
+	var themeName = await themeContext.GetWorkingThemeNameAsync();
+
+	NopHtml.AppendCssFileParts($"~/Plugins/NopStation.Plugin.B2B.B2BB2CFeatures/Themes/{themeName}/Content/css/styles.css");
+    NopHtml.AppendCssFileParts($"~/Plugins/NopStation.Plugin.B2B.B2BB2CFeatures/Themes/{themeName}/Content/css/styles2.css");
+}
+<style>
+	.remove-from-cart input[type="checkbox"] + label:before {
+		content: "\f1f8" !important;
+		display: inline-block !important;
+		font: normal normal normal 14px/1 FontAwesome !important;
+		font-size: 15px !important;
+		text-rendering: auto !important;
+		border: none !important;
+		height: unset !important;
+		width: unset !important;
+		margin-right: 0 !important;
+		background-color: transparent !important;
+	}
+
+	.remove-from-cart input[type="checkbox"]:checked + label:before {
+		border: none !important;
+		outline: none !important;
+		box-shadow: none !important;
+		background: transparent !important;
+	}
+</style>
+<div class="page wishlist-page">
+	<div class="page-title">
+		<h1>
+			@if (Model.IsEditable)
+			{
+				@T("Wishlist")
+			}
+			else
+			{
+				@string.Format(T("Wishlist.WishlistOf").Text, Model.CustomerFullname)
+			}
+		</h1>
+	</div>
+	<div class="page-body">
+		@if (Model.Items.Count > 0)
+		{
+			<div class="wishlist-content">
+				@if (Model.Warnings.Count > 0)
+				{
+					<div class="message-error">
+						<ul>
+							@foreach (var warning in Model.Warnings)
+							{
+								<li>@warning</li>
+							}
+						</ul>
+					</div>
+				}
+				<form asp-route="Wishlist" method="post">
+					<input id="itemId" name="itemId" style="display:none;" />
+					<input id="itemQuantity" name="itemQuantity" style="display:none;" />
+					<div class="table-wrapper">
+						<table class="cart">
+							<colgroup>
+								@if (Model.IsEditable)
+								{
+									<col width="1" />
+								}
+								@if (Model.ShowProductImages)
+								{
+									<col width="1" />
+								}
+								<col />
+								<col width="1" />
+								<col width="1" />
+								<col width="1" />
+								<col width="1" />
+							</colgroup>
+							<thead>
+								<tr class="cart-header-row">
+									@if (Model.IsEditable)
+									{
+										<th class="remove-from-cart" data-hide="w410, w480, w580">
+											@T("ShoppingCart.Remove")
+										</th>
+									}
+									@if (Model.ShowProductImages)
+									{
+										<th class="product-picture">
+											@T("ShoppingCart.Image")
+										</th>
+									}
+									<th class="product" data-hide="w410, w480, w580, w768">
+										@T("ShoppingCart.Product(s)")
+									</th>
+									<th class="on-special-product-data">
+
+									</th>
+									<th class="unit-price" data-hide="w410, w480, w580">
+										@T("ShoppingCart.UnitPrice")
+									</th>
+									<th class="quantity" data-hide="w410">
+										@T("ShoppingCart.Quantity")
+									</th>
+									<th class="quantity">
+										@T("ShoppingCart.AddToCart")
+									</th>
+									<th class="subtotal">
+										@T("ShoppingCart.ItemTotal")
+									</th>
+								</tr>
+							</thead>
+							<tbody>
+								@foreach (var item in Model.Items)
+								{
+									item.CustomProperties.TryGetValue(B2BB2CFeaturesDefaults.ProductIsOnSpecial, out var OnSpecialProduct);
+
+									<tr class="cart-item-row">
+										@if (Model.IsEditable)
+										{
+											<td class="remove-from-cart">
+												<input type="checkbox" id="removecheckbox-@(item.Id)" onclick="removeFromWishlist(@item.Id)" value="@(item.Id)" />
+												<label for="removecheckbox-@(item.Id)" class="td-title">@T("ShoppingCart.Remove")</label>
+											</td>
+										}
+										@if (Model.ShowProductImages)
+										{
+											<td class="product-picture">
+												<a href="@(Url.RouteUrl<Product>(new { SeName = item.ProductSeName }))"><img alt="@item.Picture.AlternateText" src="@item.Picture.ImageUrl" title="@item.Picture.Title" /></a>
+											</td>
+										}
+										<td class="product">
+											<a href="@(Url.RouteUrl<Product>(new { SeName = item.ProductSeName }))" class="product-name">@item.ProductName</a>
+											@if (!string.IsNullOrEmpty(item.AttributeInfo))
+											{
+												<div class="attributes">
+													@Html.Raw(item.AttributeInfo)
+												</div>
+											}
+											@if (!string.IsNullOrEmpty(item.RecurringInfo))
+											{
+												<div class="recurring-info">
+													@Html.Raw(item.RecurringInfo)
+												</div>
+											}
+											@if (!string.IsNullOrEmpty(item.RentalInfo))
+											{
+												<div class="rental-info">
+													@Html.Raw(item.RentalInfo)
+												</div>
+											}
+											@if (Model.IsEditable && item.AllowItemEditing)
+											{
+												var editCartItemUrl = Url.RouteUrl<Product>(new { SeName = item.ProductSeName }, webHelper.GetCurrentRequestProtocol());
+												editCartItemUrl = webHelper.ModifyQueryString(editCartItemUrl, "updatecartitemid", item.Id.ToString());
+												<div class="edit-item">
+													<a href="@editCartItemUrl">@T("Common.Edit")</a>
+												</div>
+											}
+											@if (item.Warnings.Count > 0)
+											{
+												<div class="message-error">
+													<ul>
+														@foreach (var warning in item.Warnings)
+														{
+															<li>@Html.Raw(warning)</li>
+														}
+													</ul>
+												</div>
+											}
+										</td>
+										<td class="on-special-product-data">
+											@if (bool.TryParse(OnSpecialProduct, out var isOnSpecial) && isOnSpecial)
+											{
+												<div class="on-special-product">
+													<img src="@Url.Content(B2BB2CFeaturesDefaults.ProductIsOnSpecialIconPath)" alt="Product On Special" />
+													<span class="tooltip-text">@T("Plugin.Misc.NopStation.B2BB2CFeatures.SpecialProductMessage")</span>
+												</div>
+											}
+										</td>
+										<td class="unit-price">
+											<label class="td-title">@T("ShoppingCart.UnitPrice"):</label>
+											<span class="product-unit-price">@item.UnitPrice</span>
+										</td>
+										<td class="quantity">
+											<label class="td-title">@T("ShoppingCart.Quantity"):</label>
+											@if (Model.IsEditable)
+											{
+												if (item.AllowedQuantities.Count > 0)
+												{
+													<select name="itemquantity@(item.Id)" class="qty-dropdown">
+														@foreach (var qty in item.AllowedQuantities)
+														{
+															<option selected="@qty.Selected" value="@qty.Value">@qty.Value</option>
+														}
+													</select>
+												}
+												else
+												{
+													<div class="add-to-cart-section">
+														<button type="button" class="counter-minus btn btn-primary" onclick="decreaseQuantity(@item.Id);return false;">-</button>
+														<input id="b2bProductQty_@item.Id" class="b2bProductQty_@item.Id b2bProductQty qty-input" data-productid="@item.Id" name="itemquantity@(item.Id)" value="@(item.Quantity)" style="max-width: 70px;">
+														<button type="button" class="counter-plus btn btn-primary" onclick="increaseQuantity(@item.Id);return false;">+</button>
+													</div>
+												}
+											}
+											else
+											{
+												<span class="product-quantity">@item.Quantity</span>
+											}
+										</td>
+										<td class="wishlist-inline-add-to-cart">
+											<label class="td-title">@T("ShoppingCart.AddTocart"): </label>
+											<span class="product-subtotal"><button type="button" class="button-2 wishlist-add-to-cart-button" onclick="AddToCartFromWishlist(@item.Id)">@T("ShoppingCart.AddToCart")</button></span>
+										</td>
+										<td class="subtotal">
+											<label class="td-title">@T("ShoppingCart.ItemTotal"):</label>
+											<span class="product-subtotal">@item.SubTotal</span>
+											@if (!string.IsNullOrEmpty(item.Discount))
+											{
+												<div class="discount">
+													@T("ShoppingCart.ItemYouSave", item.Discount)
+												</div>
+												if (item.MaximumDiscountedQty.HasValue)
+												{
+													<div class="discount-additional-info">
+														@T("ShoppingCart.MaximumDiscountedQty", item.MaximumDiscountedQty.Value)
+													</div>
+												}
+											}
+										</td>
+									</tr>
+								}
+							</tbody>
+						</table>
+					</div>
+					@if (Model.Items.Count > 0 && Model.DisplayTaxShippingInfo)
+					{
+						var inclTax = await workContext.GetTaxDisplayTypeAsync() == TaxDisplayType.IncludingTax;
+						@* <div class="tax-shipping-info">
+                            @T(inclTax ? "Wishlist.TaxShipping.InclTax" : "Wishlist.TaxShipping.ExclTax", Url.RouteUrl("Topic", new { SeName = Html.GetTopicSeName("shippinginfo") }))
+                        </div> *@
+					}
+					<div class="buttons">
+						@if (Model.IsEditable)
+						{
+							<button hidden style="display:none !important;" type="submit" name="updatecart" value="@T("Wishlist.UpdateCart")" class="button-2 update-wishlist-button"><span>@T("Wishlist.UpdateCart")</span></button>
+						}
+						@if (Model.IsEditable && Model.EmailWishlistEnabled)
+						{
+							<button type="button" value="@T("Wishlist.EmailAFriend")" class="button-2 email-a-friend-wishlist-button" onclick="setLocation('@Url.RouteUrl("EmailWishlist")')"><span>@T("Wishlist.EmailAFriend")</span></button>
+						}
+					</div>
+					<button hidden id="addtocartbutton" type="submit" name="addtocartbutton"></button>
+				</form>
+			</div>
+		}
+		else
+		{
+			<div class="no-data">
+				@T("Wishlist.CartIsEmpty")
+			</div>
+		}
+		@if (Model.IsEditable && Model.Items.Count > 0)
+		{
+			<div class="share-info">
+				<span class="share-label">@T("Wishlist.YourWishlistURL"):</span>
+				<a href="@Url.RouteUrl("Wishlist", new { customerGuid = Model.CustomerGuid })" class="share-link">@Url.RouteUrl("Wishlist", new { customerGuid = Model.CustomerGuid }, "http")</a>
+			</div>
+		}
+	</div>
+</div>
+
+<div id="wishlistAddToCartConfirmAcceptDialog" class="custom-modal" title="@T("NopStation.B2BB2CFeatures.ConfirmAcceptDialog.AddToCart.Confirm")" style="display: none;">
+	<form asp-controller="Wishlist" class="quick-order-confirm-accept-form" method="post" enctype="multipart/form-data">
+        <div class="popup-content">@T("NopStation.B2BB2CFeatures.ConfirmAcceptDialog.AddToOrRemoveFromCart")</div>
+        <div class="popup-button-wrapper">
+			<button id="wishlistPopupClearCartButton" type="button" value="@T("NopStation.B2BB2CFeatures.ConfirmAcceptDialog.TermsAndCondition.ClearCart")"
+                    class="popup-button" onclick="ClearExistingCartAndAddFromWishlist();">
+				@T("NopStation.B2BB2CFeatures.ConfirmAcceptDialog.TermsAndCondition.ClearCart")
+			</button>
+			<button type="button" value="@T("NopStation.B2BB2CFeatures.ConfirmAcceptDialog.TermsAndCondition.KeepItemsInCart")"
+                    class="popup-button" onclick="keepItemsInCartAndSubmit();">
+				@T("NopStation.B2BB2CFeatures.ConfirmAcceptDialog.TermsAndCondition.KeepItemsInCart")
+			</button>
+			<button type="button" name="cancel" onclick="closeConfirmAcceptPopup()" value="@T("NopStation.B2BB2CFeatures.ConfirmAcceptDialog.TermsAndCondition.Cancel")"
+                    class="popup-button">
+				@T("NopStation.B2BB2CFeatures.ConfirmAcceptDialog.TermsAndCondition.Cancel")
+			</button>
+		</div>
+	</form>
+</div>
+
+
+<script asp-location="Footer">
+	function removeFromWishlist(id) {
+		if ($('#removecheckbox-' + id).is(":checked")) {
+			$('#removecheckbox-' + id).attr('name', 'removefromcart');
+			$(".update-wishlist-button").click();
+		}
+	}
+
+	function AddToCartFromWishlist(itemId) {
+		$("#itemQuantity").val($("#b2bProductQty_" + itemId).val());
+		$("#itemId").val(itemId);
+		CheckItemsInCart(itemId);
+	}
+	function SubmitForm() {
+		$("#addtocartbutton").click();
+	}
+
+	function keepItemsInCartAndSubmit() {
+		displayAjaxLoading(true);
+		SubmitForm();
+	}
+
+	function increaseQuantity(productId) {
+		var currentQuantity = parseInt($('.b2bProductQty_' + productId).val(), 10);
+		$('.b2bProductQty_' + productId).val(currentQuantity + 1)
+	}
+	function decreaseQuantity(productId) {
+		var currentQuantity = parseInt($('.b2bProductQty_' + productId).val(), 10);
+		if (currentQuantity > 1)
+			$('.b2bProductQty_' + productId).val(currentQuantity - 1)
+	}
+
+	function CheckItemsInCart(itemId) {
+		$.ajax({
+			cache: false,
+			type: "GET",
+			dataType: "json",
+			url: "/IsItemsInCart/",
+			success: function (response) {
+				if (!response.success) {
+					displayAjaxLoading(true);
+					SubmitForm();
+				}
+				else {
+					$("#wishlistAddToCartConfirmAcceptDialog").dialog({
+						modal: true,
+						draggable: false,
+						closeOnEscape: true
+					});
+				}
+			},
+			error: function (jqXHR, textStatus, errorThrown) {
+				console.log("Error. Please Reload");
+			}
+		});
+	}
+	function ClearExistingCartAndAddFromWishlist() {
+		$.ajax({
+			cache: false,
+			type: "GET",
+			dataType: "json",
+			url: "@Url.Action("ClearCart", "OverridenShoppingCart")",
+			success: function (response) {
+				if (response.success) {
+					displayAjaxLoading(true);
+					SubmitForm();
+				}
+				else {
+					alert(response.message);
+				}
+			},
+			error: function (jqXHR, textStatus, errorThrown) {
+				console.log("Error. Can not clear cart");
+			}
+		});
+	}
+
+	function closeConfirmAcceptPopup() {
+		$("#wishlistAddToCartConfirmAcceptDialog").dialog("destroy");
+	}
+</script>

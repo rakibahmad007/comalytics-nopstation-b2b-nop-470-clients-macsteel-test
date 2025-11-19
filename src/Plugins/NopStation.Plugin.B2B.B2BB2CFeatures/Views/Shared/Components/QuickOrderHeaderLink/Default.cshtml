@@ -1,0 +1,14 @@
+﻿<li>
+    <a href="@Url.RouteUrl("QuickOrder")" class="ico-favourites" title="@T("Plugin.Misc.NopStation.B2BB2CFeatures.QuickOrder.QuickOrder")">
+        @T("Plugin.Misc.NopStation.B2BB2CFeatures.QuickOrder.QuickOrder")
+    </a>
+</li>
+
+<script asp-location="Footer">
+    addQuickOrderMenu()
+    function addQuickOrderMenu() {
+        $(".quick-order-icon").remove();
+        var quickOrderMenu = '<a href="' + '@Url.RouteUrl("QuickOrder")' + '" class="ico-favourites quick-order-icon"> <span class="ico-favourites-label">   @T("Nop.Plugin.Misc.QuickOrder.QuickOrder")</span></a>'
+        $(".header-menu").append(quickOrderMenu);
+    }
+</script> 

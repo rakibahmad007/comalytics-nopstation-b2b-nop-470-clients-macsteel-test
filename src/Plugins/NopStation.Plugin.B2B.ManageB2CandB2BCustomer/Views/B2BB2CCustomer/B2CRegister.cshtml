@@ -1,0 +1,35 @@
+﻿@using NopStation.Plugin.B2B.ManageB2CandB2BCustomer.Models
+
+@model B2CRegisterModel
+@{
+    Layout = "_ColumnsOne";
+
+    //title
+    NopHtml.AddTitleParts(T("PageTitle.Register").Text);
+    //page class
+    NopHtml.AppendPageCssClassParts("html-registration-page");
+}
+
+<div class="page registration-page">
+    <div class="page-title">
+        <h1>@T("NopStation.ERPIntegrationCore.B2C.Register")</h1>
+    </div>
+    <div class="page-body">
+        @await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.RegisterTop, additionalData = Model })
+@*         <form id="B2CRegisterForm" asp-route="B2CCustomerRegister" asp-route-returnurl="@Context.Request.Query["ReturnUrl"]" method="post" autocomplete="off"> *@
+        <form id="B2CRegisterForm" asp-action="B2CRegisterPost" asp-controller="OverriddenB2BB2CCustomer" asp-route-returnurl="@Context.Request.Query["ReturnUrl"]" method="post" autocomplete="off">
+            @await Html.PartialAsync("~/Plugins/NopStation.Plugin.B2B.ManageB2CandB2BCustomer/Views/B2BB2CCustomer/_B2CRegister.cshtml", Model)
+        </form>
+        @{ 
+            var externalMethods = await Component.InvokeAsync(typeof(ExternalMethodsViewComponent), "ExternalAuthentication");
+
+            if (!String.IsNullOrEmpty(await externalMethods.RenderHtmlContentAsync()))
+            {
+                <div class="external-authentication">
+                    @externalMethods
+                </div>
+            }
+        }
+        @await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.RegisterBottom, additionalData = Model })
+    </div>
+</div>

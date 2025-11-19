@@ -1,0 +1,274 @@
+@model RegistrationInfoModel
+
+@{
+    var customer = await workContext.GetCurrentCustomerAsync();
+    const string hideErpRegisterInfoBlockAttributeName = "CustomerPage.HideB2BRegistrationInfoBlockAttributeName";
+    var hideErpRegisterInfoBlock = await genericAttributeService.GetAttributeAsync<bool>(customer, hideErpRegisterInfoBlockAttributeName);
+}
+
+<style>
+    .header {
+        background: #f4f4f4;
+        border-bottom: 1px solid gray;
+        padding: 5px;
+    }
+
+        .header span {
+            font-size: 16px;
+            font-weight: 400;
+        }
+</style>
+
+@if (Model.NopCustomerId > 0 && Model.IsB2BRegistrationInfo)
+{
+    <nop-card asp-name="nop-customer-registration-info" asp-icon="fa fa-info" asp-title="@T("Plugins.B2B.ManageB2BCustomer.Admin.Customers.ErpRegisterInfo")" asp-hide-block-attribute-name="@hideErpRegisterInfoBlockAttributeName" asp-hide="@hideErpRegisterInfoBlock" asp-advanced="true">
+        <div class="card-body">
+            <div class="form-group row">
+                <div class="col-md-3">
+                    <nop-label asp-for="AccountNumber" />
+                </div>
+                <div class="col-md-9 justify-content-center align-self-center">
+                    @if (Model.ErpAccountId == 0)
+                    {
+                        <span class="text-muted">@Model.AccountNumber</span>
+                    }
+                    else
+                    {
+                        <a asp-controller="ErpAccount" asp-action="ErpAccountEdit" asp-route-id="@Model.ErpAccountId">
+                            @Model.AccountNumber
+                        </a>
+                    }
+                </div>
+            </div>
+
+            <div class="form-group row">
+                <div class="col-md-3">
+                    <nop-label asp-for="B2BSalesOrganisationIds" />
+                </div>
+                <div class="col-md-9">
+                    <div class="form-text-row">@Model.SalesOrganisationName</div>
+                </div>
+            </div>
+
+            <div class="form-group row">
+                <div class="col-md-3">
+                    <nop-label asp-for="JobTitle" />
+                </div>
+                <div class="col-md-9 justify-content-center align-self-center">
+                    @Model.JobTitle
+                </div>
+            </div>
+
+            <div class="form-group row">
+                <div class="col-md-3">
+                    <nop-label asp-for="PersonalAlternateContactNumber" />
+                </div>
+                <div class="col-md-9 justify-content-center align-self-center">
+                    @Model.PersonalAlternateContactNumber
+                </div>
+            </div>
+
+            <div class="form-group row">
+                <div class="col-md-3">
+                    <nop-label asp-for="AuthorisationAdditionalComment" />
+                </div>
+                <div class="col-md-9 justify-content-center align-self-center">
+                    <textarea asp-for="AuthorisationAdditionalComment" class="form-control" readonly="readonly"></textarea>
+                </div>
+            </div>
+
+            <div class="form-group row">
+                <div class="col-md-3">
+                    <nop-label asp-for="QueuedEmailInfo" />
+                </div>
+                <div class="col-md-9 justify-content-center align-self-center">
+                    <textarea asp-for="QueuedEmailInfo" class="form-control" readonly="readonly"></textarea>
+                </div>
+            </div>
+            <div class="card card-default">
+                <div class="card-header">
+                    @T("Plugins.B2B.ManageB2BCustomer.Areas.Customer.Fields.Authorisation.Heading.AuthorisationManagerInfo")
+                </div>
+                <div class="card-body">
+                    <div class="form-group row">
+                        <div class="col-md-3">
+                            <nop-label asp-for="AuthorisationFullName" />
+                        </div>
+                        <div class="col-md-9 justify-content-center align-self-center">
+                            @Model.AuthorisationFullName
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <div class="col-md-3">
+                            <nop-label asp-for="AuthorisationJobTitle" />
+                        </div>
+                        <div class="col-md-9 justify-content-center align-self-center">
+                            @Model.AuthorisationJobTitle
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <div class="col-md-3">
+                            <nop-label asp-for="AuthorisationContactNumber" />
+                        </div>
+                        <div class="col-md-9 justify-content-center align-self-center">
+                            @Model.AuthorisationContactNumber
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <div class="col-md-3">
+                            <nop-label asp-for="AuthorisationAlternateContactNumber" />
+                        </div>
+                        <div class="col-md-9 justify-content-center align-self-center">
+                            @Model.AuthorisationAlternateContactNumber
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nop-card>
+}
+
+@if (Model.NopCustomerId > 0 && !Model.IsB2BRegistrationInfo)
+{
+    <nop-card asp-name="cnop-customer-registration-info" asp-icon="fa fa-info" asp-title="@T("Plugins.B2B.ManageB2BCustomer.Admin.Customers.ErpRegisterInfo")" asp-hide-block-attribute-name="@hideErpRegisterInfoBlockAttributeName" asp-hide="@hideErpRegisterInfoBlock" asp-advanced="true">
+        <div class="card-body">
+            <div class="form-group row">
+                <div class="col-md-3">
+                    <nop-label asp-for="SalesOrganisationId" />
+                </div>
+                <div class="col-md-9">
+                    <a asp-controller="ErpSalesOrg" asp-action="ErpSalesOrgEdit" asp-route-id="@Model.SalesOrganisationId">@Model.SalesOrganisationName - @Model.SalesOrganisationCode </a>
+                </div>
+            </div>
+
+            <div class="form-group row">
+                <div class="col-md-3">
+                    <nop-label asp-for="B2BAccountIdForB2C" />
+                </div>
+                <div class="col-md-9">
+                    <a  asp-controller="ErpAccount" asp-action="ErpAccountEdit" asp-route-id="@Model.ErpAccountId">@Model.B2BAccountName - @Model.B2BAccountNumber</a>
+                </div>
+            </div>
+
+            <div class="form-group row">
+                <div class="col-md-3">
+                    <nop-label asp-for="NearestWarehouseId" />
+                </div>
+                <div class="col-md-9 justify-content-center align-self-center">
+                    @Model.WarehouseName
+                </div>
+            </div>
+
+            <div class="form-group row">
+                <div class="col-md-3">
+                    <nop-label asp-for="DistanceToNearestWarehouse" />
+                </div>
+                <div class="col-md-9 justify-content-center align-self-center">
+                    @Model.DistanceToNearestWarehouse
+                </div>
+            </div>
+
+            <div class="form-group row">
+                <div class="col-md-3">
+                    <nop-label asp-for="DeliveryOption" />
+                </div>
+                <div class="col-md-9 justify-content-center align-self-center">
+                    @Model.DeliveryOption
+                </div>
+            </div>
+
+            <div class="form-group row">
+                <div class="col-md-3">
+                    <nop-label asp-for="B2CUserId" />
+                </div>
+                <div class="col-md-9 justify-content-center align-self-center">
+                    @Model.B2CUserId
+                </div>
+            </div>
+
+            <div class="form-group row">
+                <div class="col-md-3">
+                    <nop-label asp-for="Latitude" />
+                </div>
+                <div class="col-md-9 justify-content-center align-self-center">
+                    @Model.Latitude
+                </div>
+            </div>
+
+            <div class="form-group row">
+                <div class="col-md-3">
+                    <nop-label asp-for="Longitude" />
+                </div>
+                <div class="col-md-9 justify-content-center align-self-center">
+                    @Model.Longitude
+                </div>
+            </div>
+
+            <div class="form-group row">
+                <div class="col-md-3">
+                    <nop-label asp-for="HouseNumber" />
+                </div>
+                <div class="col-md-9 justify-content-center align-self-center">
+                    @Model.HouseNumber
+                </div>
+            </div>
+
+            <div class="form-group row">
+                <div class="col-md-3">
+                    <nop-label asp-for="Street" />
+                </div>
+                <div class="col-md-9 justify-content-center align-self-center">
+                    @Model.Street
+                </div>
+            </div>
+
+            <div class="form-group row">
+                <div class="col-md-3">
+                    <nop-label asp-for="Suburb" />
+                </div>
+                <div class="col-md-9 justify-content-center align-self-center">
+                    @Model.Suburb
+                </div>
+            </div>
+
+            <div class="form-group row">
+                <div class="col-md-3">
+                    <nop-label asp-for="City" />
+                </div>
+                <div class="col-md-9 justify-content-center align-self-center">
+                    @Model.City
+                </div>
+            </div>
+
+            <div class="form-group row">
+                <div class="col-md-3">
+                    <nop-label asp-for="PostalCode" />
+                </div>
+                <div class="col-md-9 justify-content-center align-self-center">
+                    @Model.PostalCode
+                </div>
+            </div>
+
+            <div class="form-group row">
+                <div class="col-md-3">
+                    <nop-label asp-for="Country" />
+                </div>
+                <div class="col-md-9 justify-content-center align-self-center">
+                    @Model.Country
+                </div>
+            </div>
+
+            <div class="form-group row">
+                <div class="col-md-3">
+                    <nop-label asp-for="ErrorMessage" />
+                </div>
+                <div class="col-md-9 justify-content-center align-self-center">
+                    <textarea asp-for="ErrorMessage" class="form-control" readonly="readonly"></textarea>
+                </div>
+            </div>
+        </div>
+    </nop-card>
+}

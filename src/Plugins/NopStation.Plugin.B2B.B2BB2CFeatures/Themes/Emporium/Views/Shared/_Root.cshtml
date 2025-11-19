@@ -1,0 +1,220 @@
+@using Nop.Core
+@using Nop.Services.Configuration
+@using Nop.Services.Security
+@using Nop.Services.Orders
+@using Nop.Core.Domain.Orders
+
+@inject IStoreContext storeContext
+@inject IWorkContext workContext
+@inject ISettingService settingService
+@inject IPermissionService permissionService
+@inject ShoppingCartSettings shoppingCartSettings
+@inject IErpCustomerFunctionalityService erpCustomerFunctionality
+
+@{
+    Layout = "_Root.Head";
+
+    var storeId = (await storeContext.GetCurrentStoreAsync()).Id;
+
+    var controllerName = Url.ActionContext.RouteData.Values["controller"].ToString();
+    var isHomePage = controllerName.Equals("home", StringComparison.InvariantCultureIgnoreCase);
+    var isBlogPage = controllerName.Equals("blog", StringComparison.InvariantCultureIgnoreCase);
+    var customer = await workContext.GetCurrentCustomerAsync();
+    var nopUser = await erpCustomerFunctionality.GetActiveErpNopUserByCustomerAsync(customer);
+    var userTypeClassName = "";
+    if (nopUser != null)
+    {
+        var customerIsInB2BRole = await erpCustomerFunctionality.IsCustomerInB2BCustomerRoleAsync(customer);
+        var customerIsInB2CRole = await erpCustomerFunctionality.IsCustomerInB2CCustomerRoleAsync(customer);
+
+        if (nopUser.ErpUserType == ErpUserType.B2BUser && customerIsInB2BRole)
+        {
+            userTypeClassName = "b2b-user";
+        }
+        else if (nopUser.ErpUserType == ErpUserType.B2CUser && customerIsInB2CRole)
+        {
+            userTypeClassName = "b2c-user";
+        }
+    }
+}
+
+@await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.BodyStartHtmlTagAfter })
+@{ await Html.RenderPartialAsync("_Notifications"); }
+@{ await Html.RenderPartialAsync("_JavaScriptDisabledWarning"); }
+<div class="master-wrapper-page @userTypeClassName">
+    @await Component.InvokeAsync(typeof(AdminHeaderLinksViewComponent))
+    <div class="responsive-nav-wrapper-parent">
+        <div class="responsive-nav-wrapper">
+            <div class="menu-title">
+                <span>@T("SevenSpikes.Themes.Common.MenuTitle")</span>
+            </div>
+            <div class="search-wrap">
+                <span>@T("Search")</span>
+            </div>
+            <div class="mobile-logo">
+                @await Component.InvokeAsync(typeof(LogoViewComponent))
+            </div>
+            <div class="shopping-cart-link">               
+            </div>
+            <div class="personal-button" id="header-links-opener">
+                <span>@T("SevenSpikes.Themes.Common.Personal")</span>
+            </div>
+        </div>
+    </div>
+    @{ await Html.RenderPartialAsync("_Header"); }
+    <script asp-location="Footer">
+        var localized_data = {
+            AjaxCartFailure: "@T("AjaxCart.Failure")"
+        };
+        AjaxCart.init(false, '.cart-qty', '.header-links .wishlist-qty', '#flyout-cart', localized_data);
+    </script>
+    <div class="overlayOffCanvas"></div>
+    @if (isHomePage)
+    {
+        @await Component.InvokeAsync("Widget", new { widgetZone = "home_page_main_slider" })
+    }
+    @if (isBlogPage)
+    {
+        @await Component.InvokeAsync("Widget", new { widgetZone = "blog_page_banner" })
+    }
+    <div class="master-wrapper-content" id="main" role="main">
+        @await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.ContentBefore })
+        <div class="master-column-wrapper">
+            @RenderBody()
+        </div>
+        @await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.ContentAfter })
+    </div>
+    @if (isHomePage)
+    {
+        @await Component.InvokeAsync("Widget", new { widgetZone = "home_page_reviews_slider" })
+    }
+    @await Component.InvokeAsync(typeof(FooterViewComponent))
+</div>
+<script>
+    function findSubmenuBiggerThenScreen(thisElement) {
+        var targetSublistWrap = thisElement.children(".sublist-wrap");
+        var targetSublist = targetSublistWrap.children(".sublist");
+        var marginTopData = 0;
+        targetSublist.attr("data-margin-top", 0)
+        targetSublist.addClass("found");
+        var thisSublistOffset = targetSublist.offset().top - $(window).scrollTop();;
+        var thisSublistHeight = targetSublist.height();
+        var TotalPOsitionONScreen = thisSublistOffset + thisSublistHeight;
+        var windowHeight = $(window).height();
+        if (TotalPOsitionONScreen > windowHeight) {
+            var submenuOutsideScreen = TotalPOsitionONScreen - windowHeight;
+            targetSublist.attr('data-screenoutbellow', submenuOutsideScreen)
+
+            var seblistWrapWidth = 250;
+            targetSublistWrap.append("<div class='show-down-menu show' style= width:" + seblistWrapWidth + "px" + ">show More</div>");
+            targetSublistWrap.append("<div class='show-up-menu' style= width:" + seblistWrapWidth + "px" + ">show More</div>");
+
+            targetSublistWrap.on('mouseenter', ".show-down-menu", function () {
+                var MarginToTop = targetSublist.attr("data-screenoutbellow");
+                MarginToTop = -MarginToTop;
+                targetSublist.css("margin-top", MarginToTop);
+                $(this).removeClass("show");
+                setTimeout(function () {
+                    thisSublistOffset = targetSublist.offset().top - $(window).scrollTop();;
+                    if (thisSublistOffset < 0) {
+                        targetSublistWrap.children(".show-up-menu").addClass("show");
+                        targetSublist.attr("data-screenoutup", thisSublistOffset)
+                        targetSublist.attr("data-margin-top", MarginToTop);
+                        marginTopData = MarginToTop;
+                    }
+                }, 500)
+            })
+
+            targetSublistWrap.on('mouseenter', ".show-up-menu", function () {
+                var MarginToTop = targetSublist.attr("data-screenoutup");
+                var currentMarginTop = targetSublist.attr("data-margin-top");
+                MarginToTop = currentMarginTop - MarginToTop;
+                $(this).removeClass("show");
+                targetSublist.css("margin-top", MarginToTop);
+                setTimeout(function () {
+                    var menuOsideSize = targetSublist.offset().top + targetSublist.height();
+                    if (menuOsideSize > $(window).height()) {
+                        targetSublistWrap.children(".show-down-menu").addClass("show");
+
+                    }
+                    marginTopData = MarginToTop;
+                }, 500)
+            })
+
+            $(targetSublistWrap).on("wheel scroll", function (e) {
+                e.stopPropagation();
+                e.preventDefault();
+                var targetSublistOffsetTop = targetSublist.offset().top - $(window).scrollTop();
+                var screenoutbellow = targetSublist.attr("data-screenoutbellow");
+                var scrollValue = e.originalEvent.wheelDelta / 40;
+                if (scrollValue < 0) {
+
+                    marginTopData = parseInt(targetSublist.attr("data-margin-top")) + scrollValue;
+                    var merginTopDataLimit = -marginTopData - 3;
+                    var currentScrollValue = merginTopDataLimit;
+                    if (merginTopDataLimit <= screenoutbellow) {
+                        targetSublist.attr("data-margin-top", marginTopData);
+                        targetSublist.css("margin-top", marginTopData);
+                        if (marginTopData <= -screenoutbellow) {
+                            targetSublistWrap.children(".show-down-menu").removeClass("show")
+                        }
+                        if (targetSublistOffsetTop < 0) {
+                            targetSublistWrap.children(".show-up-menu").addClass("show");
+                            targetSublist.attr("data-screenoutup", targetSublistOffsetTop);
+                        }
+
+                    }
+                } else {
+
+                    var currentScrollValue = -marginTopData;
+
+                    if (currentScrollValue > screenoutbellow) {
+                        marginTopData = -screenoutbellow
+                    }
+
+                    marginTopData = marginTopData + scrollValue;
+                    if (targetSublistOffsetTop <= 0) {
+                        targetSublist.attr("data-margin-top", marginTopData);
+                        targetSublist.css("margin-top", marginTopData);
+                    }
+
+                    if (currentScrollValue >= screenoutbellow - 3) {
+                        targetSublistWrap.children(".show-up-menu").removeClass("show");
+                    }
+                    var targetSublistOffsetBottom = targetSublistOffsetTop + targetSublist.height();
+                    var windowBottom = $(window).scrollTop() + $(window).height();
+                    if (targetSublistOffsetBottom > windowBottom) {
+                        targetSublistWrap.children(".show-down-menu").addClass("show")
+                    }
+
+                }
+            })
+
+        }
+    }
+
+    function hasSubmenuMouseleave(thisItem) {
+        var targetSublist = thisItem.find(".sublist");
+        targetSublist.css("margin-top", 0);
+        thisItem.find(".show-down-menu").remove();
+        thisItem.find(".show-up-menu").remove();
+        targetSublist.attr("data-margin-top", 0);
+    }
+
+    $(document).ready(function () {
+        $(".category-navigation-list a").removeAttr("title");
+        $(".has-sublist").on("mouseenter", function () {
+            if ($(window).width() > 1024) {
+                findSubmenuBiggerThenScreen($(this))
+            }
+        })
+        $(".has-sublist").on("mouseleave", function () {
+            if ($(window).width() > 1024) {
+                hasSubmenuMouseleave($(this));
+            }
+        })
+
+    })
+</script>
+@await Component.InvokeAsync(typeof(EuCookieLawViewComponent))
+@await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.BodyEndHtmlTagBefore })

@@ -1,0 +1,10 @@
+﻿@model AdditionalCategoryInfoModel
+@{
+    const string hideAdditionalInfoBlockAttributeName = "CategoryPage.AdditionalCategoryInfo";
+    var hideAdditionalInfoBlock = await genericAttributeService.GetAttributeAsync<bool>
+    (await workContext.GetCurrentCustomerAsync(), hideAdditionalInfoBlockAttributeName);
+
+}
+<nop-card asp-name="additional-info" asp-icon="fa fa-random" asp-title="@T("Plugins.Widgets.AdditionalCategoryInfo.Title")" asp-hide-block-attribute-name="@hideAdditionalInfoBlockAttributeName " asp-hide="@hideAdditionalInfoBlock" asp-advanced="false">
+	@await Html.PartialAsync("~/Plugins/Nop.Plugin.Widgets.AdditionalCategoryInfo/Areas/Admin/Views/_AdditionalTab.cshtml", Model)
+</nop-card>

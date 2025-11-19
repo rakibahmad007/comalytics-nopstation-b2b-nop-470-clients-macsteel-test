@@ -1,0 +1,76 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using Nop.Core.Domain.Catalog;
+using Nop.Core.Domain.Customers;
+using Nop.Core.Domain.Orders;
+using NopStation.Plugin.B2B.B2BB2CFeatures.Model;
+using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
+
+namespace NopStation.Plugin.B2B.B2BB2CFeatures.Services.ErpCustomerFunctionality;
+
+public interface IErpCustomerFunctionalityService
+{
+    Task ClearGenericAttributeOfB2BQuoteOrderAsync();
+    Task ClearGenericAttributeOfB2CQuoteOrderAsync();
+    Task<bool> CheckAndUpdateGenericAttributeOfB2BQuoteOrder(int erpOrderId, IList<ShoppingCartItem> currentShoppingCartItems);
+    Task<bool> CheckAndUpdateGenericAttributeOfERPQuoteOrder(ErpOrderAdditionalData b2BOrderPerAccount, IList<ShoppingCartItem> shoppingCartItems);
+    Task<bool> CheckAndUpdateGenericAttributeOfB2CQuoteOrder(int erpOrderId, IList<ShoppingCartItem> currentShoppingCartItems);
+    Task<bool> IsErpAccountBlockSalesOrderAsync(Customer customer);
+    Task<ErpNopUser> GetActiveErpNopUserByCustomerAsync(Customer customer);
+    Task<bool> IsConsideredAsB2BOrderByB2BUser(ErpNopUser b2BUser);
+    Task<bool> IsConsideredAsB2COrderByB2CUser(ErpNopUser b2CUser);
+    Task<bool> IsHideAddToCartAsync();
+    Task<ErpAccount> GetActiveErpAccountByCustomerAsync(Customer customer);
+    Task<ErpCustomerConfiguration> GetErpCustomerConfigurationByNopCustomerIdAsync(int nopCustomerId);
+    Task<ErpCustomerConfiguration> GetErpCustomerConfigurationOfCurrentCustomerAsync();
+    Task<ErpCustomerConfiguration> CreateErpCustomerConfigurationByNopCustomerIdAsync(int nopCustomerId);
+    Task<ErpCustomerConfiguration> CreateErpCustomerConfigurationByNopCustomerAsync(Customer customer);
+    Task InsertErpCustomerConfigurationAsync(ErpCustomerConfiguration erpCustomerConfiguration);
+    Task UpdateErpCustomerConfigurationAsync(ErpCustomerConfiguration erpCustomerConfiguration);
+    Task<bool> IsSalesOrderInvalidForCurrentCustomerAsync();
+    Task<bool> IsCurrentCustomerInErpSalesRepRoleAsync();
+    Task<bool> IsCurrentCustomerInAdministratorRoleAsync();
+    Task<bool> IsCurrentCustomerInAdministratorRoleAsync(Customer customer);
+    Task<bool> CheckQuoteOrderStatusAsync(ErpOrderAdditionalData erpOrder);
+    Task<bool> CheckAllowAddressEdit(ErpAccount b2BAccount);
+    Task<bool> B2BDisableBuyButtonAsync(Product product, bool currentValue, int totalStockQuantity = 0);
+    Task<(DateTime, DateTime)> GetMinimumAndMaximumDeliveryDateForShippingAddress();
+    Task ClearCurrentCustomerYearlySavingsCacheAsync(int customerId);
+    Task ClearCurrentCustomerAllTimeSavingsCacheAsync(int customerId);
+    Task<ErpFilterInfoModel> GetErpFilterInfoModel();
+    Task<(decimal, decimal)> GetErpProductPriceAndDiscountPriceByErpAccountAndProductAsync(ErpAccount b2BAccount, int productId);
+    Task<bool> CheckAllowBackOrderingByAccountAsync(ErpAccount erpAccount);
+    Task<bool> IsTheProductFromSpecialCategoryAsync(Product product);
+    Task<Dictionary<int, bool>> AreTheProductsFromSpecialCategoryAsync(IList<Product> products);
+    Task<string> GetPricingNoteAsync(ErpAccount erpAccount, Product product);
+    Task<bool> IsOriginalCustomerMultiAccountBuyer();
+    Task AddOrUpdateB2CUserSpecialRolesAsync(Customer nopCustomer, int oldSalesOrgId, int newSalesOrgId);
+    Task<bool> IsCustomerInB2BCustomerRoleAsync(Customer customer);
+    Task<bool> IsCustomerInB2BCustomerRoleAsync(int customerId = 0);
+    Task<bool> IsCurrentCustomerInB2BCustomerRoleAsync();
+    Task<bool> IsCustomerInB2CCustomerRoleAsync(Customer customer);
+    Task<bool> IsCustomerInB2CCustomerRoleAsync(int customerId = 0);
+    Task<bool> IsCurrentCustomerInB2CCustomerRoleAsync();
+    Task<bool> IsCustomerInB2BQuoteAssistantRoleAsync(Customer customer);
+    Task<bool> IsCustomerInB2BQuoteAssistantRoleAsync(int customerId = 0);
+    Task<bool> IsCurrentCustomerInB2BQuoteAssistantRoleAsync();
+    Task<bool> IsCustomerInB2BOrderAssistantRoleAsync(Customer customer);
+    Task<bool> IsCustomerInB2BOrderAssistantRoleAsync(int customerId = 0);
+    Task<bool> IsCurrentCustomerInB2BOrderAssistantRoleAsync();
+    Task<bool> IsCustomerInB2BB2CAdminRoleAsync(Customer customer);
+    Task<bool> IsCustomerInB2BB2CAdminRoleAsync(int customerId = 0);
+    Task<bool> IsCurrentCustomerInB2BB2CAdminRoleAsync();
+    Task<bool> IsCustomerInB2BCustomerAccountingPersonnelRoleAsync(Customer customer);
+    Task<bool> IsCustomerInB2BCustomerAccountingPersonnelRoleAsync(int customerId = 0);
+    Task<bool> IsCurrentCustomerInB2BCustomerAccountingPersonnelRoleAsync();
+    Task<bool> IsCustomerInB2BSalesRepRoleAsync(int customerId = 0);
+    Task<bool> IsCustomerInB2BSalesRepRoleAsync(Customer customer);
+    Task<bool> IsCurrentCustomerInB2BSalesRepRoleAsync();
+    Task<bool> IsCustomerInQuickOrderUserRoleAsync(Customer customer);
+    Task<bool> IsCustomerInQuickOrderUserRoleAsync(int customerId = 0);
+    Task<bool> IsCurrentCustomerInQuickOrderUserRoleAsync();
+    Task<(bool, bool)> IsTermsAndConditionAcceptRequiredAndIsFirstTimeAsync();
+
+    Task<(decimal, decimal)> GetErpProductPriceAndDiscountPercByErpAccountAndProduct(ErpAccount erpAccount, int productId);
+}

@@ -1,0 +1,33 @@
+﻿@using NopStation.Plugin.B2B.B2BB2CFeatures.Model
+@model CatalogProductsModel
+
+@if (!string.IsNullOrEmpty(Model.WarningMessage))
+{
+    <div class="warning">
+        @Model.WarningMessage
+    </div>
+}
+
+@if (Model.Products.Count > 0)
+{
+    @await Html.PartialAsync("_B2BCatalogProductList", Model)
+
+    var pager = Html.Pager(Model)
+        .QueryParam("pagenumber")
+        // for search page
+        .BooleanParameterName("advs")
+        .BooleanParameterName("isc")
+        .BooleanParameterName("sid")
+        .RenderEmptyParameters(true);
+
+    @if (!await pager.IsEmpty())
+    {
+        <div class="pager">
+            @pager
+        </div>
+    }
+}
+else
+{
+    @await Html.PartialAsync("_B2BCatalogProductList", Model)
+}

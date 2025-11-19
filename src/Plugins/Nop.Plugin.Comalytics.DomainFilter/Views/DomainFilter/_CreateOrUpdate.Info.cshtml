@@ -1,0 +1,33 @@
+@model DomainModel
+@using Nop.Plugin.Comalytics.DomainFilter.Domains
+
+@using Nop.Services
+
+<div class="card-body">
+    <div class="form-group row">
+        <div class="col-md-3">
+            <nop-label asp-for="DomainOrEmailName" />
+        </div>
+        <div class="col-md-9">
+            <nop-editor asp-for="DomainOrEmailName" asp-required="true" />
+            <span asp-validation-for="DomainOrEmailName"></span>
+        </div>
+    </div>
+    <div class="form-group row">
+        <div class="col-md-3">
+            <nop-label asp-for="TypeId" />
+        </div>
+        <div class="col-md-9">
+            <nop-select asp-for="TypeId" asp-items="@(Html.GetEnumSelectList<DomainType>())" asp-required="true" />
+            <span asp-validation-for="TypeId"></span>
+        </div>
+    </div>
+    <div class="form-group row">
+        <div class="col-md-3">
+            <nop-label asp-for="IsActive" />
+        </div>
+        <div class="col-md-9">
+            <nop-editor asp-for="IsActive" />
+        </div>
+    </div>
+</div>

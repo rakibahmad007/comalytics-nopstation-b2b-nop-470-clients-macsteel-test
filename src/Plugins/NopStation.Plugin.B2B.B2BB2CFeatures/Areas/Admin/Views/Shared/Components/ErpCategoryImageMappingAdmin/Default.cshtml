@@ -1,0 +1,86 @@
+﻿@model ErpCategoryImageMappingModel
+
+@{
+    var customer = await workContext.GetCurrentCustomerAsync();
+    const string hideCategoryImageSwitchBlockAttributeName = "Admin.Customer.EditPage.HideCategoryImageSwitch";
+    var hideCategoryImageSwitchBlock = await genericAttributeService.GetAttributeAsync<bool>(customer, hideCategoryImageSwitchBlockAttributeName);
+}
+
+<nop-card asp-name="erp-category-image-switch" asp-icon="fas fa-info" asp-title="@T("Plugin.Misc.NopStation.ERPIntegrationCore.ErpCategoryImageShow.Title")" asp-hide-block-attribute-name="@hideCategoryImageSwitchBlockAttributeName" asp-hide="@hideCategoryImageSwitchBlock" asp-advanced="true">
+    <div class="card-body">
+        <div class="form-group row advanced-setting">
+            <div class="col-md-3">
+                <nop-label asp-for="IsShowImage" />
+            </div>
+            <div class="col-md-9 justify-content-center align-self-center">
+                <input type="checkbox" id="isShowImageCheckbox" @(Model.IsShowImage ? "checked" : "") />
+                <span asp-validation-for="IsShowImage"></span>
+                <div id="category-image-message" style="display:none; margin-top: 5px;"></div>
+            </div>
+        </div>
+    </div>
+</nop-card>
+
+<style>
+    .success-message {
+        color: green;
+    }
+
+    .error-message {
+        color: red;
+    }
+</style>
+
+<script>
+    $(document).ready(function () {
+        $('#isShowImageCheckbox').change(function () {
+            var isChecked = $(this).is(':checked');
+            var categoryId = @Model.CategoryId;
+            var body = { categoryId: categoryId, isShowImage: isChecked };
+            addAntiForgeryToken(body);
+
+            $.ajax({
+                data: body,
+                cache: false,
+                type: "POST",
+                url: "@(Url.Action("CategoryDetails", "CategoryImageMapping"))",
+                success: function (response) {
+                    var messageElement = $('#category-image-message');
+                    if (response.success) {
+                        messageElement
+                            .text("Category image visibility updated successfully.")
+                            .removeClass("error-message")
+                            .addClass("success-message")
+                            .fadeIn();
+
+                        setTimeout(function () {
+                            messageElement.fadeOut();
+                        }, 2000);
+                    } else {
+                        messageElement
+                            .text("Failed to update category image visibility.")
+                            .removeClass("success-message")
+                            .addClass("error-message")
+                            .fadeIn();
+
+                        setTimeout(function () {
+                            messageElement.fadeOut();
+                        }, 2000);
+                    }
+                },
+                error: function () {
+                    var messageElement = $('#category-image-message');
+                    messageElement
+                        .text("An error occurred while updating category image visibility.")
+                        .removeClass("success-message")
+                        .addClass("error-message")
+                        .fadeIn();
+
+                    setTimeout(function () {
+                        messageElement.fadeOut();
+                    }, 2000);
+                }
+            });
+        });
+    });
+</script>

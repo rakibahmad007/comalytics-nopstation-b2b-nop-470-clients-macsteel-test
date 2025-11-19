@@ -1,0 +1,219 @@
+﻿@model ErpSalesOrgModel
+
+<div class="card-body">
+
+    <div class="form-group row">
+        <div class="col-md-3">
+            <nop-label asp-for="Name" />
+        </div>
+        <div class="col-md-9">
+            <nop-editor asp-for="Name" asp-required="true" />
+            <span asp-validation-for="Name"></span>
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <div class="col-md-3">
+            <nop-label asp-for="Code" />
+        </div>
+        <div class="col-md-9">
+            <nop-editor asp-for="Code" asp-required="true" />
+            <span asp-validation-for="Code"></span>
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <div class="col-md-3">
+            <nop-label asp-for="Email" />
+        </div>
+        <div class="col-md-9">
+            <nop-editor asp-for="Email" asp-required="true" />
+            <span asp-validation-for="Email"></span>
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <div class="col-md-3">
+            <nop-label asp-for="IntegrationClientId" />
+        </div>
+        <div class="col-md-9">
+            <nop-editor asp-for="IntegrationClientId" />
+            <span asp-validation-for="IntegrationClientId"></span>
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <div class="col-md-3">
+            <nop-label asp-for="AuthenticationKey" />
+        </div>
+        <div class="col-md-9">
+            <nop-editor asp-for="AuthenticationKey" />
+            <span asp-validation-for="AuthenticationKey"></span>
+        </div>
+    </div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="SpecialsCategoryId" />
+		</div>
+		<div class="col-md-9">
+			<nop-select asp-for="SpecialsCategoryId" asp-items="Model.AvailableCategories" />
+			<span asp-validation-for="SpecialsCategoryId"></span>
+		</div>
+	</div>
+
+    <div class="form-group row">
+        <div class="col-md-3">
+            <nop-label asp-for="IsActive" />
+        </div>
+        <div class="col-md-9">
+            <nop-editor asp-for="IsActive" />
+            <span asp-validation-for="IsActive"></span>
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <div class="col-md-3">
+            <nop-label asp-for="ErpAccountNameForB2C" />
+        </div>
+        @if (Model.ErpAccountIdForB2C > 0)
+        {
+            <div class="col-md-9">
+                <a asp-controller="ErpAccount" asp-action="ErpAccountEdit" asp-route-id="@Model.ErpAccountIdForB2C">@Model.ErpAccountNameForB2C</a>
+            </div>
+        }
+    </div>
+
+    <div class="form-group row">
+        <div class="col-md-3">
+            <nop-label asp-for="ErpAccountIdForB2C" />
+        </div>
+
+        <div class="col-md-9">
+            <input type="text" id="search-account-code" autocomplete="off" placeholder="Search by Erp Account number" class="form-control" />
+            <span id="search-account-by-code"></span>
+            <button type="button" id="search-account-clear" class="btn bg-gray" style="display: none; margin-top: 5px;">@T("Admin.Common.Clear")</button>
+            <input asp-for="ErpAccountIdForB2C" autocomplete="off" style="display: none;" />
+
+            <script>
+                $(document).ready(function () {
+                    $('#search-account-code').autocomplete({
+                        delay: 500,
+                        minLength: 3,
+                        source: function (request, response) {
+                            $.ajax({
+                                url: '@(Url.Action("ErpAccountSearchAutoComplete", "ErpAccount"))',
+                                dataType: 'json',
+                                data: { term: request.term },
+                                success: function (data) {
+                                    // Check if there are no results
+                                    if (data.length === 0) {
+                                        response([{ label: 'No results found', value: '' }]);
+                                    } else {
+                                        response(data);
+                                    }
+                                }
+                            });
+                        },
+                        select: function (event, ui) {
+                            if (ui.item.value === '' || ui.item.label === 'No results found') {
+                                return false;
+                            }
+                            $('#@Html.IdFor(model => model.ErpAccountIdForB2C)').val(ui.item.erpaccountid);
+                            $('#search-account-by-code').text(ui.item.label);
+
+                            $('#search-account-clear').show();
+                            $('#validationMessageErpAccountId').hide();
+                            return false;
+                        }
+                    });
+
+                    //remove button
+                    $('#search-account-clear').click(function () {
+                        $('#@Html.IdFor(model => model.ErpAccountIdForB2C)').val('0');
+                        $('#search-account-by-code').text('');
+                        $('#search-account-clear').hide();
+                        return false;
+                    });
+                });
+            </script>
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <div class="col-md-3">
+            <nop-label asp-for="NoItemsMessage" />
+        </div>
+        <div class="col-md-9">
+            <nop-editor asp-for="NoItemsMessage" />
+            <span asp-validation-for="NoItemsMessage"></span>
+        </div>
+    </div>
+
+    @if (Model.Id > 0)
+    {
+        <div class="form-group row">
+            <div class="col-md-3">
+                <nop-label asp-for="LastErpAccountSyncTimeOnUtc" />
+            </div>
+            <div class="col-md-9 justify-content-center align-self-center">
+                @Model.LastErpAccountSyncTimeOnUtc
+            </div>
+        </div>
+        
+        <div class="form-group row">
+            <div class="col-md-3">
+                <nop-label asp-for="LastErpGroupPriceSyncTimeOnUtc" />
+            </div>
+            <div class="col-md-9 justify-content-center align-self-center">
+                @Model.LastErpGroupPriceSyncTimeOnUtc
+            </div>
+        </div>
+        
+        <div class="form-group row">
+            <div class="col-md-3">
+                <nop-label asp-for="LastErpShipToAddressSyncTimeOnUtc" />
+            </div>
+            <div class="col-md-9 justify-content-center align-self-center">
+                @Model.LastErpShipToAddressSyncTimeOnUtc
+            </div>
+        </div>
+        
+        <div class="form-group row">
+            <div class="col-md-3">
+                <nop-label asp-for="LastErpStockSyncTimeOnUtc" />
+            </div>
+            <div class="col-md-9 justify-content-center align-self-center">
+                @Model.LastErpStockSyncTimeOnUtc
+            </div>
+        </div>
+
+        <div class="form-group row">
+            <div class="col-md-3">
+                <nop-label asp-for="LastErpProductSyncTimeOnUtc" />
+            </div>
+            <div class="col-md-9 justify-content-center align-self-center">
+                @Model.LastErpProductSyncTimeOnUtc
+            </div>
+        </div>
+
+        <div class="form-group row">
+            <div class="col-md-3">
+                <nop-label asp-for="CreatedOn" />
+            </div>
+            <div class="col-md-9 justify-content-center align-self-center">
+                @Model.CreatedOn
+            </div>
+        </div>
+
+        <div class="form-group row">
+            <div class="col-md-3">
+                <nop-label asp-for="UpdatedOn" />
+            </div>
+            <div class="col-md-9 justify-content-center align-self-center">
+                @Html.DisplayFor(model => model.UpdatedOn)
+            </div>
+        </div>
+    }
+
+</div>

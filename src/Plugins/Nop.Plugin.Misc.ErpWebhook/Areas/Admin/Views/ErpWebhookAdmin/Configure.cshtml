@@ -1,0 +1,63 @@
+﻿@model ConfigurationModel
+
+@{
+    Layout = "_AdminLayout";
+    NopHtml.SetActiveMenuItemSystemName("ErpWebhookConfigure");
+}
+
+<form asp-controller="ErpWebhookAdmin" asp-action="Configure" method="post">
+    <nop-antiforgery-token />
+
+    <div class="content-header clearfix">
+        <h1 class="float-left">
+            @T("Admin.ErpWebhookAdmin.Configuration.Settings")
+        </h1>
+        <div class="float-right">
+            <button type="submit" name="save" class="btn btn-primary">
+                <i class="far fa-save"></i>
+                @T("Admin.Common.Save")
+            </button>
+        </div>
+    </div>
+
+    <div class="content">
+        <div class="form-horizontal">
+            @await Component.InvokeAsync("StoreScopeConfiguration")
+            <div class="card-group">
+                <div class="card card-default">
+                    <div class="card-body">
+
+                        <div class="form-group row">
+                            <div class="col-md-3">
+                                <nop-override-store-checkbox asp-for="WebhookSecretKey_OverrideForStore"
+                                                             asp-input="WebhookSecretKey" asp-store-scope="@Model.ActiveStoreScopeConfiguration" />
+                                <nop-label asp-for="WebhookSecretKey" />
+                            </div>
+                            <div class="col-md-9">
+                                <nop-editor asp-for="WebhookSecretKey" />
+                                <span asp-validation-for="WebhookSecretKey"></span>
+                                @if (string.IsNullOrWhiteSpace(Model.WebhookSecretKey))
+                                {
+                                    <span class="text-danger"><strong>Please press save button to get Token</strong></span>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
+                            <div class="col-md-3">
+                                <nop-override-store-checkbox asp-for="DefaultCountryThreeLetterIsoCode_OverrideForStore"
+                                                             asp-input="DefaultCountryThreeLetterIsoCode" asp-store-scope="@Model.ActiveStoreScopeConfiguration" />
+                                <nop-label asp-for="DefaultCountryThreeLetterIsoCode" />
+                            </div>
+                            <div class="col-md-9">
+                                <nop-select asp-for="DefaultCountryThreeLetterIsoCode" asp-items="Model.AvailableCountries" />
+                                <span asp-validation-for="DefaultCountryThreeLetterIsoCode"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</form>

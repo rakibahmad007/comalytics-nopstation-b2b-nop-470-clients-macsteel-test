@@ -1,0 +1,156 @@
+﻿[
+  {
+    "codes": "02,09,10,12,18,19,20,21,22,23,24,25,26,27,28,29,31",
+    "levels": [
+      {
+        "type": "FIXED",
+        "value": "STEEL"
+      },
+      {
+        "type": "FIELD",
+        "value": "EWBEZ"
+      },
+      {
+        "type": "FIELD",
+        "value": "MAT_PH_CLASS_T"
+      }
+    ]
+  },
+  {
+    "codes": "08",
+    "levels": [
+      {
+        "type": "FIXED",
+        "value": "PIPING"
+      },
+      {
+        "type": "FIELD",
+        "value": "MAT_PH_CLASS_T"
+      }
+    ]
+  },
+  {
+    "codes": "32,33,34,35,36,41,42,43",
+    "levels": [
+      {
+        "type": "FIXED",
+        "value": "FITTINGS"
+      },
+      {
+        "type": "FIELD",
+        "value": "EWBEZ2"
+      },
+      {
+        "type": "FIELD",
+        "value": "MAT_PH_CLASS_T"
+      }
+    ]
+  },
+  {
+    "codes": "46,47,48,49,50",
+    "levels": [
+      {
+        "type": "FIXED",
+        "value": "FLANGES"
+      },
+      {
+        "type": "FIELD",
+        "value": "EWBEZ"
+      },
+      {
+        "type": "FIELD",
+        "value": "MAT_PH_CLASS_T"
+      }
+    ]
+  },
+  {
+    "codes": "17",
+    "levels": [
+      {
+        "type": "FIXED",
+        "value": "VALVES"
+      },
+      {
+        "type": "FIELD",
+        "value": "MAT_PH_CLASS_T"
+      }
+    ]
+  },
+  {
+    "codes": "06,11,30,37,38,39,40,44,45,51,52",
+    "levels": [
+      {
+        "type": "FIXED",
+        "value": "ROOFING"
+      },
+      {
+        "type": "FIELD",
+        "value": "EWBEZ"
+      },
+      {
+        "type": "FIELD",
+        "value": "MAT_PH_CLASS_T"
+      }
+    ]
+  },
+  {
+    "codes": "03",
+    "levels": [
+      {
+        "type": "FIXED",
+        "value": "FENCING AND PALISADE"
+      },
+      {
+        "type": "FIELD",
+        "value": "MAT_PH_CLASS_T"
+      }
+    ]
+  },
+  {
+    "codes": "15",
+    "levels": [
+      {
+        "type": "FIXED",
+        "value": "HARDWARE &amp; OTHER"
+      },
+      {
+        "type": "FIELD",
+        "value": "MAT_PH_CLASS_T"
+      }
+    ]
+  },
+  {
+    "codes": "60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79",
+    "levels": [
+      {
+        "type": "FIXED",
+        "value": "HARDWARE &amp; OTHER"
+      },
+      {
+        "type": "FIELD",
+        "value": "EWBEZ"
+      },
+      {
+        "type": "FIELD",
+        "value": "EWBEZ2"
+      },
+      {
+        "type": "FIELD",
+        "value": "MAT_PH_CLASS_T"
+      }
+    ]
+  },
+  {
+    "codes": "14",
+    "levels": [
+      {
+        "type": "FIXED",
+        "value": "SPECIAL STEELS"
+      },
+      {
+        "type": "FIELD",
+        "value": "MAT_PH_CLASS_T"
+      }
+    ]
+  }
+]

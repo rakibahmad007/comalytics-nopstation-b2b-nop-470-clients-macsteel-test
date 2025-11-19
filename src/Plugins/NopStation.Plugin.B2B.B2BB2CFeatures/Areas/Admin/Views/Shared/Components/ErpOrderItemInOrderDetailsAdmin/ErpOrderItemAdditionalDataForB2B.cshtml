@@ -1,0 +1,512 @@
+﻿@model ErpOrderModel
+
+@using Nop.Core.Domain.Tax;
+@using Nop.Core.Domain.Catalog;
+
+@{
+    var customer = await workContext.GetCurrentCustomerAsync();
+
+    const string hideErpOrderItemProductsBlockAttributeName = "OrderPage.HideErpOrderItemProductsBlock";
+    var hideErpOrderItemProductsBlock = await genericAttributeService.GetAttributeAsync<bool>(customer, hideErpOrderItemProductsBlockAttributeName);
+}
+
+<nop-card asp-name="erp-order-products" asp-icon="fas fa-th-list" asp-title="@T("Plugin.Misc.NopStation.B2BB2CFeatures.Admin.ErpOrderItemInOrderDetails.Block.ErpOrderItems")" asp-hide-block-attribute-name="@hideErpOrderItemProductsBlockAttributeName" asp-hide="@hideErpOrderItemProductsBlock" asp-advanced="true">
+    <div class="card-body">
+        <div class="form-group row">
+            <div class="col-md-12" style="overflow-x: auto;">
+                @foreach (var item in Model.ErpOrderItems)
+                {
+                    <script>
+                        $(document).ready(function () {
+                            toggleB2BOrderItemEdit@(item.Id)(false);
+                        });
+                    </script>
+
+                    <script>
+                        function toggleB2BOrderItemEdit@(item.Id)(editMode) {
+                            if (editMode) {
+                                $('#pnlEditB2BEoiUnitPrice@(item.Id)').show();
+                                $('#pnlEditB2BEoiQuantity@(item.Id)').show();
+                                $('#pnlEditB2BEoiDiscount@(item.Id)').show();
+                                $('#pnlEditB2BEoiPrice@(item.Id)').show();
+                                $('#btnEditB2BOrderItem@(item.Id)').hide();
+                                $('#btnDeleteB2BOrderItem@(item.Id)').hideElement();
+                                $('#btnSaveB2BOrderItem@(item.Id)').show();
+                                $('#btnCancelB2BOrderItem@(item.Id)').show();
+                            } else {
+                                $('#pnlEditB2BEoiUnitPrice@(item.Id)').hide();
+                                $('#pnlEditB2BEoiQuantity@(item.Id)').hide();
+                                $('#pnlEditB2BEoiDiscount@(item.Id)').hide();
+                                $('#pnlEditB2BEoiPrice@(item.Id)').hide();
+                                $('#btnEditB2BOrderItem@(item.Id)').show();
+                                $('#btnDeleteB2BOrderItem@(item.Id)').showElement();
+                                $('#btnSaveB2BOrderItem@(item.Id)').hide();
+                                $('#btnCancelB2BOrderItem@(item.Id)').hide();
+                            }
+                        }
+                    </script>
+                }
+
+                <table class="table table-hover table-bordered">
+                    <thead>
+                        <tr>
+                            <th>
+                                @T("Admin.Orders.Products.Picture")
+                            </th>
+                            <th>
+                                @T("Admin.Orders.Products.ProductName")
+                            </th>
+                            @if (Model.HasDownloadableProducts)
+                            {
+                                <th>
+                                    @T("Admin.Orders.Products.Download")
+                                </th>
+                            }
+                            <th>
+                                @T("Admin.Orders.Products.Price")
+                            </th>
+                            <th>
+                                @T("Admin.Orders.Products.Quantity")
+                            </th>
+                            <th>
+                                @T("Admin.Orders.Products.Discount")
+                            </th>
+                            <th>
+                                @T("Admin.Orders.Products.Total")
+                            </th>
+                            <th>
+                                @T("Plugin.Misc.NopStation.B2BB2CFeatures.Admin.ErpOrderItemInOrderDetails.TableHeader.ERPOrderLineNumber")
+                            </th>
+                            <th>
+                                @T("Plugin.Misc.NopStation.B2BB2CFeatures.Admin.ErpOrderItemInOrderDetails.TableHeader.ERPSalesUoM")
+                            </th>
+                            <th>
+                                @T("Plugin.Misc.NopStation.B2BB2CFeatures.Admin.ErpOrderItemInOrderDetails.TableHeader.ERPOrderLineStatus")
+                            </th>
+                            <th>
+                                @T("Plugin.Misc.NopStation.B2BB2CFeatures.Admin.ErpOrderItemInOrderDetails.TableHeader.ERPDateRequired")
+                            </th>
+                            <th>
+                                @T("Plugin.Misc.NopStation.B2BB2CFeatures.Admin.ErpOrderItemInOrderDetails.TableHeader.ERPDateExpected")
+                            </th>
+                            <th>
+                                @T("Plugin.Misc.NopStation.B2BB2CFeatures.Admin.ErpOrderItemInOrderDetails.TableHeader.ERPDeliveryMethod")
+                            </th>
+                            <th>
+                                @T("Plugin.Misc.NopStation.B2BB2CFeatures.Admin.ErpOrderItemInOrderDetails.TableHeader.ERPInvoiceNumber")
+                            </th>
+                            <th>
+                                @T("Plugin.Misc.NopStation.B2BB2CFeatures.Admin.ErpOrderItemInOrderDetails.TableHeader.ERPOrderLineNotes")
+                            </th>
+                            <th>
+                                @T("Plugin.Misc.NopStation.B2BB2CFeatures.Admin.ErpOrderItemInOrderDetails.TableHeader.LastERPUpdateUtc")
+                            </th>
+                            @if (!Model.IsLoggedInAsVendor)
+                            {
+                                <th>
+                                    @T("Admin.Common.Edit")
+                                </th>
+                            }
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.ErpOrderItems)
+                        {
+                            <tr>
+                                <td class="text-center">
+                                    <img src="@item.PictureThumbnailUrl" alt="" title="" />
+                                </td>
+                                <td style="width: 15%;" class="text-left">
+                                    <em><a asp-controller="Product" asp-action="Edit" asp-route-id="@item.ProductId">@item.ProductName</a></em>
+                                    @if (!string.IsNullOrEmpty(item.AttributeInfo))
+                                    {
+                                        <p>
+                                            @Html.Raw(item.AttributeInfo)
+                                        </p>
+                                    }
+                                    @if (!string.IsNullOrEmpty(item.RecurringInfo))
+                                    {
+                                        <p>
+                                            @Html.Raw(item.RecurringInfo)
+                                        </p>
+                                    }
+                                    @if (!string.IsNullOrEmpty(item.RentalInfo))
+                                    {
+                                        <p>
+                                            @Html.Raw(item.RentalInfo)
+                                        </p>
+                                    }
+                                    @if (!string.IsNullOrEmpty(item.Sku))
+                                    {
+                                        <p>
+                                            <strong>@T("Admin.Orders.Products.SKU")</strong><text>:</text>
+                                            @item.Sku
+                                        </p>
+                                    }
+                                    @if (!string.IsNullOrEmpty(item.VendorName))
+                                    {
+                                        <p>
+                                            <strong>@T("Admin.Orders.Products.Vendor")</strong><text>:</text>
+                                            @item.VendorName
+                                        </p>
+                                    }
+                                    @if (item.ReturnRequests.Count > 0)
+                                    {
+                                        <p>
+                                            @T("Admin.Orders.Products.ReturnRequests")<text>:</text>
+                                            @for (var i = 0; i < item.ReturnRequests.Count; i++)
+                                            {
+                                                <a asp-controller="ReturnRequest" asp-action="Edit" asp-route-id="@item.ReturnRequests[i].Id">@item.ReturnRequests[i].CustomNumber</a>
+                                                if (i != item.ReturnRequests.Count - 1)
+                                                {
+                                                    <text>,</text>
+                                                }
+                                            }
+                                        </p>
+                                    }
+                                    @if (item.PurchasedGiftCardIds.Count > 0)
+                                    {
+                                        <p>
+                                            @T("Admin.Orders.Products.GiftCards")<text>:</text>
+                                            @for (var i = 0; i < item.PurchasedGiftCardIds.Count; i++)
+                                            {
+                                                <a asp-controller="GiftCard" asp-action="Edit" asp-route-id="@item.PurchasedGiftCardIds[i]">@item.PurchasedGiftCardIds[i]</a>
+                                                if (i != item.PurchasedGiftCardIds.Count - 1)
+                                                {
+                                                    <text>,</text>
+                                                }
+                                            }
+                                        </p>
+                                    }
+                                </td>
+
+                                @if (Model.HasDownloadableProducts)
+                                {
+                                    <td style="width: 15%;" class="text-center">
+                                        @if (item.IsDownload)
+                                        {
+                                            <div>
+                                                @string.Format(T("Admin.Orders.Products.Download.DownloadCount").Text, item.DownloadCount)
+                                                <button type="submit" name="btnResetDownloadCount@(item.Id)" title="@T("Admin.Orders.Products.Download.ResetDownloadCount.Title")" id="btnResetDownloadCount@(item.Id)" class="btn btn-sm bg-navy">
+                                                    @T("Admin.Orders.Products.Download.ResetDownloadCount")
+                                                </button>
+                                                <hr />
+                                            </div>
+                                            if (item.DownloadActivationType == DownloadActivationType.Manually)
+                                            {
+                                                <div>
+                                                    <button type="submit" name="btnEoiActivateDownload@(item.Id)" id="btnEoiActivateDownload@(item.Id)" class="btn btn-sm bg-green">
+                                                        @(item.IsDownloadActivated ? T("Admin.Orders.Products.Download.Deactivate") : T("Admin.Orders.Products.Download.Activate"))
+                                                    </button>
+                                                    <hr />
+                                                </div>
+                                            }
+                                            <div>
+                                                <div>
+                                                    <strong>
+                                                        @T("Admin.Orders.Products.License")
+                                                    </strong>
+                                                </div>
+                                                @if (item.LicenseDownloadGuid != Guid.Empty)
+                                                {
+                                                    <div>
+                                                        <a asp-controller="Download" asp-action="DownloadFile" asp-route-downloadGuid="@item.LicenseDownloadGuid">@T("Admin.Orders.Products.License.DownloadLicense")</a>
+                                                    </div>
+                                                }
+                                                <button type="submit" id="eoilicensefile" name="eoilicensefile" onclick="javascript:OpenWindow('@(Url.Action("UploadLicenseFilePopup", "Order", new {id = Model.Id, orderItemId = item.Id, btnId = "btnRefreshPage", formId = "order-form"}))', 500, 400, true); return false;" class="btn btn-sm bg-olive">
+                                                    @T("Admin.Orders.Products.License.UploadFile")
+                                                </button>
+                                            </div>
+                                        }
+                                    </td>
+                                }
+                                <td style="width: 15%;" class="text-center">
+                                    @if (Model.AllowCustomersToSelectTaxDisplayType)
+                                    {
+                                        <div>@Html.Raw(item.UnitPriceInclTax)</div>
+                                        <div>@Html.Raw(item.UnitPriceExclTax)</div>
+                                    }
+                                    else
+                                    {
+                                        switch (Model.TaxDisplayType)
+                                        {
+                                            case TaxDisplayType.ExcludingTax:
+                                                {
+                                                    @Html.Raw(item.UnitPriceExclTax)
+                                                }
+                                                break;
+                                            case TaxDisplayType.IncludingTax:
+                                                {
+                                                    @Html.Raw(item.UnitPriceInclTax)
+                                                }
+                                                break;
+                                            default:
+                                                break;
+                                        }
+                                    }
+                                    <div id="pnlEditB2BEoiUnitPrice@(item.Id)">
+                                        <div class="form-group row">
+                                            <div class="col-md-5">
+                                                @T("Admin.Orders.Products.Edit.InclTax")
+                                            </div>
+                                            <div class="col-md-7">
+                                                <input name="eoiUnitPriceInclTax@(item.Id)" type="text" value="@item.UnitPriceInclTaxValue" id="eoiUnitPriceInclTax@(item.Id)" class="form-control input-sm" />
+                                            </div>
+                                        </div>
+                                        <div class="form-group row">
+                                            <div class="col-md-5">
+                                                @T("Admin.Orders.Products.Edit.ExclTax")
+                                            </div>
+                                            <div class="col-md-7">
+                                                <input name="eoiUnitPriceExclTax@(item.Id)" type="text" value="@item.UnitPriceExclTaxValue" id="eoiUnitPriceExclTax@(item.Id)" class="form-control input-sm" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td style="width: 10%;" class="text-center">
+                                    <div>@item.Quantity</div>
+                                    <div id="pnlEditB2BEoiQuantity@(item.Id)">
+                                        <div class="form-group row">
+                                            <div class="col-md-8 offset-md-2">
+                                                <input name="eoiQuantity@(item.Id)" type="text" value="@item.Quantity" id="eoiQuantity@(item.Id)" class="form-control input-sm" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td style="width: 15%;" class="text-center">
+                                    @if (Model.AllowCustomersToSelectTaxDisplayType)
+                                    {
+                                        <div>@Html.Raw(item.DiscountInclTax)</div>
+                                        <div>@Html.Raw(item.DiscountExclTax)</div>
+                                    }
+                                    else
+                                    {
+                                        switch (Model.TaxDisplayType)
+                                        {
+                                            case TaxDisplayType.ExcludingTax:
+                                                {
+                                                    @Html.Raw(item.DiscountExclTax)
+                                                }
+                                                break;
+                                            case TaxDisplayType.IncludingTax:
+                                                {
+                                                    @Html.Raw(item.DiscountInclTax)
+                                                }
+                                                break;
+                                            default:
+                                                break;
+                                        }
+                                    }
+                                    <div id="pnlEditB2BEoiDiscount@(item.Id)">
+                                        <div class="form-group row">
+                                            <div class="col-md-5">
+                                                @T("Admin.Orders.Products.Edit.InclTax")
+                                            </div>
+                                            <div class="col-md-7">
+                                                <input name="eoiDiscountInclTax@(item.Id)" type="text" value="@item.DiscountInclTaxValue" id="eoiDiscountInclTax@(item.Id)" class="form-control input-sm" />
+                                            </div>
+                                        </div>
+                                        <div class="form-group row">
+                                            <div class="col-md-5">
+                                                @T("Admin.Orders.Products.Edit.ExclTax")
+                                            </div>
+                                            <div class="col-md-7">
+                                                <input name="eoiDiscountExclTax@(item.Id)" type="text" value="@item.DiscountExclTaxValue" id="eoiDiscountExclTax@(item.Id)" class="form-control input-sm" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td style="width: 15%;" class="text-center">
+                                    @if (Model.AllowCustomersToSelectTaxDisplayType)
+                                    {
+                                        <div>@Html.Raw(item.SubTotalInclTax)</div>
+                                        <div>@Html.Raw(item.SubTotalExclTax)</div>
+                                    }
+                                    else
+                                    {
+                                        switch (Model.TaxDisplayType)
+                                        {
+                                            case TaxDisplayType.ExcludingTax:
+                                                {
+                                                    @Html.Raw(item.SubTotalExclTax)
+                                                }
+                                                break;
+                                            case TaxDisplayType.IncludingTax:
+                                                {
+                                                    @Html.Raw(item.SubTotalInclTax)
+                                                }
+                                                break;
+                                            default:
+                                                break;
+                                        }
+                                    }
+                                    <div id="pnlEditB2BEoiPrice@(item.Id)">
+                                        <div class="form-group row">
+                                            <div class="col-md-5">
+                                                @T("Admin.Orders.Products.Edit.InclTax")
+                                            </div>
+                                            <div class="col-md-7">
+                                                <input name="eoiPriceInclTax@(item.Id)" type="text" value="@item.SubTotalInclTaxValue" id="eoiPriceInclTax@(item.Id)" class="form-control input-sm" />
+                                            </div>
+                                        </div>
+                                        <div class="form-group row">
+                                            <div class="col-md-5">
+                                                @T("Admin.Orders.Products.Edit.ExclTax")
+                                            </div>
+                                            <div class="col-md-7">
+                                                <input name="eoiPriceExclTax@(item.Id)" type="text" value="@item.SubTotalExclTaxValue" id="eoiPriceExclTax@(item.Id)" class="form-control input-sm" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td style="width: 15%;" class="text-center">
+                                    <div>@item.ERPOrderLineNumber</div>
+                                </td>
+                                <td style="width: 15%;" class="text-center">
+                                    <div>@item.ERPSalesUoM</div>
+                                </td>
+                                <td style="width: 15%;" class="text-center">
+                                    <div>@item.ERPOrderLineStatus</div>
+                                </td>
+                                <td style="width: 15%;" class="text-center">
+                                    <div>@item.ERPDateRequired</div>
+                                </td>
+                                <td style="width: 15%;" class="text-center">
+                                    <div>@item.ERPDateExpected</div>
+                                </td>
+                                <td style="width: 15%;" class="text-center">
+                                    <div>@item.ERPDeliveryMethod</div>
+                                </td>
+                                <td style="width: 15%;" class="text-center">
+                                    <div>@item.ERPInvoiceNumber</div>
+                                </td>
+                                <td style="width: 15%;" class="text-center">
+                                    <div>@item.ERPOrderLineNotes</div>
+                                </td>
+                                <td style="width: 15%;" class="text-center">
+                                    <div>@item.LastERPUpdateUtc</div>
+                                </td>
+                                @if (!Model.IsLoggedInAsVendor)
+                                {
+                                    <td style="width: 15%;" class="text-center">
+                                        <button type="button" class="btn btn-default btn-delete-b2b-order-item" id="btnDeleteB2BOrderItem@(item.Id)" data-item-id="@item.Id">
+                                            <i class="far fa-trash-alt"></i>
+                                            @T("Admin.Common.Delete")
+                                        </button>
+                                    </td>
+                                }
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        @if (!string.IsNullOrEmpty(Model.CheckoutAttributeInfo) && !Model.IsLoggedInAsVendor)
+        {
+            <div class="form-group row">
+                <div class="col-md-12">
+                    @Html.Raw(Model.CheckoutAttributeInfo)
+                </div>
+            </div>
+        }
+        @if (!Model.IsLoggedInAsVendor)
+        {
+            <div class="form-group row">
+                <div class="col-md-12">
+                    <button type="submit" id="btnAddNewProduct" name="btnAddNewProduct" onclick="javascript:setLocation('@(Url.Action("AddProductToOrder", "Order", new {orderId = Model.Id}))'); return false;" class="btn btn-primary">
+                        @T("Admin.Orders.Products.AddNew")
+                    </button>
+                </div>
+            </div>
+        }
+    </div>
+
+    <script asp-location="Footer">
+        function startLoading() {
+            $('.please-wait').show();
+            $('body').addClass('loading');
+        }
+        function stopLoading() {
+            $('.please-wait').hide();
+            $('body').removeClass('loading');
+        }
+        function initializeB2BDeleteModal(itemId) {
+            const modalId = `deleteB2BOrderItem${itemId}-modal`;
+            const buttonId = `btnDeleteB2BOrderItem${itemId}`;
+
+            const modalHtml = `
+                <div id="${modalId}" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="${modalId}-title">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h4 class="modal-title" id="${modalId}-title">Are you sure?</h4>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                Are you sure you want to delete this B2B order item?
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" id="${modalId}-submit" class="btn btn-primary float-right">
+                                    Yes
+                                </button>
+                                <span class="btn btn-default float-right margin-r-5" data-dismiss="modal">
+                                    No, cancel
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+
+            // Add modal to body if it doesn't exist
+            if (!document.getElementById(modalId)) {
+                document.body.insertAdjacentHTML('beforeend', modalHtml);
+            }
+
+            // Initialize modal behavior
+            $(`#${buttonId}`).attr('type', 'button')
+                .attr('data-toggle', 'modal')
+                .attr('data-target', `#${modalId}`);
+
+            $(`#${modalId}-submit`).off('click').on('click', function() {
+                startLoading();
+
+                $.ajax({
+                    url: '@Url.Action("DeleteB2BOrderItem", "OverridenOrder")',
+                    type: 'POST',
+                    data: {
+                        id: @Model.Id,
+                        orderItemId: itemId,
+                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function(response) {
+                        //$(`#${modalId}`).modal('hide');
+
+                        if (response.redirect) {
+                            window.location.href = response.redirect;
+                        } else {
+                            window.location.reload();
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        $(`#${modalId}`).modal('hide');
+                        window.location.reload();
+                    },
+                    complete: function() {
+                        stopLoading();
+                    }
+                });
+            });
+        }
+
+        $(document).ready(function() {
+            $('.btn-delete-b2b-order-item').each(function() {
+                const itemId = $(this).data('item-id');
+                initializeB2BDeleteModal(itemId);
+            });
+        });
+    </script>
+</nop-card>
+
+@await Component.InvokeAsync(typeof(AdminWidgetViewComponent), new { widgetZone = B2BB2CFeaturesDefaults.ErpAdminWidgetZonesOrderDetailsBlock, additionalData = Model.Id })

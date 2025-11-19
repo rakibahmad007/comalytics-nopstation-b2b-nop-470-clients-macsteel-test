@@ -1,0 +1,51 @@
+@model B2CMacsteelExpressShopModel
+
+<div asp-validation-summary="All"></div>
+<input asp-for="Id" type="hidden" />
+
+@{
+	const string hideInfoBlockAttributeName = "B2CMacsteelExpressShopCreateOrUpdatePage.HideInfoBlock";
+    var customer = await workContext.GetCurrentCustomerAsync();
+    var hideInfoBlock = await genericAttributeService.GetAttributeAsync<bool>(customer, hideInfoBlockAttributeName);
+
+}
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="form-horizontal">
+			<nop-cards id="B2CMacsteelExpressShop-cards">
+				<nop-card asp-name="B2CMacsteelExpressShop-info" asp-icon="fas fa-info" asp-title="@T("Plugin.Misc.NopStation.Plugin.B2B.B2BB2CFeatures.B2CMacsteelExpressShop.Info")" asp-hide-block-attribute-name="@hideInfoBlockAttributeName" asp-hide="@hideInfoBlock" asp-advanced="false">
+                    <div class="card-body">
+                        <div class="form-group row">
+                            <div class="col-md-3">
+								<nop-label asp-for="MacsteelExpressShopName" />
+                            </div>
+                            <div class="col-md-9">
+                                <nop-editor asp-for="MacsteelExpressShopName" asp-required="true" />
+                                <span asp-validation-for="MacsteelExpressShopName"></span>
+                            </div>
+                        </div>
+						<div class="form-group row">
+							<div class="col-md-3">
+								<nop-label asp-for="MacsteelExpressShopCode" />
+							</div>
+							<div class="col-md-9">
+								<nop-editor asp-for="MacsteelExpressShopCode" asp-required="true" />
+								<span asp-validation-for="MacsteelExpressShopCode"></span>
+							</div>
+						</div>
+						<div class="form-group row">
+							<div class="col-md-3">
+								<nop-label asp-for="Message" />
+							</div>
+							<div class="col-md-9">
+								<nop-editor asp-for="Message" asp-required="true" />
+								<span asp-validation-for="Message"></span>
+							</div>
+						</div>
+                    </div>
+                </nop-card>
+            </nop-cards>
+        </div>
+    </div>
+</section>

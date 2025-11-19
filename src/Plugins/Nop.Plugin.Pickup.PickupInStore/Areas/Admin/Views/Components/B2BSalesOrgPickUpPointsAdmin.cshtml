@@ -1,0 +1,101 @@
+@model B2BSalesOrgPickupPointSearchModel
+@using Nop.Plugin.Pickup.PickupInStore.Areas.Admin.Models.B2BSalesOrgPickupPoints
+
+@{
+    const string hidePickupPointBlockAttributeName = "B2BSalesOrganisation.HidePickupPointBlock";
+    var hidePickupPointBlock = 
+    await genericAttributeService.GetAttributeAsync<bool>(await workContext.GetCurrentCustomerAsync(), hidePickupPointBlockAttributeName, defaultValue: true);
+}
+
+<nop-card asp-name="b2bsalesorg-pickupPoints" 
+    asp-icon="fa fa-list" 
+    asp-title="@T("Plugins.Payments.B2BCustomerAccount.B2BSalesOrganisations.PickupPoints")"   
+    asp-hide-block-attribute-name="@hidePickupPointBlockAttributeName" 
+    asp-hide="@hidePickupPointBlock">
+    <div class="card-body">
+        @await Html.PartialAsync("Table", new DataTablesModel
+        {
+            Name = "salesorg-pickupPoints-grid",
+            UrlRead = new DataUrl("B2BSalesOrgPickupPointList", "B2BSalesOrgPickupPoint", new RouteValueDictionary { [nameof(Model.B2BSalesOrgId)] = Model.B2BSalesOrgId }),
+            UrlUpdate = new DataUrl("EditB2BSalesOrgPickupPoint", "B2BSalesOrgPickupPoint", null),
+            UrlDelete = new DataUrl("DeleteB2BSalesOrgPickupPoint", "B2BSalesOrgPickupPoint", null),
+            Length = Model.PageSize,
+            LengthMenu = Model.AvailablePageSizes,
+            ColumnCollection = new List<ColumnProperty>
+            {
+                new ColumnProperty(nameof(B2BSalesOrgPickupPointModel.PickupPointName))
+                {
+                    Title = T("Plugins.Payments.B2BCustomerAccount.B2BSalesOrgPickupPoint.Fields.PickupPointName").Text,
+                    Width = "200",
+                    Render = new RenderLink(new DataUrl("~/Admin/Shipping/EditPickupPoint", nameof(B2BSalesOrgPickupPointModel.PickupPointId)))
+                },
+                new ColumnProperty(nameof(B2BSalesOrgPickupPointModel.Id))
+                {
+                    Title = T("Admin.Common.Edit").Text,
+                    Width = "100",
+                    ClassName = NopColumnClassDefaults.Button,
+                    Render = new RenderButtonsInlineEdit()
+                },
+                new ColumnProperty(nameof(B2BSalesOrgPickupPointModel.Id))
+                {
+                    Title = T("Admin.Common.Delete").Text,
+                    Width = "100",
+                    ClassName = NopColumnClassDefaults.Button,
+                    Render = new RenderButtonRemove(T("Admin.Common.Delete").Text)
+                }
+            }
+        })
+
+        <div class="card no-margin">
+            <div class="card-header">
+                @T("Admin.Common.AddNewRecord")
+            </div>
+            <div class="card-body">
+                <div class="form-group row">
+                    <div class="col-md-3">
+                        <nop-label asp-for="@Model.AddB2BSalesOrgPickupPointModel.PickupPointId" />
+                    </div>
+                    <div class="col-md-9">
+                        <nop-select asp-for="@Model.AddB2BSalesOrgPickupPointModel.PickupPointId" asp-items="@Model.AddB2BSalesOrgPickupPointModel.AvailablePickupPoints" />
+                        <span asp-validation-for="@Model.AddB2BSalesOrgPickupPointModel.PickupPointId"></span>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <div class="offset-md-3 col-md-9">
+                        <button type="button" id="addB2BSalesOrgPickupPoint" class="btn btn-primary">@T("Admin.Common.AddNewRecord")</button>
+                    </div>
+                </div>
+            </div>
+            <script asp-location="Footer">
+                $(document).ready(function () {
+                    $('#addB2BSalesOrgPickupPoint').click(function () {
+                        $('#addB2BSalesOrgPickupPoint').attr('disabled', true);
+                        var postData = {
+                            PickupPointId: $("#@Html.IdFor(model => model.AddB2BSalesOrgPickupPointModel.PickupPointId)").val(),
+                        };
+                        addAntiForgeryToken(postData);
+
+                        $.ajax({
+                            cache: false,
+                            type: "POST",
+                            url: "@Html.Raw(Url.Action("CreateB2BSalesOrgPickupPoint", "B2BSalesOrgPickupPoint", new { salesOrgId = Model.B2BSalesOrgId }))",
+                            data: postData,
+                            success: function (data, textStatus, jqXHR) {
+                                if (data.Result) {
+                                    //reload grid
+                                    updateTable('#salesorg-pickupPoints-grid');
+                                } else {
+                                    //display errors if returned
+                                    display_nop_error(data);
+                                }
+                            },
+                            complete: function (jqXHR, textStatus) {
+                                $('#addB2BSalesOrgPickupPoint').attr('disabled', false);
+                            }
+                        });
+                    });
+                });
+            </script>
+        </div>
+    </div>
+</nop-card>

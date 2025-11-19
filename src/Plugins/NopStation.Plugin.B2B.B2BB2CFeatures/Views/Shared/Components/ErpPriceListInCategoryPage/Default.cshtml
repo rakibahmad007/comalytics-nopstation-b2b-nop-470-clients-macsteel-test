@@ -1,0 +1,106 @@
+@using NopStation.Plugin.B2B.B2BB2CFeatures.Model
+@model ErpPriceListInCategoryPageModel
+
+@inject B2BB2CFeaturesSettings b2BB2CFeaturesSettings
+@inject Nop.Core.IWebHelper webHelper
+
+<style>
+	.btn-container {
+		-ms-transform: translate(-50%,-50%);
+		float: right;
+	}
+
+	.list-download-btn {
+		text-align: left;
+	}
+
+	.dropdown {
+		position: relative;
+		display: inline-block;
+	}
+
+	.dropdown:not(:last-child) {
+		margin-right: 10px;
+	}
+
+	.dropdown-content {
+		display: none;
+		position: absolute;
+		box-shadow: 0 0 15px rgba(0,0,0,0.2);
+		z-index: 1;
+		left: 50%;
+		transform: translateX(-50%);
+		width: 220px;
+		background-color: #fff;
+		padding: 10px 0;
+		text-align: left;
+		border-top: 1px solid #eee;
+	}
+
+	.dropdown-content button {
+		text-decoration: none;
+		display: block;
+		position: relative;
+		white-space: nowrap;
+		text-overflow: ellipsis;
+		overflow: hidden;
+		padding: 0 35px 0 20px;
+		height: 40px;
+		line-height: 40px;
+		color: #8c8c8c;
+		font-size: 15px;
+		font-weight: bold;
+		transition: all .2s ease;
+		border: none;
+		background: none;
+		width: 100%;
+	}
+
+	.dropdown-content button:hover {
+		background-color: #f1f1f1;
+		color: #bbbbbb;
+	}
+
+	.dropdown:hover .dropdown-content {
+		display: block;
+	}
+</style>
+
+<div class="btn-container">
+    @if (b2BB2CFeaturesSettings.DisplayAllCategoriesPriceListInCategoryPage)
+    {
+        <div class="dropdown">
+            <button type="button" class="btn bg-blue button-1 ">@T("Plugin.Misc.NopStation.B2BB2CFeatures.DownloadableProducts.ExportAllCategoriesPricelist")</button>
+            <div class="dropdown-content">
+                <button class="list-download-btn"
+                        onclick="ErpAccountCommon.downloadFromUrl('@(Url.Action("ExportProductsByCategory", "Export", new { categoryId = Model.CategoryId }))')"
+                        name="download">
+                    @T("Plugin.Misc.NopStation.B2BB2CFeatures.DownloadableProducts.ExportExcelPricelist")
+                </button>
+                <button class="list-download-btn"
+                        onclick="ErpAccountCommon.downloadFromUrl('@(Url.Action("ExportProductsByCategoryPDF", "Export", new { categoryId = Model.CategoryId }))')"
+                        name="download">
+                    @T("Plugin.Misc.NopStation.B2BB2CFeatures.DownloadableProducts.ExportPDFPricelist")
+                </button>
+            </div>
+        </div>
+    }
+    @if (b2BB2CFeaturesSettings.DisplayCategoryPriceListInCategoryPage)
+    {
+        <div class="dropdown">
+            <button type="button" class="btn bg-blue button-1 ">@T("Plugin.Misc.NopStation.B2BB2CFeatures.DownloadableProducts.ExportCurrentCategoriesPricelist")</button>
+            <div class="dropdown-content">
+                <button class="list-download-btn"
+                        onclick="ErpAccountCommon.downloadFromUrl('@(Url.Action("ExportProductsByCategoryId", "Export", new { categoryId = Model.CategoryId }))')"
+                        name="download">
+                    @T("Plugin.Misc.NopStation.B2BB2CFeatures.DownloadableProducts.ExportCategoryExcelPricelist")
+                </button>
+                <button class="list-download-btn"
+                        onclick="ErpAccountCommon.downloadFromUrl('@(Url.Action("ExportProductsByCategoryIdPDF", "Export", new { categoryId = Model.CategoryId }))')"
+                        name="download">
+                    @T("Plugin.Misc.NopStation.B2BB2CFeatures.DownloadableProducts.ExportCategoryPDFPricelist")
+                </button>
+            </div>
+        </div>
+    }
+</div>

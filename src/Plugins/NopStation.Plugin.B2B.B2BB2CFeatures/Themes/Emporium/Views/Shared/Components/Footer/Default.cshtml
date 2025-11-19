@@ -1,0 +1,270 @@
+﻿@model FooterModel
+@using NopStation.Plugin.B2B.ERPIntegrationCore.Services
+@inject IErpShipToAddressService erpShipToAddressService
+
+@{
+    var storeId = (await storeContext.GetCurrentStoreAsync()).Id;
+    var removeCopyright = await settingService.GetSettingByKeyAsync("emporiumthemesettings.removecopyright", false, storeId, true);
+    var removeDesignedBy = await settingService.GetSettingByKeyAsync("emporiumthemesettings.removedesignedby", false, storeId, true);
+    var footerLogoUrl = await Component.InvokeAsync("Widget", new { widgetZone = "emporium_footer_logo" });
+
+    var currentCustomer = await workContext.GetCurrentCustomerAsync();
+    var isErpCustomer = await erpCustomerFunctionality.GetActiveErpAccountByCustomerAsync(currentCustomer) != null;
+
+	var CustomerInfoUrl = isErpCustomer ? Url.RouteUrl("ErpAccountInvoices") : Url.RouteUrl("CustomerInfo");
+    var CustomerOrdersUrl = isErpCustomer ? Url.RouteUrl("ErpAccountOrders") : Url.RouteUrl("CustomerOrders");
+}
+
+<div class="category-banner-bottom">
+    <div class="image">
+        <img src="/images/thumbs/category_banner.png">
+    </div>
+    <div class="image-mobile">
+        <img src="/images/thumbs/category_banner_mobile.png">
+    </div>
+    <div class="content">
+        <div class="title">
+            <strong>@T("Category.Banner.Title")</strong>
+        </div>
+        <p>@T("Category.Banner.Text")</p>
+    </div>
+</div>
+<div class="footer">
+    @await Component.InvokeAsync("Widget", new { widgetZone = "footer_top" })
+    <div class="footer-upper">
+        @if (!String.IsNullOrEmpty(await footerLogoUrl.RenderHtmlContentAsync()))
+        {
+            <div class="footer-logo">
+                <img src="@footerLogoUrl" alt="footer_logo" />
+            </div>
+        }
+        <div class="social-icons">
+            @await Component.InvokeAsync("SocialButtons")
+        </div>
+    </div>
+    <div class="footer-middle">
+        <div class="footer-block">
+            <div class="title">
+                <strong>@T("Footer.Information")</strong>
+            </div>
+            <ul class="list">
+                @if (Model.SitemapEnabled && Model.DisplaySitemapFooterItem)
+                {
+                    <li><a href="@Url.RouteUrl("Sitemap")">@T("Sitemap")</a></li>
+                }
+                <li><a href="/contactus">Contact Us</a></li>
+                @if (Model.DisplayContactUsFooterItem)
+                {
+                    <li><a href="@Url.RouteUrl("ContactUs")">@T("ContactUs")</a></li>
+                }
+                @if (Model.SearchEnabled && Model.DisplayProductSearchFooterItem)
+                {
+                    <li><a href="@Url.RouteUrl("ProductSearch")">@T("Search")</a> </li>
+                }
+                @if (Model.NewsEnabled && Model.DisplayNewsFooterItem)
+                {
+                    <li><a href="@Url.RouteUrl("NewsArchive")">@T("News")</a></li>
+                }
+                @if (Model.BlogEnabled && Model.DisplayBlogFooterItem)
+                {
+                    <li><a href="@Url.RouteUrl("Blog")">@T("Blog")</a></li>
+                }
+                @if (Model.ForumEnabled && Model.DisplayForumsFooterItem)
+                {
+                    <li><a href="@Url.RouteUrl("Boards")">@T("Forum.Forums")</a></li>
+                }
+                @if (Model.NewProductsEnabled && Model.DisplayNewProductsFooterItem)
+                {
+                    <li><a href="@Url.RouteUrl("NewProducts")">@T("Products.NewProducts")</a></li>
+                }
+                @foreach (var topic in Model.Topics.Where(x => x.IncludeInFooterColumn1).ToList())
+                {
+                    <li><a href="@(Url.RouteUrl<Topic>(new { SeName = topic.SeName }))">@topic.Name</a></li>
+                }
+                <li><a href="/blog">How-To Guide</a></li>
+            </ul>
+        </div>
+        <div class="footer-block">
+            <div class="title">
+                <strong>@T("Footer.MyAccount")</strong>
+            </div>
+            <ul class="list">
+                @if (Model.DisplayCustomerInfoFooterItem)
+                {
+                    <li><a href="@CustomerInfoUrl">@T("Account.MyAccount")</a></li>
+                }
+                <li><a href="@CustomerOrdersUrl">@T("Account.CustomerOrders")</a></li>
+                @if (Model.DisplayCustomerOrdersFooterItem)
+                {
+                    <li><a href="@Url.RouteUrl("CustomerOrders")">@T("Account.CustomerOrders")</a></li>
+                }
+                @if (Model.DisplayCustomerAddressesFooterItem)
+                {
+                    <li><a href="@Url.RouteUrl("CustomerAddresses")">@T("Account.CustomerAddresses")</a></li>
+                }
+                @if (Model.RecentlyViewedProductsEnabled && Model.DisplayRecentlyViewedProductsFooterItem)
+                {
+                    <li><a href="@Url.RouteUrl("RecentlyViewedProducts")">@T("Products.RecentlyViewedProducts")</a></li>
+                }
+                @if (Model.AllowCustomersToCheckGiftCardBalance)
+                {
+                    <li><a href="@Url.RouteUrl("CheckGiftCardBalance")">@T("CheckGiftCardBalance")</a></li>
+                }
+                @if (Model.CompareProductsEnabled && Model.DisplayCompareProductsFooterItem)
+                {
+                    <li><a href="@Url.RouteUrl("CompareProducts")">@T("Products.Compare.List")</a></li>
+                }
+                @if (Model.ShoppingCartEnabled && Model.DisplayShoppingCartFooterItem)
+                {
+                    <li><a href="@Url.RouteUrl("ShoppingCart")">@T("ShoppingCart")</a></li>
+                }
+                @if (Model.WishlistEnabled && Model.DisplayWishlistFooterItem)
+                {
+                    <li><a href="@Url.RouteUrl("Wishlist")">@T("Wishlist")</a></li>
+                }
+                @foreach (var topic in Model.Topics.Where(x => x.IncludeInFooterColumn2).ToList())
+                {
+                    <li><a href="@(Url.RouteUrl<Topic>(new { SeName = topic.SeName }))">@topic.Name</a></li>
+                }
+            </ul>
+        </div>
+        @if (isErpCustomer && b2BB2CFeaturesSettings.DisplayErpRepDetailsToCustomer)
+        {
+            var erpAccount = await erpCustomerFunctionality.GetActiveErpAccountByCustomerAsync(currentCustomer);
+            var shipToAddressList = await erpShipToAddressService.GetErpShipToAddressesByErpAccountIdAsync(erpAccount?.Id ?? 0);
+            if (shipToAddressList != null)
+            {
+                foreach(var shipToAddress in shipToAddressList)
+                {
+                    <div class="footer-block">
+                        <div class="title">
+                            <strong>@T("Footer.B2B.B2BRepDetails")</strong>
+                        </div>
+                        <ul class="list">
+                            <li>@shipToAddress.RepNumber</li>
+                            <li>@shipToAddress.RepFullName</li>
+                            <li>@shipToAddress.RepPhoneNumber</li>
+                            <li>@shipToAddress.RepEmail</li>
+                        </ul>
+                    </div>
+                }
+            }
+        }
+        <div class="footer-block">
+            <div class="title">
+                <strong>@T("Footer.CustomerService")</strong>
+            </div>
+            <ul class="list">
+                @if (Model.AllowCustomersToApplyForVendorAccount && Model.DisplayApplyVendorAccountFooterItem)
+                {
+                    <li><a href="@Url.RouteUrl("ApplyVendorAccount")">@T("Vendors.ApplyAccount")</a></li>
+                }
+                @foreach (var topic in Model.Topics.Where(x => x.IncludeInFooterColumn3).ToList())
+                {
+                    <li><a href="@(Url.RouteUrl<Topic>(new { SeName = topic.SeName }))">@topic.Name</a></li>
+                }
+            </ul>
+        </div>
+        <div class="socials-and-payments custom-logos">
+            <div class="contact-info">
+                <div class="sub-title">
+                    <strong>@T("Footer.ContactSection.Title")</strong>
+                </div>
+                <ul>
+                    <li>
+                        <p>Sales Tel: <a class="phone-link" href="Tel:0118714799">(011) 871 4799</a></p>
+                    </li>
+                    <li>
+                        <p>Head Office Tel: <a class="phone-link" href="Tel:0118710000">(011) 871 0000</a></p>
+                    </li>
+                    <li>
+                        <p>Email: <a class="email-link" href="mailto:info@macsteel.co.za">info@macsteel.co.za</a></p>
+                    </li>
+                    <li>
+                        <p>Address: 7 Brook Road, Lilianton Industrial Sites, Lilianton, Boksburg, Gauteng, South Africa</p>
+                    </li>
+                </ul>
+            </div>
+            <div class="contact-info">
+                <div class="sub-title">
+                    <strong>@T("Footer.ContactSection.SubTitle.OnlineStore")</strong>
+                </div>
+                <ul>
+                    <li>
+                        <p>Tel: <a class="phone-link" href="Tel:0118710300">(011) 871 0300</a></p>
+                    </li>
+                    <li>
+                        <p>Email: <a class="email-link" href="mailto:ecommerce@macsteel.co.za">ecommerce@macsteel.co.za </a></p>
+                    </li>
+                </ul>
+            </div>
+            <div class="pay-options">
+                <div class="title">
+                    <strong>@T("SevenSpikes.Themes.Emporium.Common.PaymentOptions")</strong>
+                </div>
+                <img src="@Url.Content("~/Themes/Emporium/Content/img/pay_icon1.png")" alt="" />
+                <img src="@Url.Content("~/Themes/Emporium/Content/img/pay_icon2.png")" alt="" />
+                <img src="@Url.Content("~/Themes/Emporium/Content/img/pay_icon3.png")" alt="" />
+                <img src="@Url.Content("~/Themes/Emporium/Content/img/pay_icon6.png")" alt="" />
+                <img src="@Url.Content("~/Themes/Emporium/Content/img/pay_icon7.png")" alt="" />
+            </div>
+            <div>
+                <img src="@Url.Content("~/Themes/Emporium/Content/img/pay_icon8.png")" alt="" />
+                <img src="@Url.Content("~/Themes/Emporium/Content/img/pay_icon9.png")" alt="" />
+                <img src="@Url.Content("~/Themes/Emporium/Content/img/pay_icon10.png")" alt="" />
+                <img src="@Url.Content("~/Themes/Emporium/Content/img/pay_icon11.png")" alt="" />
+            </div>
+        </div>
+    </div>
+    <div class="footer-lower">
+        <div class="footer-powered-by">
+            Powered by <a href="https://www.comalytics.com/" target="_blank"><img alt="E-business powered by Comalytics" src="/images/Comalytics-default.png">Comalytics</a>
+        </div>
+        <div class="proudly-south-african">
+            <img src="/images/uploaded/ProudlySA_Member_Logo black background.png" alt="Proudly South African logo" />
+        </div>
+        @if (!removeDesignedBy)
+        {
+            <div class="footer-designed-by">
+                Designed by <a href="https://www.nop-templates.com/" target="_blank">Nop-Templates.com</a>
+            </div>
+        }
+        <div class="footer-disclaimer">
+            @T("Content.CopyrightNotice", DateTime.Now.Year, Model.StoreName)
+        </div>
+        @if (Model.DisplayTaxShippingInfoFooter)
+        {
+            var inclTax = await workContext.GetTaxDisplayTypeAsync() == TaxDisplayType.IncludingTax;
+            <div class="footer-tax-shipping">
+                @T(inclTax ? "Footer.TaxShipping.InclTax" : "Footer.TaxShipping.ExclTax", Url.RouteTopicUrl("shippinginfo"))
+            </div>
+        }
+        @await Component.InvokeAsync(typeof(StoreThemeSelectorViewComponent))
+    </div>
+    @await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.Footer, additionalData = Model })
+</div>
+
+@* script for hader menu stay *@
+<script asp-location="Footer">
+    var timer1 = 0
+    $(document).ready(function () {
+        function delayMenu(fn, ms) {
+            return function (args) {
+                clearTimeout(timer1)
+                timer1 = setTimeout(fn.bind(this, args), ms || 0)
+            }
+        }
+
+        $(".category-navigation-list-wrapper").on("mouseenter", function () {
+            $(this).addClass("show-menu");
+            $(this).css("overflow", "visible");
+            clearTimeout(timer1)
+        })
+
+        $(".category-navigation-list-wrapper").on("mouseleave", delayMenu(function () {
+            $(".category-navigation-list-wrapper").removeClass("show-menu");
+            $(".category-navigation-list-wrapper").css("overflow", "hidden")
+
+        }, 1000))
+    })
+</script>

@@ -1,0 +1,459 @@
+﻿@using NopStation.Plugin.B2B.B2BB2CFeatures.Infrastructure
+@using NopStation.Plugin.B2B.B2BB2CFeatures.Model.ErpAccountPublic
+@using NopStation.Plugin.B2B.ERPIntegrationCore.Infrastructure
+@using Nop.Services.Security
+
+@model ErpAccountInfoModel
+@inject IPermissionService permissionService
+@inject IErpCustomerFunctionalityService erpCustomerFunctionality
+@inject IWorkContext workContext
+
+@{
+    Layout = "_ColumnsTwo";
+    NopHtml.AddTitleParts(T("PageTitle.Account").Text);
+    NopHtml.AppendPageCssClassParts("html-account-page");
+    NopHtml.AppendPageCssClassParts("html-customer-info-page");
+    NopHtml.AppendPageCssClassParts("html-custom-account");
+
+    await Html.PartialAsync("~/Plugins/NopStation.Plugin.B2B.B2BB2CFeatures/Views/Shared/_DatatableScripts.cshtml");
+
+    var accountNo = Model.AccountNumber;
+    var displayErpCreditInfo = await permissionService.AuthorizeAsync(ErpPermissionProvider.DisplayB2BAccountCreditInfo);
+    var displayB2BAccountStatements = await permissionService.AuthorizeAsync(ErpPermissionProvider.DisplayB2BAccountStatements);
+    var displayB2BFinancialTransactions = await permissionService.AuthorizeAsync(ErpPermissionProvider.DisplayB2BFinancialTransactions);
+    var currentCustomer = await workContext.GetCurrentCustomerAsync();
+    var nopUser = await erpCustomerFunctionality.GetActiveErpNopUserByCustomerAsync(currentCustomer);
+    var isB2CUser = nopUser != null && nopUser.ErpUserType == ErpUserType.B2CUser;
+}
+
+@section left
+{
+    @await Component.InvokeAsync(typeof(CustomerNavigationViewComponent), new { selectedTabId = B2BB2CFeaturesDefaults.ErpCustomerNavigationEnum_ErpAccountTransactionsInfo })
+}
+
+<style>
+    a {
+        color: inherit;
+    }
+</style>
+
+<div class="page account-page account-info-page">
+    <div class="page-title">
+        <h1>@T("Plugin.Misc.NopStation.B2BB2CFeatures.PageTitle.ErpInvoices")</h1>
+    </div>
+
+    <div class="page-body">
+
+        @if (!isB2CUser)
+        {   
+            <style>
+                .account-info-section {
+                    border-bottom: 1px solid #727272;
+                }
+            </style>
+            <div class="fieldset account-info-section">
+                <div class="form-fields">
+                    <div class="inputs">
+                        <label asp-for="AccountNumber" asp-postfix=":"></label>
+                        <label id="AccountNumber">@Model.AccountNumber</label>
+                    </div>
+                    <div class="inputs">
+                        <label asp-for="AccountName" asp-postfix=":"></label>
+                        <label id="AccountName">@Model.AccountName</label>
+                    </div>
+                    @if (displayErpCreditInfo && !Model.HasErpQuoteAssistantRole && !Model.HasErpOrderAssistantRole)
+                    {
+                        @if (Model.IsShowYearlySavings && !string.IsNullOrEmpty(Model.CurrentYearOnlineSavings))
+                        {
+                            <div class="inputs">
+                                <label asp-for="CurrentYearOnlineSavings" asp-postfix=":"></label>
+                                <label id="CurrentYearOnlineSavings">@Model.CurrentYearOnlineSavings</label>
+                            </div>
+                        }
+                        <div class="inputs">
+                            <label asp-for="CreditLimit" asp-postfix=":"></label>
+                            <label id="CreditLimit">@Model.CreditLimit</label>
+                        </div>
+                        <div class="inputs">
+                            <label asp-for="CurrentBalance" asp-postfix=":"></label>
+                            <label id="CurrentBalance">@Model.CurrentBalance</label>
+                        </div>
+                        @if (Model.IsShowAllTimeSavings && !string.IsNullOrEmpty(Model.AllTimeOnlineSavings))
+                        {
+                            <div class="inputs">
+                                <label asp-for="AllTimeOnlineSavings" asp-postfix=":"></label>
+                                <label id="AllTimeOnlineSavings">@Model.AllTimeOnlineSavings</label>
+                            </div>
+                        }
+                        <div class="inputs">
+                            <label asp-for="AvailableCredit" asp-postfix=":"></label>
+                            <label id="AvailableCredit">@Model.AvailableCredit</label>
+                        </div>
+                        <div class="inputs">
+                            <label asp-for="LastPaymentAmount" asp-postfix=":"></label>
+                            <label id="LastPaymentAmount">@Model.LastPaymentAmount</label>
+                        </div>
+                        <div class="inputs">
+                            <label asp-for="LastPaymentDate" asp-postfix=":"></label>
+                            <label id="LastPaymentDate">@Model.LastPaymentDate</label>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        @if (displayB2BAccountStatements && Model.IsShowAccountStatementDownloadEnabled)
+        {
+            <div class="fieldset account-statement-section">
+                <div class="form-fields">
+                    <div>
+                        <div class="account-monthly-statement-div">
+                            <h2 class="account-monthly-statement-title">@T("Plugin.Misc.NopStation.B2BB2CFeatures.AccountStatementDownLoad"): </h2>
+                        </div>
+                        <div class="account-monthly-statement-btn-div">
+                            <div class="account-monthly-statement-btns">
+                                <div class="account-monthly-statement-div monthly-statement-btn-div">
+                                    <button class="button-1 account-monthly-statement-btn 30days-statement-btn" onclick="ErpAccountCommon.downloadFromUrl('@(Url.Action("DownloadAccountStatementByMonth", "ErpAccountPublic", new { accountNo = Model.AccountNumber, monthCount = 1 }))')">@T("Plugin.Misc.NopStation.B2BB2CFeatures.AccountStatement.30DaysStatement")</button>
+                                </div>
+                                <div class="account-monthly-statement-div monthly-statement-btn-div">
+                                    <button class="button-1 account-monthly-statement-btn 60days-statement-btn" onclick="ErpAccountCommon.downloadFromUrl('@(Url.Action("DownloadAccountStatementByMonth", "ErpAccountPublic", new { accountNo = Model.AccountNumber, monthCount = 2 }))')">@T("Plugin.Misc.NopStation.B2BB2CFeatures.AccountStatement.60DaysStatement")</button>
+                                </div>
+                                <div class="account-monthly-statement-div monthly-statement-btn-div">
+                                    <button class="button-1 account-monthly-statement-btn 90days-statement-btn" onclick="ErpAccountCommon.downloadFromUrl('@(Url.Action("DownloadAccountStatementByMonth", "ErpAccountPublic", new { accountNo = Model.AccountNumber, monthCount = 3 }))')">@T("Plugin.Misc.NopStation.B2BB2CFeatures.AccountStatement.90DaysStatement")</button>
+                                </div>
+                            </div>
+                            <p>@T("Plugin.Misc.NopStation.B2BB2CFeatures.AccountStatement.90DaysStatementInfo")</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        @if (displayB2BFinancialTransactions && !Model.HasErpQuoteAssistantRole && !Model.HasErpOrderAssistantRole)
+        {
+            <div class="fieldset">
+                <div class="row account-input-section">
+                    <div class="my-inputs">
+                        <label asp-for="SearchDocumentNumberOrName" asp-postfix=":"></label>
+                        <input asp-for="SearchDocumentNumberOrName" />
+                    </div>
+                    <div class="my-inputs">
+                        <label asp-for="SearchOrderNumberOrName" asp-postfix=":"></label>
+                        <input asp-for="SearchOrderNumberOrName" />
+                    </div>
+                    <div class="my-inputs">
+                        <label asp-for="SearchTransactionFromDate" asp-postfix=":"></label>
+                        <input type="Date" asp-for="SearchTransactionFromDate" />
+                    </div>
+                    <div class="my-inputs">
+                        <label asp-for="SearchTransactionToDate" asp-postfix=":"></label>
+                        <input type="Date" asp-for="SearchTransactionToDate" />
+                    </div>
+                    <div class="my-inputs">
+                        <label asp-for="SearchSortOptionId" asp-postfix=":"></label>
+                        <select asp-for="SearchSortOptionId" asp-items="Model.AvailableSortOptions"></select>
+                    </div>
+                    <button type="button" id="search-b2baccount-financial-transactions" class="btn btn-primary btn-search btn-b2b-search">
+                        <i class="fa fa-search"></i>
+                        @T("Admin.Common.Search")
+                    </button>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-body b2b-finantial-transection-data-table">
+                    @{
+                        var gridModel = new DataTablesModel
+                        {
+                            Name = "transaction-list-grid",
+                            UrlRead = new DataUrl("LoadErpFinancialTransactionList", "ErpAccountPublic", null),
+                            Length = Model.PageSize,
+                            LengthMenu = Model.AvailablePageSizes,
+                            SearchButtonId = "search-b2baccount-financial-transactions",
+                            Filters = new List<FilterParameter>
+                            {
+                                new FilterParameter(nameof(Model.SearchDocumentNumberOrName)),
+                                new FilterParameter(nameof(Model.SearchOrderNumberOrName)),
+                                new FilterParameter(nameof(Model.SearchTransactionFromDate)),
+                                new FilterParameter(nameof(Model.SearchTransactionToDate)),
+                                new FilterParameter(nameof(Model.SearchSortOptionId))
+                            }
+                        };
+
+                        var postindateRender = new RenderDate();
+                        postindateRender.Format = B2BB2CFeaturesDefaults.ErpDateFormatForDataTable;
+                        gridModel.ColumnCollection.Add(new ColumnProperty(nameof(RecentTransactionModel.PostingDate))
+                        {
+                            Title = T("Plugin.Misc.NopStation.B2BB2CFeatures.ErpAccount.FinancialTransaction.Fields.PostingDate").Text,
+                            Width = "200",
+                            Render = postindateRender
+                        });
+                        gridModel.ColumnCollection.Add(new ColumnProperty(nameof(ErpAccountOrderDetailsModel.CustomerOrder))
+                        {
+                            Title = T("Plugin.Misc.NopStation.B2BB2CFeatures.ErpAccount.FinancialTransaction.Fields.CustomerOrder").Text,
+                            Width = "200"
+                        });
+                        gridModel.ColumnCollection.Add(new ColumnProperty(nameof(RecentTransactionModel.DocumentDisplayName))
+                        {
+                            Title = T("Plugin.Misc.NopStation.B2BB2CFeatures.ErpAccount.FinancialTransaction.Fields.DocumentType").Text,
+                            Width = "200"
+                        });
+                        gridModel.ColumnCollection.Add(new ColumnProperty(nameof(RecentTransactionModel.DocumentNo))
+                        {
+                            Title = T("Plugin.Misc.NopStation.B2BB2CFeatures.ErpAccount.FinancialTransaction.Fields.DocumentNo").Text,
+                            Width = "200",
+                            ClassName = "download-invoices",
+                            Render = new RenderCustom("renderDownloadInvoiceLink")
+                        });
+                        gridModel.ColumnCollection.Add(new ColumnProperty(nameof(RecentTransactionModel.Remaining))
+                        {
+                            Title = T("Plugin.Misc.NopStation.B2BB2CFeatures.ErpAccount.FinancialTransaction.Fields.Remaining").Text,
+                            Width = "200",
+                        });
+                        gridModel.ColumnCollection.Add(new ColumnProperty(nameof(RecentTransactionModel.AmountExVat))
+                        {
+                            Title = T("Plugin.Misc.NopStation.B2BB2CFeatures.ErpAccount.FinancialTransaction.Fields.AmountExVat").Text,
+                            Width = "200",
+                        });
+                        gridModel.ColumnCollection.Add(new ColumnProperty(nameof(RecentTransactionModel.DocumentNo))
+                        {
+                            Title = T("Plugin.Misc.NopStation.B2BB2CFeatures.B2BAccount.FinancialTransaction.Fields.DownloadPod").Text,
+                            Width = "200",
+                            ClassName = NopColumnClassDefaults.Button,
+                            Render = new RenderCustom("renderColumnPOD")
+                        });
+                        gridModel.ColumnCollection.Add(new ColumnProperty(nameof(RecentTransactionModel.DocumentNo))
+                        {
+                            Title = T("Plugin.Misc.NopStation.B2BB2CFeatures.B2BAccount.FinancialTransaction.Fields.TestCert").Text,
+                            Width = "200",
+                            ClassName = NopColumnClassDefaults.Button,
+                            Render = new RenderCustom("renderColumnTestCert")
+                        });
+                    }
+                    @await Html.PartialAsync("Table", gridModel)
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="custom-modal fade account-statement-modal" id="AccountStatementModal" role="dialog" title="@T("Plugin.Misc.NopStation.B2BB2CFeatures.AccountStatementListDownLoad.PopUpTitle")" style="display: none;">
+        <div class="modal-body account-statement-document-list" id="account-statement-document-list">
+            <div class="account-statement-loading popup-content">(Loading...)</div>
+        </div>
+    </div>
+</div>
+
+<div class="custom-modal fade" id="podModal" role="dialog" title="POD List" style="display: none;">
+    <div class="modal-body pod-document-list">
+        <div class="pod-loading popup-content">Loading...</div>
+        <ol id="downloadablePodList"></ol>
+    </div>
+</div>
+
+@if (Model.HasErpSalesRepRole)
+{
+    <script asp-location="Footer">
+        $('html').last().addClass("sales-rep")
+    </script>
+}
+
+<div class="custom-modal fade" id="testCertModal" role="dialog" title="@T("Plugin.Misc.NopStation.B2BB2CFeatures.ErpAccount.TestCertList")" style="display: none;">
+    <div class="modal-body test-cert-document-list">
+        <div class="test-cert-loading popup-content">Loading...</div>
+        <ol id="downloadableTestCertList"></ol>
+    </div>
+</div>
+
+<script asp-location="Footer">
+    $(document).ready(function () {
+        $('.block-account-navigation .listbox .list>li>a').each(function () {
+            $(this).removeClass("active").addClass("inactive");
+        });
+
+        $('.b2baccount-info a').removeClass("inactive").addClass("active");
+
+        $.ajax({
+            cache: true,
+            type: "GET",
+            url: "@Url.RouteUrl("LoadErpAccountInfoFromErp")",
+            dataType: "json",
+            success: function (data, textStatus, jqXHR) {
+                if (data) {
+                    console.log(data)
+                    console.log("Time is: " + new Date())
+                    if (data.CreditLimit) {
+                        $('#CreditLimit').html(data.CreditLimit);
+                    }
+                    if (data.CurrentBalance) {
+                        $('#CurrentBalance').html(data.CurrentBalance);
+                    }
+                    if (data.AvailableCredit) {
+                        $('#AvailableCredit').html(data.AvailableCredit);
+                    }
+                    if (data.LastPaymentAmount) {
+                        $('#LastPaymentAmount').html(data.LastPaymentAmount);
+                    }
+                    if (data.LastPaymentDate) {
+                        $('#LastPaymentDate').html(data.LastPaymentDate);
+                    }
+                    console.log("On LoadB2BAccountInfoFromErp. Ajax loding finished..... \nTime is: " + new Date())
+                }
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+                console.log("Live account data sync failed");
+            }
+        });
+    });
+    function renderColumnPOD(data, type, row, meta) {
+        return row.IsDocumentTypeDownloadable ? '<button onclick=\"podModalShow(' + data + ');return false;\" class="btn btn-default pod-download-btn">@T("Plugin.Misc.NopStation.B2BB2CFeatures.FinancialTransaction.Fields.DownloadPod")</button>' : '<button type="button" class="btn btn-default btn-invoice-download-disabled" disabled>@T("Plugin.Misc.NopStation.B2BB2CFeatures.FinancialTransaction.Fields.DownloadPod")</button>';
+    }
+
+    function podModalShow(documentNo) {
+        $('.pod-loading').show();
+        var pods = $("#downloadablePodList");
+        pods.html('');
+        var sendData =
+        {
+            DocumentNo: documentNo
+        };
+
+        $.ajax({
+            cache: false,
+            type: "GET",
+            url: "@Url.Action("GetPodDocumentList", "ErpAccountPublic")",
+            data: sendData,
+            dataType: "json",
+            success: function (data, textStatus, jqXHR) {
+                $('#podModal').css('opacity', '1');
+                if (data.HavePodDocument) {
+                    $.each(data.podDocuments, function (id, pod) {
+                        pods.append($('<li></li>').html('<a onclick=\'DownloadPod("' + documentNo + '","' + pod + '")\' href>' + pod + '</a>'));
+                    });
+                } else {
+                    pods.append($('<li></li>').html('No POD found'));
+                }
+                $('.pod-loading').hide();
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+                alert('Failed to Load');
+                $('.pod-loading').hide();
+            }
+        });
+
+        $("#podModal").dialog({
+            modal: true,
+            draggable: false,
+            closeOnEscape: true
+        });
+    }
+
+    function DownloadPod(documentNo, pod) {
+        var downloadPoDActionUrl = "/ErpAccountPublic/DownloadPod?documentNo=" + documentNo + '&pod=' + pod + "";
+        ErpAccountCommon.downloadFromUrl(downloadPoDActionUrl);
+    }
+
+    function renderColumnTestCert(data, type, row, meta) {
+        return row.IsDocumentTypeDownloadable ? '<button onclick=\"testCertModalShow(' + data + ');return false;\" class="btn btn-default test-certi-download-btn">@T("Plugin.Misc.NopStation.B2BB2CFeatures.ErpAccount.FinancialTransaction.Fields.TestCert")</button>' : '<button type="button" class="btn btn-default btn-invoice-download-disabled" disabled>@T("Plugin.Misc.NopStation.B2BB2CFeatures.ErpAccount.FinancialTransaction.Fields.TestCert")</button>';
+    }
+
+    function testCertModalShow(documentNo) {
+        $('.test-cert-loading').show();
+        var testCerts = $("#downloadableTestCertList");
+        testCerts.html('');
+        var sendData = { DocumentNo: documentNo };
+
+        $.ajax({
+            cache: false,
+            type: "GET",
+            url: "@Url.Action("GetTestCertDocumentList", "ErpAccountPublic")",
+            data: sendData,
+            dataType: "json",
+            success: function (data, textStatus, jqXHR) {
+                if (data.HaveTestCertDocument) {
+                    $.each(data.testCertDocuments, function (id, testCert) {
+                        testCerts.append($('<li></li>').html('<a onclick=\'DownloadTestCert("' + documentNo + '","' + testCert + '")\'>' + testCert + '</a>'));
+                    });
+                }
+                else {
+                    testCerts.append($('<li></li>').html('@T("Plugin.Misc.NopStation.B2BB2CFeatures.ErpAccount.TestCert.NotFound")'));
+                }
+                $('.test-cert-loading').hide();
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+                alert('Failed to Load');
+                $('.test-cert-loading').hide();
+            }
+        });
+
+        $("#testCertModal").dialog({
+            modal: true,
+            draggable: false,
+            closeOnEscape: true
+        });
+    }
+
+    function DownloadTestCert(documentNo, testCert) {
+        var downloadTestCertActionUrl = "/ErpAccountPublic/DownloadTestCert/" + documentNo + testCert + "";
+        ErpAccountCommon.downloadFromUrl(downloadTestCertActionUrl);
+    }
+
+    function renderDownloadInvoiceLink(data, type, row, meta) {
+        return row.IsDocumentTypeInvoice ? '<button type="button"  onclick="viewInvoiceListLinkGenerator(' + data + ' )" class="btn btn-default btn-invoice-download">' + data + '</button>' : '<button type="button" class="btn btn-default btn-invoice-download-disabled" disabled>' + data + '</button>';
+    }
+
+    function AccountStatementModalShow() {
+        $('.account-statement-loading').show();
+        $("#downloadable-account-statement-list").remove();
+        var list_div = '<ol id="downloadable-account-statement-list"></ol>'
+        $("#account-statement-document-list").append(list_div);
+        var accountStatementsListView = $("#downloadable-account-statement-list");
+
+        $.ajax({
+            cache: false,
+            type: "GET",
+            url: "@Url.RouteUrl("GetAccountStatementList")",
+            dataType: "json",
+            success: function (data, textStatus, jqXHR) {
+                if (data.HaveAccountStatements) {
+                    var accountStatements = data.AccountStatements;
+                    $.each(accountStatements, function (id, accountStatement) {
+                        var str = '<li><a href=\'/DownloadAccountStatement/' + accountStatement.AccountNo
+                            + '/' + accountStatement.StartDate + '/'
+                            + accountStatement.EndDate + '\'> Statement - '
+                            + accountStatement.StartDate + ' to '
+                            + accountStatement.EndDate + '</a></li>'
+
+                        accountStatementsListView.append(str);
+                    });
+                } else {
+                    var str = '<li>@T("Plugin.Misc.NopStation.B2BB2CFeatures.AccountStatementListDownLoad.NotFound")</li>'
+                    accountStatementsListView.append(str);
+                }
+                $('.account-statement-loading').hide();
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+                alert('Failed to Load');
+                $('.account-statement-loading').hide();
+            }
+        });
+
+        $("#AccountStatementModal").dialog({
+            modal: true,
+            draggable: false,
+            closeOnEscape: true
+        });
+    }
+
+    function renderDownloadInvoiceLink(data, type, row, meta) {
+        return row.IsDocumentTypeDownloadable ? '<button type="button"  onclick="viewInvoiceListLinkGenerator(' + row.Id + ' )" class="btn btn-default btn-invoice-download">' + data + '</button>' : '<button type="button" class="btn btn-default btn-invoice-download-disabled" disabled>' + data + '</button>';
+    }
+
+    function renderColumnTestCert(data, type, row, meta) {
+        return row.IsDocumentTypeDownloadable ? '<button onclick=\"testCertModalShow(' + data + ');return false;\" class="btn btn-default test-certi-download-btn">@T("Plugin.Misc.NopStation.B2BB2CFeatures.ErpAccount.FinancialTransaction.Fields.TestCert")</button>' : '<button type="button" class="btn btn-default btn-invoice-download-disabled" disabled>' + data + '</button>';
+    }
+
+    function viewInvoiceListLinkGenerator(documentNo) {
+        var downloadInvoiceActionUrl = "/ErpAccountPublic/DownloadInvoice/?invoiceId=" + documentNo + "";
+        ErpAccountCommon.downloadFromUrl(downloadInvoiceActionUrl);
+    }
+
+</script>

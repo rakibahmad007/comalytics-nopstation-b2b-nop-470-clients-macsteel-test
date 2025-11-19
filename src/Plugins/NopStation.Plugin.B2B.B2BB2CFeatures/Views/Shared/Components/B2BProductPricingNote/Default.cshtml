@@ -1,0 +1,11 @@
+@using NopStation.Plugin.B2B.B2BB2CFeatures.Model
+@model B2BProductDetailsPricingNoteModel
+
+@if (Model.HavePricingNote)
+{
+	<div class="pricing-note"><span class="label">@T("B2B.Products.PricingNotes"): </span><span class="value">@Model.PricingNote</span></div>
+}
+@if (Model.DisplayWeightInformation)
+{
+	<div class="product-weight"><span class="label">@T("B2B.Products.ProductWeight"): </span><span class="value">@Model.WeightValue</span></div>
+}

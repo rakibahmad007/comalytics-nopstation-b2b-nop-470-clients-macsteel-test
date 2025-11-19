@@ -1,0 +1,215 @@
+@model ErpDeliveryDatesSearchModel;
+
+@{
+    Layout = "_AdminLayout";
+    //page title
+    ViewBag.PageTitle = T("NopStation.Plugin.B2B.B2BB2CFeatures.SiteMapNode.Title.ErpDeliveryDates").Text;
+    //active menu item (system name)
+    NopHtml.SetActiveMenuItemSystemName(B2BB2CFeaturesDefaults.ErpDeliveryDates_SiteMapNode_SystemName);
+}
+
+@{
+    const string hideSearchBlockAttributeName = "ErpDeliveryDates.HideSearchBlock";
+    var hideSearchBlock = await genericAttributeService.GetAttributeAsync<bool>(await workContext.GetCurrentCustomerAsync(), hideSearchBlockAttributeName);
+}
+
+<form asp-controller="ErpDeliveryDates" asp-action="List" method="post">
+    <div class="content-header clearfix">
+        <h1 class="float-left">
+            @T("NopStation.Plugin.B2B.B2BB2CFeatures.ErpDeliveryDates")
+        </h1>
+    </div>
+
+    <section class="content">
+        <div class="container-fluid">
+            <div class="form-horizontal">
+                <div class="cards-group">
+                    <div class="card card-default card-search">
+                        <div class="card-body">
+                            <div class="row search-row @(!hideSearchBlock ? "opened" : "")" data-hideAttribute="@hideSearchBlockAttributeName">
+                                <div class="search-text">@T("Admin.Common.Search")</div>
+                                <div class="icon-search"><i class="fas fa-search" aria-hidden="true"></i></div>
+                                <div class="icon-collapse"><i class="far fa-angle-@(!hideSearchBlock ? "up" : "down")" aria-hidden="true"></i></div>
+                            </div>
+
+                            <div class="search-body @(hideSearchBlock ? "closed" : "")">
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group row">
+                                            <div class="col-md-4">
+                                                <nop-label asp-for="SalesOrgOrPlant" />
+                                            </div>
+                                            <div class="col-md-8">
+                                                <nop-editor asp-for="SalesOrgOrPlant" />
+                                            </div>
+                                        </div>
+                                        
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group row">
+                                            <div class="col-md-4">
+                                                <nop-label asp-for="City" />
+                                            </div>
+                                            <div class="col-md-8">
+                                                <nop-editor asp-for="City" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="text-center col-12">
+                                        <button type="button" id="search-deliveryRouteLists" class="btn btn-primary btn-search">
+                                            <i class="fas fa-search"></i>
+                                            @T("Admin.Common.Search")
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card card-default">
+                        <div class="card-body">
+                            @await Html.PartialAsync("Table", new DataTablesModel
+                            {
+                                Name = "deliveryDates-grid",
+                                UrlRead = new DataUrl("DeliveryDatesList", "ErpDeliveryDates", null),
+                                SearchButtonId = "search-deliveryRouteLists",
+                                Length = Model.PageSize,
+                                LengthMenu = Model.AvailablePageSizes,
+                                Filters = new List<FilterParameter>
+                                {
+                                    new FilterParameter(nameof(Model.SalesOrgOrPlant)),
+                                    new FilterParameter(nameof(Model.City))
+                                },
+                                ColumnCollection = new List<ColumnProperty>
+                                {
+                                    new ColumnProperty(nameof(ErpDeliveryDatesModel.SalesOrgOrPlant))
+                                    {
+                                        Title = T("NopStation.Plugin.B2B.B2BB2CFeatures.ErpDeliveryDates.Field.SalesOrgOrPlant").Text,
+                                        Width = "100",
+                                    },
+                                    new ColumnProperty(nameof(ErpDeliveryDatesModel.CutOffTime))
+                                    {
+                                        Title = T("NopStation.Plugin.B2B.B2BB2CFeatures.ErpDeliveryDates.Field.CutOffTime").Text,
+                                        Width = "100",
+                                    },
+                                    new ColumnProperty(nameof(ErpDeliveryDatesModel.City))
+                                    {
+                                        Title = T("NopStation.Plugin.B2B.B2BB2CFeatures.ErpDeliveryDates.Field.City").Text,
+                                        Width = "100",
+                                    },
+                                    new ColumnProperty(nameof(ErpDeliveryDatesModel.AllWeekIndicator))
+                                    {
+                                        Title = T("NopStation.Plugin.B2B.B2BB2CFeatures.ErpDeliveryDates.Field.AllWeekIndicator").Text,
+                                        Width = "100",
+										Render = new RenderBoolean()
+                                    },
+									new ColumnProperty(nameof(ErpDeliveryDatesModel.IsFullLoadRequired))
+                                    {
+                                        Title = T("NopStation.Plugin.B2B.B2BB2CFeatures.ErpDeliveryDates.Field.IsFullLoadRequired").Text,
+                                        Width = "100",
+										Render = new RenderBoolean()
+                                    },
+                                    new ColumnProperty(nameof(ErpDeliveryDatesModel.Monday))
+                                    {
+                                        Title = T("NopStation.Plugin.B2B.B2BB2CFeatures.ErpDeliveryDates.Field.Monday").Text,
+                                        Width = "100",
+										Render = new RenderBoolean()
+                                    },
+                                    new ColumnProperty(nameof(ErpDeliveryDatesModel.Tuesday))
+                                    {
+                                        Title = T("NopStation.Plugin.B2B.B2BB2CFeatures.ErpDeliveryDates.Field.Tuesday").Text,
+                                        Width = "150",
+										Render = new RenderBoolean()
+                                    },
+                                    new ColumnProperty(nameof(ErpDeliveryDatesModel.Wednesday))
+                                    {
+                                        Title = T("NopStation.Plugin.B2B.B2BB2CFeatures.ErpDeliveryDates.Field.Wednesday").Text,
+                                        Width = "100",
+										Render = new RenderBoolean()
+                                    },
+                                    new ColumnProperty(nameof(ErpDeliveryDatesModel.Thursday))
+                                    {
+                                        Title = T("NopStation.Plugin.B2B.B2BB2CFeatures.ErpDeliveryDates.Field.Thursday").Text,
+                                        Width = "100",
+										Render = new RenderBoolean()
+                                    },
+                                    new ColumnProperty(nameof(ErpDeliveryDatesModel.Friday))
+                                    {
+                                        Title = T("NopStation.Plugin.B2B.B2BB2CFeatures.ErpDeliveryDates.Field.Friday").Text,
+                                        Width = "100",
+										Render = new RenderBoolean()
+                                    },
+                                    new ColumnProperty(nameof(ErpDeliveryDatesModel.DelDate1))
+                                    {
+                                        Title = T("NopStation.Plugin.B2B.B2BB2CFeatures.ErpDeliveryDates.Field.DelDate1").Text,
+                                        Width = "100",
+                                    },
+                                    new ColumnProperty(nameof(ErpDeliveryDatesModel.DelDate2))
+                                    {
+                                        Title = T("NopStation.Plugin.B2B.B2BB2CFeatures.ErpDeliveryDates.Field.DelDate2").Text,
+                                        Width = "100",
+                                    },
+                                    new ColumnProperty(nameof(ErpDeliveryDatesModel.DelDate3))
+                                    {
+                                        Title = T("NopStation.Plugin.B2B.B2BB2CFeatures.ErpDeliveryDates.Field.DelDate3").Text,
+                                        Width = "100",
+                                    },
+                                    new ColumnProperty(nameof(ErpDeliveryDatesModel.DelDate4))
+                                    {
+                                        Title = T("NopStation.Plugin.B2B.B2BB2CFeatures.ErpDeliveryDates.Field.DelDate4").Text,
+                                        Width = "100",
+                                    },
+                                    new ColumnProperty(nameof(ErpDeliveryDatesModel.DelDate5))
+                                    {
+                                        Title = T("NopStation.Plugin.B2B.B2BB2CFeatures.ErpDeliveryDates.Field.DelDate5").Text,
+                                        Width = "100",
+                                    },
+                                    new ColumnProperty(nameof(ErpDeliveryDatesModel.DelDate6))
+                                    {
+                                        Title = T("NopStation.Plugin.B2B.B2BB2CFeatures.ErpDeliveryDates.Field.DelDate6").Text,
+                                        Width = "100",
+                                    },
+                                    new ColumnProperty(nameof(ErpDeliveryDatesModel.DelDate7))
+                                    {
+                                        Title = T("NopStation.Plugin.B2B.B2BB2CFeatures.ErpDeliveryDates.Field.DelDate7").Text,
+                                        Width = "100",
+                                    },
+                                    new ColumnProperty(nameof(ErpDeliveryDatesModel.DelDate8))
+                                    {
+                                        Title = T("NopStation.Plugin.B2B.B2BB2CFeatures.ErpDeliveryDates.Field.DelDate8").Text,
+                                        Width = "100",
+                                    },
+                                    new ColumnProperty(nameof(ErpDeliveryDatesModel.DelDate9))
+                                    {
+                                        Title = T("NopStation.Plugin.B2B.B2BB2CFeatures.ErpDeliveryDates.Field.DelDate9").Text,
+                                        Width = "100",
+                                    },
+                                    new ColumnProperty(nameof(ErpDeliveryDatesModel.DelDate10))
+                                    {
+                                        Title = T("NopStation.Plugin.B2B.B2BB2CFeatures.ErpDeliveryDates.Field.DelDate10").Text,
+                                        Width = "100",
+                                    },
+                                    new ColumnProperty(nameof(ErpDeliveryDatesModel.CreatedOn))
+                                    {
+                                        Title = T("NopStation.Plugin.B2B.B2BB2CFeatures.ErpDeliveryDates.Field.CreatedOn").Text,
+                                        Width = "100",
+                                        Render = new RenderDate()
+                                    },
+                                    new ColumnProperty(nameof(ErpDeliveryDatesModel.UpdatedOn))
+                                    {
+                                        Title = T("NopStation.Plugin.B2B.B2BB2CFeatures.ErpDeliveryDates.Field.UpdatedOn").Text,
+                                        Width = "100",
+                                        Render = new RenderDate()
+                                    }
+                                }
+                            })
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</form>

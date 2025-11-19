@@ -1,0 +1,44 @@
+﻿@model ConfigurationModel
+
+@{
+    Layout = "_ConfigurePlugin";
+    NopHtml.SetActiveMenuItemSystemName("NopStation.Plugin.B2B.ManageB2CandB2BCustomer.Configuration");
+}
+
+@await Component.InvokeAsync(typeof(StoreScopeConfigurationViewComponent))
+
+<form asp-controller="B2CShipToAddress" asp-action="Configure" method="post">
+    <nop-cards id="OverriddenB2BB2CCustomer-cards">
+        <nop-card asp-name="OverriddenB2BB2CCustomer-general" asp-icon="fas fa-info" asp-title="@T("NopStation.Plugin.B2B.OverriddenB2BB2CCustomer.General")" asp-hide-block-attribute-name="@ManageB2CandB2BCustomerDefaults.HideGeneralBlock" asp-hide="@Model.HideGeneralBlock" asp-advanced="false">
+            <div class="card-body">
+                <div class="card card-default">
+                    <div class="card-body">
+                        <div class="form-group row">
+                            <div class="col-md-3">
+                                <nop-label asp-for="ServiceUrl" />
+                            </div>
+                            <div class="col-md-9">
+                                <nop-editor asp-for="ServiceUrl" />
+                                <span asp-validation-for="ServiceUrl"></span>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <div class="col-md-3">
+                                <nop-label asp-for="AuthToken" />
+                            </div>
+                            <div class="col-md-9">
+                                <nop-editor asp-for="AuthToken" />
+                                <span asp-validation-for="AuthToken"></span>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <div class="col-md-9 offset-md-3">
+                                <button type="submit" name="save" class="btn btn-primary">@T("Admin.Common.Save")</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nop-card>
+    </nop-cards>
+</form>

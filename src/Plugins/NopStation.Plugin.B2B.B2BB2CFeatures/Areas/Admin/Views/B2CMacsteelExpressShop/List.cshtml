@@ -1,0 +1,123 @@
+﻿@model B2CMacsteelExpressShopSearchModel
+
+@{
+    Layout = "_AdminLayout";
+    //page title
+    NopHtml.AddTitleParts(T("NopStation.Plugin.B2B.B2BB2CFeatures.SiteMapNode.Title.B2CMacsteelExpressShop").Text);
+    ViewBag.PageTitle = T("NopStation.Plugin.B2B.B2BB2CFeatures.SiteMapNode.Title.B2CMacsteelExpressShop").Text;
+    //active menu item (system name)
+    NopHtml.SetActiveMenuItemSystemName(B2BB2CFeaturesDefaults.B2CMacsteelExpressShop_SiteMapNode_SystemName);
+}
+
+@{
+	var customer = await workContext.GetCurrentCustomerAsync();
+	const string hideSearchBlockAttributeName = "B2CMacsteelExpressShopListPage.HideSearchBlock";
+	var hideSearchBlock = await genericAttributeService.GetAttributeAsync<bool>(customer, hideSearchBlockAttributeName);
+
+	const string hideB2CMacsteelExpressShopBlockAttributeName = "B2CMacsteelExpressShopListPage.hideB2CMacsteelExpressShopBlock";
+	var hideB2CMacsteelExpressShopBlock = await genericAttributeService.GetAttributeAsync<bool>(customer, hideB2CMacsteelExpressShopBlockAttributeName);
+}
+
+<form asp-area="Admin" asp-controller="B2CMacsteelExpressShop" asp-action="List" method="post">
+    <div class="content-header clearfix">
+        <h1 class="float-left">
+			@T("Plugin.Misc.NopStation.Plugin.B2B.B2BB2CFeatures.B2CMacsteelExpressShops")
+        </h1>
+        <div class="float-right">
+            <a asp-action="Create" class="btn btn-primary">
+                <i class="fas fa-plus-square"></i>
+                @T("Admin.Common.AddNew")
+            </a>
+        </div>
+    </div>
+
+    <Section class="content">
+        <div class="container-fluid">
+            <div class="form-horizontal">
+                <div class="cards-group">
+                    <div class="card card-default card-search form-horizontal">
+                        <div class="card-body">
+                            <div class="row search-row @(!hideSearchBlock ? "opened" : "")" data-hideAttribute="@hideSearchBlockAttributeName">
+                                <div class="search-text">@T("Admin.Common.Search")</div>
+                                <div class="icon-search"><i class="fas fa-search" aria-hidden="true"></i></div>
+                                <div class="icon-collapse"><i class="far fa-angle-@(!hideSearchBlock ? "up" : "down")" aria-hidden="true"></i></div>
+                            </div>
+                            <div class="search-body @(hideSearchBlock ? "closed" : "")">
+                                <div class="form-group row">
+                                    <div class="col-md-6">
+                                        <div class="form-group row">
+                                            <div class="col-md-4">
+												<nop-label asp-for="SearchMacsteelExpressShopName" />
+                                            </div>
+                                            <div class="col-md-8">
+												<nop-editor asp-for="SearchMacsteelExpressShopName" />
+                                            </div>
+                                        </div>
+										<div class="form-group row">
+											<div class="col-md-4">
+												<nop-label asp-for="SearchMacsteelExpressShopCode" />
+											</div>
+											<div class="col-md-8">
+												<nop-editor asp-for="SearchMacsteelExpressShopCode" />
+											</div>
+										</div>
+                                    </div>
+                                </div>
+								<div class="form-group row">
+									<div class="col-md-7 col-md-offset-6">
+									    <button type="button" id="search-b2CMacsteelExpressShop" class="btn btn-primary btn-search">
+									        <i class="fa fa-search"></i>
+									        @T("Admin.Common.Search")
+									    </button>
+									</div>
+								</div>
+                            </div>
+                        </div>
+                    </div>
+
+					<nop-card asp-name="B2CMacsteelExpressShop" asp-icon="fas fa-building" asp-title="@T("Plugin.Misc.NopStation.Plugin.B2B.B2BB2CFeatures.B2CMacsteelExpressShops.CardHeader.B2CMacsteelExpressShops")" asp-hide-block-attribute-name="@hideB2CMacsteelExpressShopBlockAttributeName" asp-hide="@hideB2CMacsteelExpressShopBlock" asp-advanced="true">
+                        <div class="card-body">
+                            <div class="card card-default">
+                                <div class="card-body">
+                                    @await Html.PartialAsync("Table", new DataTablesModel
+                                    {
+                                        Name = "b2CMacsteelExpressShop-grid",
+										UrlRead = new DataUrl("MacsteelExpressShopList", "B2CMacsteelExpressShop", null),
+										SearchButtonId = "search-b2CMacsteelExpressShop",
+										Length = Model.PageSize,
+										LengthMenu = Model.AvailablePageSizes,
+										Filters = new List<FilterParameter>
+										{
+										    new FilterParameter(nameof(Model.SearchMacsteelExpressShopName)),
+										    new FilterParameter(nameof(Model.SearchMacsteelExpressShopCode))
+										},
+                                        ColumnCollection = new List<ColumnProperty>
+                                        {
+                                            new ColumnProperty(nameof(B2CMacsteelExpressShopModel.MacsteelExpressShopName))
+                                            {
+                                                Title = T("Plugins.Payments.B2BCustomerAccount.MacsteelExpressShop.Fields.MacsteelExpressShopName").Text,
+												Width = "200"
+                                            },
+                                            new ColumnProperty(nameof(B2CMacsteelExpressShopModel.MacsteelExpressShopCode))
+                                            {
+                                                Title = T("Plugins.Payments.B2BCustomerAccount.MacsteelExpressShop.Fields.MacsteelExpressShopCode").Text,
+												Width = "200"
+                                            },
+                                            new ColumnProperty(nameof(B2CMacsteelExpressShopModel.Id))
+                                            {
+												Title = T("Admin.Common.Edit").Text,
+												Width = "100",
+												ClassName = NopColumnClassDefaults.Button,
+												Render = new RenderButtonEdit(new DataUrl("Edit"))
+                                            }
+                                        }
+                                    })
+                                </div>
+                            </div>
+                        </div>
+                    </nop-card>
+                </div>
+            </div>
+        </div>
+    </Section>
+</form>

@@ -1,0 +1,12 @@
+﻿{
+  "Group": "Erp webhook",
+  "FriendlyName": "Webhook",
+  "SystemName": "Misc.ErpWebhook",
+  "Version": "4.70.0.1",
+  "SupportedVersions": [ "4.70" ],
+  "Author": "Comalytics",
+  "DisplayOrder": 100,
+  "FileName": "Nop.Plugin.Misc.ErpWebhook.dll",
+  "Description": "This plugin enable webhook for erp.",
+  "DependsOnSystemNames": [ "NopStation.Plugin.B2B.ERPIntegrationCore" ]
+}

@@ -1,0 +1,241 @@
+﻿@using Nop.Core.Domain.Catalog
+@model CatalogProductsModel
+
+@{
+    var themeName = await themeContext.GetWorkingThemeNameAsync();
+    NopHtml.AppendCssFileParts($"~/Plugins/NopStation.Plugin.B2B.B2BB2CFeatures/Themes/{themeName}/Content/css/styles.css");
+    NopHtml.AppendCssFileParts($"~/Plugins/NopStation.Plugin.B2B.B2BB2CFeatures/Themes/{themeName}/Content/css/styles2.css");
+
+    var addToWishlistText = T("Products.Wishlist.AddToWishlist").Text;
+    var checkUserRegisteredLink = Url.Action("IsShowAddToCart", "ErpAccountPublic");
+    var currCustomer = await workContext.GetCurrentCustomerAsync();
+    var isErpCustomer = (await erpAccountService.GetActiveErpAccountByCustomerIdAsync(currCustomer.Id)) != null;
+    var isHideAddToCart = await erpCustomerFunctionality.IsHideAddToCartAsync();
+    var isHidePricingnote = false;
+    var isHideWeightinfo = false;
+    var shoppingCartTypeId = (int)ShoppingCartType.ShoppingCart;
+
+    if (isErpCustomer)
+    {
+        var erpCustomerConfiguration = await erpCustomerFunctionality.GetErpCustomerConfigurationOfCurrentCustomerAsync();
+
+        if (erpCustomerConfiguration != null)
+        {
+            isHidePricingnote = erpCustomerConfiguration.IsHidePricingNote;
+            isHideWeightinfo = erpCustomerConfiguration.IsHideWeightInfo;
+        }
+    }
+}
+
+<style>
+    .list-product-quantity-input {
+        width: 80px !important;
+        padding-left: 0px !important;
+        padding-right: 20px !important;
+    }
+
+    .product-box-add-to-cart-button {
+        height: 34px;
+        background: #1a3b83;
+        border: 1px solid #1a3b83;
+        color: #fff;
+        border-radius: 3px;
+        padding: 0 10px;
+        font-weight: normal;
+        white-space: nowrap;
+    }
+</style>
+
+@if (Model.Products.Count > 0)
+{
+    @if (Model.ViewMode == "list")
+    {
+        <div class="product-b2blist">
+            <div class="table-wrapper">
+                <table class="b2blist">
+                    <thead>
+                        <tr>
+                            <th class="sku">@T("Plugin.Misc.NopStation.Plugin.B2B.B2BB2CFeatures.B2BList.Product(s).Sku")</th>
+                            <th class="name">@T("Plugin.Misc.NopStation.Plugin.B2B.B2BB2CFeatures.B2BList.Product(s).Name")</th>
+                            <th class="on-special-product-data"></th>
+                            <th class="price">@T("Plugin.Misc.NopStation.Plugin.B2B.B2BB2CFeatures.B2BList.Product(s).Price")</th>
+                            @if (isErpCustomer)
+                            {
+                                <th class="uom">@T("Plugin.Misc.NopStation.Plugin.B2B.B2BB2CFeatures.B2BList.Product(s).UOM")</th>
+                                @if (!isHidePricingnote)
+                                {
+                                    <th class="pricing-note">@T("Plugin.Misc.NopStation.Plugin.B2B.B2BB2CFeatures.B2BList.Product(s).PricingNotes")</th>
+                                }
+                                @if (!isHideWeightinfo)
+                                {
+                                    <th class="weight">@T("Plugin.Misc.NopStation.Plugin.B2B.B2BB2CFeatures.B2BList.Product(s).WeightInfo")</th>
+                                }
+                                <th class="stock">@T("Plugin.Misc.NopStation.Plugin.B2B.B2BB2CFeatures.B2BList.Product(s).Stock")</th>
+                                <th class="backInStockSubscription"></th>
+                                <th class="add-to-wishlist"></th>
+                            }
+                            <th class="minus-btn"></th>
+                            <th class="quantity">@T("Plugin.Misc.NopStation.Plugin.B2B.B2BB2CFeatures.B2BList.Product(s).Qty")</th>
+                            <th class="plus-btn"></th>
+                            <th class="@(isHideAddToCart ? "add-to-cart-btn-not-logged-in" : "add-to-cart-btn")"></th>
+                            <th class="btn-wrapper"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var product in Model.Products)
+                        {
+                            var addtocartPluslink = Url.RouteUrl("AddProductToCart-Catalog", new { productId = product.Id, shoppingCartTypeId = shoppingCartTypeId, quantity = 1 });
+                            var addtocartMinuslink = Url.RouteUrl("RemoveProductQuantityFromCart-Catalog", new { productId = product.Id, shoppingCartTypeId = shoppingCartTypeId, quantity = 1 });
+
+							var addtowishlistlink = Url.RouteUrl("AddProductToCart-Catalog", new { productId = product.Id, shoppingCartTypeId = (int)ShoppingCartType.Wishlist, quantity = 1 });
+
+                            product.CustomProperties.TryGetValue(B2BB2CFeaturesDefaults.ProductIsOnSpecial, out var OnSpecialProduct);
+
+                            <tr class="product-item" data-productid="@product.Id">
+                                <td class="sku">@product.Sku</td>
+                                <td class="name">
+                                    <a href="@(Url.RouteUrl<Product>(new { SeName = product.SeName }))" title="@product.PictureModels.FirstOrDefault().Title">@product.Name</a>
+                                </td>
+                                <td class="on-special-product-data">
+                                    @if (bool.TryParse(OnSpecialProduct, out var isOnSpecial) && isOnSpecial)
+                                    {
+                                        <div class="on-special-product">
+                                            <img src="@Url.Content(B2BB2CFeaturesDefaults.ProductIsOnSpecialIconPath)" alt="Product On Special" />
+                                            <span class="tooltip-text">@T("Plugin.Misc.NopStation.B2BB2CFeatures.SpecialProductMessage")</span>
+                                        </div>
+                                    }
+                                </td>
+                                <td class="price">@product.ProductPrice?.Price</td>
+                                @if (isErpCustomer)
+                                {
+                                    <td class="uom" id="b2bUOM_@product.Id"></td>
+                                    @if (!isHidePricingnote)
+                                    {
+                                        <td class="pricing-note" id="b2bPricingNotes_@product.Id"></td>
+                                    }
+                                    @if (!isHideWeightinfo)
+                                    {
+                                        <td class="weight" id="b2bWeightValue_@product.Id"></td>
+                                    }
+                                    <button type="button" class="add-to-cart-button" data-productid="@product.Id" style="display:none;"></button>
+                                    <td class="stock" id="b2bStockAvailability_@product.Id"></td>
+                                    <td class="backInStockSubscription" id="backInStockSubscription_@product.Id"></td>
+                                    <td class="add-to-wishlist">
+                                        <div id="add-to-wishlist-div" class="add-to-wishlist-div" title="@T("B2B.B2BAccountPublic.Cart.AddToWishList")" data-toggle="tooltip">
+                                            <button type="button" id="add-to-wishlist-button-@product.Id" class="button-2 add-to-wishlist-button" value="@addToWishlistText" data-productid="@product.Id" onclick="AjaxCart.addproducttocart_catalog('@addtowishlistlink');return false;"></button>
+                                        </div>
+                                    </td>
+                                }
+                                <td class="minus-btn"><button type="button" class="counter-minus btn btn-primary" onclick="decreaseQuantity(@product.Id);return false;">-</button></td>
+                                <td class="quantity"><input id="b2bProductQty_@product.Id" class="b2bProductQty_@product.Id b2bProductQty" data-productid="@product.Id" name="productQty" value="1" style="max-width: 70px;"></td>
+                                <td class="plus-btn"><button type="button" class="counter-plus btn btn-primary" onclick="increaseQuantity(@product.Id);return false;">+</button></td>
+                                @if (!isHideAddToCart)
+                                {
+                                    <td class="add-to-cart-btn">
+                                        <button type="button" class="b2bAddToCart button-1 add-to-cart" onclick="productAddToCart(@product.Id)" data-productid="@product.Id" name="productQty">@T("ShoppingCart.AddToCart")</button>
+                                    </td>
+                                }
+                                else
+                                {
+                                    <td class="add-to-cart-btn-not-logged-in">
+                                        <input type="button" value="@T("ShoppingCart.AddToCart")" class="button-1 not-logged-in-add-to-cart-button" data-productid="@product.Id" />
+                                    </td>
+                                }
+                                <td class="btn-wrapper"></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        var productList = (IEnumerable<ProductOverviewModel>)Model.Products;
+        var productIdList = productList.Select(x => x.Id).ToList();
+        var productIds = string.Join(",", productIdList);
+
+        <script asp-location="Footer">
+            function backInStockSubscriptionClick(productId) {
+                displayPopupContentFromUrl('backinstocksubscribe/' + productId, '@T("BackInStockSubscriptions.NotifyMeWhenAvailable")');
+            }
+
+            $(function () {
+                var isErpCustomer = '@isErpCustomer'.toLowerCase();
+                if (isErpCustomer == 'true') {
+                    ErpAccountCommon.loadProductB2BData("@productIds");
+                }
+            });
+
+            $('.not-logged-in-add-to-cart-button').on('click', function () {
+                B2BAjaxCart.promptForLogin();
+            });
+
+            function productAddToCart(productId) {
+                var currentQuantity = parseInt($('.b2bProductQty_' + productId).val(), 10);
+                var shoppingCartTypeId = @shoppingCartTypeId;
+                var urlCheck = '@checkUserRegisteredLink';
+
+                B2BAjaxCart.checkUserRegisteredAndUpdateProductQuantity(currentQuantity, productId, urlCheck, shoppingCartTypeId)
+            }
+
+            function increaseQuantity(productId) {
+                var currentQuantity = parseInt($('.b2bProductQty_' + productId).val(), 10);
+                $('.b2bProductQty_' + productId).val(currentQuantity + 1)
+            }
+
+            function decreaseQuantity(productId) {
+                var currentQuantity = parseInt($('.b2bProductQty_' + productId).val(), 10);
+                if (currentQuantity > 1)
+                    $('.b2bProductQty_' + productId).val(currentQuantity - 1)
+            }
+        </script>
+        <script>
+            window.onload = function () {
+                document.querySelector(".category-banner-bottom").style.display = "none";
+            }
+        </script>
+    }
+    else
+    {
+        var productList = (IEnumerable<ProductOverviewModel>)Model.Products;
+
+        <div class="product-grid">
+            <div class="item-grid">
+                @foreach (var product in productList)
+                {
+                    <div class="item-box">
+                        @await Html.PartialAsync("_ProductBox", product)
+                    </div>
+                }
+            </div>
+        </div>
+    }
+}
+else
+{
+    <div id="b2b_no_items_msg" class="no-result"></div>
+
+    <script asp-location="Footer">
+        $(document).ready(function () {
+            $.ajax({
+                cache: true,
+                url: "@Url.RouteUrl("LoadErpNoItemsMsg")",
+                type: 'Get',
+                success: function (response) {
+                    if (response.hasMessage) {
+                        let bannerHeader = response.Message.substr(0, 37);
+                        let bannerText = response.Message.replace(bannerHeader, '');
+
+                        $('#b2b_no_items_msg').append('<div class="banner-header">' + bannerHeader + '</div>');
+                        $('#b2b_no_items_msg').append("<p>" + $.trim(bannerText) + "</p>");
+                    } else {
+                        let defaultMessage = "Please log in to see products and pricing for your area";
+                        $('#b2b_no_items_msg').append("<p>" + defaultMessage + "</p>");
+                    }
+                },
+                error: function () {
+                    console.log("Can Not Load No Items Msg");
+                }
+            });
+        });
+    </script>
+}

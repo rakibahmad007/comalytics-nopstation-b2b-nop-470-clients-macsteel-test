@@ -1,0 +1,93 @@
+﻿@model ProductDetailsModel.ProductPriceModel
+
+<style>
+    .flex-container {
+        display: inline-flex;
+    }
+</style>
+
+@if (!Model.CustomerEntersPrice)
+{
+    Model.CustomProperties.TryGetValue(B2BB2CFeaturesDefaults.ProductIsOnSpecial, out var OnSpecialProduct);
+
+    <div class="prices">
+
+        @if (Model.CallForPrice)
+        {
+            <div class="product-price call-for-price">
+                <span>@T("Products.CallForPrice")</span>
+            </div>
+        }
+        else
+        {
+            if (Model.IsRental)
+            {
+                <div class="rental-price">
+                    <span>@T("Products.Price.RentalPrice"):</span>
+                    <span>@Model.RentalPrice</span>
+                </div>
+            }
+            if (!string.IsNullOrWhiteSpace(Model.OldPrice))
+            {
+                <div class="old-product-price">
+                    <span>@T("Products.Price.OldPrice"):</span>
+                    <span>@Model.OldPrice</span>
+                </div>
+            }
+            <div class="@if (string.IsNullOrWhiteSpace(Model.PriceWithDiscount))
+                {
+                    <text>product-price</text>
+                }
+                else
+                {
+                    <text>non-discounted-price</text>
+                }">
+                @if (!string.IsNullOrWhiteSpace(Model.OldPrice) || !string.IsNullOrWhiteSpace(Model.PriceWithDiscount))
+                {
+                    <label for="price-value-@(Model.ProductId)">@T("Products.Price"):</label>
+                }
+                <div class="price-container">
+                      <div class="flex-container">
+                           <div>
+                               <span @if (string.IsNullOrWhiteSpace(Model.PriceWithDiscount)) { <text> id="price-value-@(Model.ProductId)" class="price-value-@(Model.ProductId)" </text> }>
+                                   @Html.Raw(Model.Price)
+                               </span>
+                           </div>
+                           <div>
+                                @if (bool.TryParse(OnSpecialProduct, out var isOnSpecial) && isOnSpecial)
+                                {
+                                    <div class="on-special-product">
+                                        <img src="@Url.Content(B2BB2CFeaturesDefaults.ProductIsOnSpecialIconPath)"alt="Product On Special" />
+                                        <span class="tooltip-text">@T("Plugin.Misc.NopStation.Plugin.B2B.B2BB2CFeatures.SpecialProductMessage")</span>
+                                    </div>
+                                } 
+                           </div>
+                      </div>
+                </div>
+            </div>
+            if (!string.IsNullOrWhiteSpace(Model.PriceWithDiscount))
+            {
+                <div class="product-price discounted-price">
+                    <span>@T("Products.Price.WithDiscount"):</span>
+                    <span class="price-value-@(Model.ProductId)">
+                        @Html.Raw(Model.PriceWithDiscount)
+                    </span>
+                </div>
+            }
+            if (!string.IsNullOrEmpty(Model.BasePricePAngV))
+            {
+                <div class="base-price-pangv" id="base-price-pangv-@Model.ProductId">
+                    @Model.BasePricePAngV
+                </div>
+            }
+            if (Model.DisplayTaxShippingInfo)
+            {
+                var inclTax = await workContext.GetTaxDisplayTypeAsync() == TaxDisplayType.IncludingTax;
+                <div class="tax-shipping-info">
+                    @T(inclTax ? "Products.Price.TaxShipping.InclTax" : "Products.Price.TaxShipping.ExclTax", Url.RouteTopicUrl("shippinginfo"))
+                </div>
+            }
+        }
+        @await Component.InvokeAsync("Widget", new { widgetZone = B2BB2CFeaturesDefaults.ProductPriceB2BPricingNote, additionalData = Model.ProductId })
+    </div>
+}

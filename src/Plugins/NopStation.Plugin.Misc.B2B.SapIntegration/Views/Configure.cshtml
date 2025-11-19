@@ -1,0 +1,74 @@
+﻿@model ConfigurationModel
+
+@{
+	Layout = "_AdminLayout";
+	ViewBag.PageTitle = T("NopStation.Plugin.Misc.B2B.SapIntegration.Configuration").Text;
+	NopHtml.SetActiveMenuItemSystemName("Misc.B2B.SapIntegration.Configuration");
+}
+
+@{
+    var customer = await workContext.GetCurrentCustomerAsync();
+
+    const string hideCustomerCreationBlockAttributeName = "Configure.HideCustomerCreationBlock";
+    var hideCustomerCreationBlock = await genericAttributeService.GetAttributeAsync<bool>(customer, hideCustomerCreationBlockAttributeName);
+
+    const string hideOrderCreationBlockAttributeName = "Configure.HideOrderCreationBlock";
+    var hideOrderCreationBlock = await genericAttributeService.GetAttributeAsync<bool>(customer, hideOrderCreationBlockAttributeName);
+
+    const string hideOrderSyncBlockAttributeName = "Configure.HideOrderSyncBlock";
+    var hideOrderSyncBlock = await genericAttributeService.GetAttributeAsync<bool>(customer, hideOrderSyncBlockAttributeName);
+
+    const string hidePaymentBlockAttributeName = "Configure.HidePaymentBlock";
+    var hidePaymentBlock = await genericAttributeService.GetAttributeAsync<bool>(customer, hidePaymentBlockAttributeName);
+
+	const string hideSapSettingsBlockAttributeName = "Configure.HideSapSettingsBlock";
+	var hideSapSettingsBlock = await genericAttributeService.GetAttributeAsync<bool>(customer, hideSapSettingsBlockAttributeName);
+
+}
+
+@await Component.InvokeAsync(typeof(StoreScopeConfigurationViewComponent))
+
+<form asp-controller="SapIntegration" asp-action="Configure" method="post">
+	<div class="content-header clearfix">
+		<h1 class="float-left">
+			@T("NopStation.Plugin.Misc.B2B.SapIntegration.Configuration")
+		</h1>
+		<div class="float-right">
+			<button type="submit" name="save" class="btn btn-primary">
+				<i class="far fa-save"></i>
+				@T("Admin.Common.Save")
+			</button>
+		</div>
+	</div>
+	<section class="content">
+		<div class="container-fluid">
+			<div class="form-horizontal">
+				<nop-cards id="SapIntegration-cards">
+					<nop-card asp-name="SapIntegration-general" asp-icon="fas fa-info" asp-title="@T("NopStation.Plugin.Misc.B2B.SapIntegration.General")" asp-hide-block-attribute-name="@SapIntegrationDefaults.HideGeneralBlock" asp-hide="@Model.HideGeneralBlock" asp-advanced="false">
+						@await Html.PartialAsync("~/Plugins/Misc.B2B.SapIntegration/Views/_Configure.General.cshtml", Model)
+					</nop-card>
+
+					<nop-card asp-name="SapIntegration-CustomerCreation" asp-icon="fas fa-info" asp-title="@T("NopStation.Plugin.Misc.B2B.SapIntegration.CustomerCreation")" asp-hide-block-attribute-name="@hideCustomerCreationBlockAttributeName" asp-hide="@hideCustomerCreationBlock" asp-advanced="false">
+						@await Html.PartialAsync("~/Plugins/Misc.B2B.SapIntegration/Views/_Configure.CustomerCreation.cshtml", Model)
+					</nop-card>
+
+					<nop-card asp-name="SapIntegration-OrderCreation" asp-icon="fas fa-info" asp-title="@T("NopStation.Plugin.Misc.B2B.SapIntegration.OrderCreation")" asp-hide-block-attribute-name="@hideOrderCreationBlockAttributeName" asp-hide="@hideOrderCreationBlock" asp-advanced="false">
+						@await Html.PartialAsync("~/Plugins/Misc.B2B.SapIntegration/Views/_Configure.OrderCreation.cshtml", Model)
+					</nop-card>
+
+					<nop-card asp-name="SapIntegration-OrderSync" asp-icon="fas fa-info" asp-title="@T("NopStation.Plugin.Misc.B2B.SapIntegration.OrderSync")" asp-hide-block-attribute-name="@hideOrderSyncBlockAttributeName" asp-hide="@hideOrderSyncBlock" asp-advanced="false">
+						@await Html.PartialAsync("~/Plugins/Misc.B2B.SapIntegration/Views/_Configure.OrderSync.cshtml", Model)
+					</nop-card>
+
+					<nop-card asp-name="SapIntegration-Payment" asp-icon="fas fa-info" asp-title="@T("NopStation.Plugin.Misc.B2B.SapIntegration.Payment")" asp-hide-block-attribute-name="@hidePaymentBlockAttributeName" asp-hide="@hidePaymentBlock" asp-advanced="false">
+						@await Html.PartialAsync("~/Plugins/Misc.B2B.SapIntegration/Views/_Configure.Payment.cshtml", Model)
+					</nop-card>
+
+					<nop-card asp-name="SapIntegration-SapSettings" asp-icon="fas fa-info" asp-title="@T("NopStation.Plugin.Misc.B2B.SapIntegration.SapSettings")" asp-hide-block-attribute-name="@hideSapSettingsBlockAttributeName" asp-hide="@hideSapSettingsBlock" asp-advanced="false">
+						@await Html.PartialAsync("~/Plugins/Misc.B2B.SapIntegration/Views/_Configure.SapSettings.cshtml", Model)
+					</nop-card>
+				</nop-cards>
+			</div>
+		</div>
+	</section>
+</form>

@@ -1,0 +1,11 @@
+﻿{
+  "Group": "Shipping rate computation",
+  "FriendlyName": "B2C Shipping Manager",
+  "SystemName": "Shipping.B2CShipping",
+  "Version": "1.00",
+  "SupportedVersions": [ "4.70" ],
+  "Author": "Comalytics",
+  "DisplayOrder": 1,
+  "FileName": "Nop.Plugin.Shipping.B2CShipping.dll",
+  "Description": "This plugin offers shipping rate computation for B2C Customer"
+}

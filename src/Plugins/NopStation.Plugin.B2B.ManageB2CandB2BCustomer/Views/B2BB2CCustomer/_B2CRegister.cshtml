@@ -1,0 +1,1127 @@
+@using NopStation.Plugin.B2B.ManageB2CandB2BCustomer.Models
+
+@model B2CRegisterModel
+@inject B2BB2CFeaturesSettings b2BB2CFeaturesSettings
+@{
+    var storeScope = await storeContext.GetActiveStoreScopeConfigurationAsync();
+}
+
+<style>
+    #map {
+        height: 500px;
+        margin-bottom: 30px;
+    }
+
+    #description {
+        font-family: Roboto;
+        font-size: 15px;
+        font-weight: 300;
+    }
+
+    #infowindow-content .title {
+        font-weight: bold;
+    }
+
+    #infowindow-content {
+        display: none;
+    }
+
+    #map #infowindow-content {
+        display: inline;
+    }
+
+    .address-input-card {
+        margin: 10px;
+        overflow: hidden;
+        padding: 0;
+        width: 92%;
+        height: 40px;
+        border-radius: 2px;
+        box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+        left: 0 !important;
+    }
+
+    #address-input-container {
+    }
+
+    .pac-controls, .map-controls {
+        display: inline-block;
+        padding: 5px 11px;
+    }
+
+        .pac-controls label, .map-controls label {
+            font-family: Roboto;
+            font-size: 13px;
+            font-weight: 300;
+        }
+
+    #address-input {
+        background-color: #fff;
+        text-overflow: ellipsis;
+        width: 100%;
+        border: none !important;
+        border-radius: 0px !important;
+        padding-bottom: 6px;
+    }
+
+    #title {
+        color: #fff;
+        background-color: #4d90fe;
+        font-size: 25px;
+        font-weight: 500;
+        padding: 6px 12px;
+    }
+
+    .gmnoprint[role="menubar"] {
+        bottom: 0px;
+        top: auto !important;
+    }
+
+        .gmnoprint[role="menubar"] .gm-style-mtc {
+            width: 85px;
+            height: 0;
+            float: none !important;
+        }
+
+            .gmnoprint[role="menubar"] .gm-style-mtc button {
+                height: 100% !important;
+                width: 100%;
+                border-radius: 10px !important;
+                background: transparent !important;
+                color: transparent !important;
+                font-size: 0 !important;
+                display: none !important;
+            }
+
+    .gm-style-mtc ul[role="menu"] {
+        bottom: 90px;
+        top: auto !important;
+        right: 10px !important;
+        display: none !important;
+    }
+
+    .gm-style-mtc li[role="menuitemcheckbox"] {
+        font-size: 15px !important;
+        display: none !important;
+    }
+
+    .toggle-map-button {
+        position: absolute;
+        z-index: 1;
+        bottom: 24px !important;
+        left: 10px !important;
+        width: 75px;
+        height: 75px;
+        text-align: center;
+        background-color: #fff;
+        border: none;
+        outline: none;
+        border-radius: 10px !important;
+        background-image: url('Plugins/NopStation.Plugin.B2B.ManageB2CandB2BCustomer/Content/img/satellite_thumb.png');
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: 90px;
+        margin: 0px;
+        padding: 10px;
+        text-transform: none;
+        appearance: none;
+        cursor: pointer;
+        user-select: none;
+        direction: ltr;
+        overflow: hidden;
+        text-align: center;
+        vertical-align: middle;
+        color: #fff;
+        font-family: Roboto, Arial, sans-serif;
+        font-size: 15px;
+        border-bottom-left-radius: 2px;
+        border-top-left-radius: 2px;
+        box-shadow: rgba(0, 0, 0, 0.3) 0px 1px 4px -1px;
+        min-width: 66px;
+        font-weight: 500;
+    }
+
+    a[rel="noopener"] {
+        display: none !important;
+    }
+
+    #B2CRegisterForm #dark-overlay-for-popup {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgb(217 217 217 / 50%);
+        z-index: 999;
+    }
+
+    div[aria-describedby="noShopZoneWarningDialog"] {
+        min-height: 250px;
+    }
+</style>
+
+<div class="validationSummaryHeaderTop" id="validationSummaryHeaderTop" hidden>
+    <strong class="text-danger">@T("Plugins.B2B.ManageB2BCustomer.Account.ValidationSummaryHeader"):</strong>
+    <br />
+    <br />
+</div>
+@{
+    var hasPasswordError = ViewData.ModelState.TryGetValue("Password", out var passwordState)
+                           && passwordState.Errors.Count > 0;
+}
+@if (hasPasswordError)
+{
+    <!-- Custom HTML-rendered error for Password -->
+    <div class="field-validation-error">
+        @foreach (var error in passwordState.Errors)
+        {
+            @Html.Raw(error.ErrorMessage)
+        }
+    </div>
+}
+else
+{
+    <!-- Default validation summary for other fields -->
+    <div asp-validation-summary="All" class="message-error"></div>
+}
+
+
+@Html.HiddenFor(x => x.IsB2BUser)
+@if (b2BB2CFeaturesSettings.UseDefaultAccountForB2CUser && b2BB2CFeaturesSettings.DefaultB2CErpAccountId > 0)
+{
+    @if (!Model.IsB2BUser)
+    {
+        <script asp-location="Footer">
+            $(document).ready(function () {
+                $('.b2b-b2c-account-info').hide();
+            });
+        </script>
+        <input asp-for="B2CIdentificationNumber" hidden />
+        <input asp-for="AccountName" hidden />
+    }
+}
+
+<div class="fieldset">
+    <div class="title">
+        <strong>@T("Plugins.B2B.ManageB2BCustomer.Account.B2CRegister.Title")</strong>
+        <p class="b2cRegisterDescription">@T("Plugins.B2B.ManageB2BCustomer.Account.B2CRegister.Description")</p>
+    </div>
+</div>
+<div class="fieldset">
+    <div class="title">
+        <strong>@T("Account.YourPersonalDetails")</strong>
+    </div>
+    <div class="form-fields">
+
+        <div class="inputs">
+            <label asp-for="Company" class="control-label">
+                @T("Plugins.B2B.Manageb2bcustomer.Account.Fields.B2C.Company"):
+                <span class="applicable">If Applicable</span>
+            </label>
+            <input asp-for="Company" />
+        </div>
+
+        @if (Model.GenderEnabled)
+        {
+            <div class="inputs">
+                <label for="gender">@T("Account.Fields.Gender"):</label>
+                <div id="gender" class="gender">
+                    <span class="male">
+                        <input type="radio" asp-for="Gender" value="M" checked="@(Model.Gender == "M")" id="gender-male" />
+                        <label class="forcheckbox" for="gender-male">@T("Account.Fields.Gender.Male")</label>
+                    </span>
+                    <span class="female">
+                        <input type="radio" asp-for="Gender" value="F" checked="@(Model.Gender == "F")" id="gender-female" />
+                        <label class="forcheckbox" for="gender-female">@T("Account.Fields.Gender.Female")</label>
+                    </span>
+                </div>
+            </div>
+        }
+        @if (Model.FirstNameEnabled)
+        {
+            <div class="inputs">
+                <label asp-for="FirstName" asp-postfix=":"></label>
+                <input asp-for="FirstName" />
+                @if (Model.FirstNameRequired)
+                {
+                    <nop-required />
+                }
+                <span asp-validation-for="FirstName"></span>
+            </div>
+        }
+        @if (Model.LastNameEnabled)
+        {
+            <div class="inputs">
+                <label asp-for="LastName" asp-postfix=":"></label>
+                <input asp-for="LastName" />
+                @if (Model.LastNameRequired)
+                {
+                    <nop-required />
+                }
+                <span asp-validation-for="LastName"></span>
+            </div>
+        }
+        @if (Model.DateOfBirthEnabled)
+        {
+            <div class="inputs date-of-birth">
+                <label>@T("Account.Fields.DateOfBirth"):</label>
+                <nop-date-picker asp-day-name="@Html.NameFor(x => x.DateOfBirthDay)"
+                                 asp-month-name="@Html.NameFor(x => x.DateOfBirthMonth)"
+                                 asp-year-name="@Html.NameFor(x => x.DateOfBirthYear)"
+                                 asp-begin-year="@(DateTime.Now.AddYears(-110))"
+                                 asp-end-year="@(DateTime.UtcNow)"
+                                 asp-selected-date="@Model.ParseDateOfBirth()" />
+
+                @if (Model.DateOfBirthRequired)
+                {
+                    <nop-required />
+                }
+                <span asp-validation-for="DateOfBirthDay"></span>
+                <span asp-validation-for="DateOfBirthMonth"></span>
+                <span asp-validation-for="DateOfBirthYear"></span>
+            </div>
+        }
+        <div class="inputs">
+            <label asp-for="Email" asp-postfix=":"></label>
+            <input asp-for="Email" />
+            <nop-required />
+            <span asp-validation-for="Email"></span>
+        </div>
+        @if (Model.EnteringEmailTwice)
+        {
+            <div class="inputs">
+                <label asp-for="ConfirmEmail" asp-postfix=":"></label>
+                <input asp-for="ConfirmEmail" />
+                <nop-required />
+                <span asp-validation-for="ConfirmEmail"></span>
+            </div>
+        }
+        @if (Model.UsernamesEnabled)
+        {
+            <div class="inputs">
+                <label asp-for="Username" asp-postfix=":"></label>
+                <input asp-for="Username" />
+                <nop-required />
+                <span asp-validation-for="Username"></span>
+                @if (Model.CheckUsernameAvailabilityEnabled)
+                {
+                    @await Html.PartialAsync("_CheckUsernameAvailability")
+                }
+            </div>
+
+        }
+
+        @if (Model.PhoneEnabled)
+        {
+            <div class="inputs">
+                <label asp-for="Phone" asp-postfix=":"></label>
+                <input asp-for="Phone" />
+                @if (Model.PhoneRequired)
+                {
+                    <nop-required />
+                }
+                <span asp-validation-for="Phone"></span>
+            </div>
+        }
+        <div class="inputs">
+            <label asp-for="VatNumber" class="control-label">
+                @T("Plugins.B2B.Manageb2bcustomer.Account.Fields.B2C.Vatnumber"):
+                <span class="applicable">If Applicable</span>
+            </label>
+            <input asp-for="VatNumber" />
+            @*                 <span class="vat-note"><em>@T("Account.Fields.VatNumber.Note")</em></span> *@
+            <span asp-validation-for="VatNumber"></span>
+        </div>
+
+    </div>
+</div>
+
+@if (Model.AllowCustomersToSetTimeZone)
+{
+    <div class="fieldset">
+        <div class="title">
+            <strong>@T("Account.Preferences")</strong>
+        </div>
+        <div class="form-fields">
+            <div class="inputs">
+                <label asp-for="TimeZoneId" asp-postfix=":"></label>
+                <select asp-for="TimeZoneId" asp-items="Model.AvailableTimeZones"></select>
+                <span asp-validation-for="TimeZoneId"></span>
+            </div>
+        </div>
+    </div>
+}
+
+<div class="fieldset">
+    <br />
+    <div class="title">
+        <strong>@T("NopStation.Plugin.B2B.ManageB2CandB2BCustomer.Address")</strong>
+    </div>
+    <div id="addressForm" action="" method="get" autocomplete="off">
+        <div hidden id="latitudeDiv" class="inputs">
+            <label asp-for="Latitude" asp-postfix=":"></label>
+            <input asp-for="Latitude" id="latitude" readonly />
+            <nop-required />
+            <span asp-validation-for="Latitude"></span>
+        </div>
+        <div hidden id="longitudeDiv" class="inputs">
+            <label asp-for="Longitude" asp-postfix=":"></label>
+            <input asp-for="Longitude" id="longitude" readonly />
+            <nop-required />
+            <span asp-validation-for="Longitude"></span>
+        </div>
+
+        <div hidden id="houseNumberDiv" class="inputs">
+            <label asp-for="HouseNumber" asp-postfix=":"></label>
+            <input asp-for="HouseNumber" id="houseNumber" />
+            <nop-required />
+            <span asp-validation-for="HouseNumber"></span>
+        </div>
+        <div hidden id="streetDiv" class="inputs">
+            <label asp-for="Street" asp-postfix=":"></label>
+            <input asp-for="Street" id="street" />
+            <nop-required />
+            <span asp-validation-for="Street"></span>
+        </div>
+        <div hidden id="suburbDiv" class="inputs">
+            <label asp-for="Suburb" asp-postfix=":"></label>
+            <input asp-for="Suburb" id="suburb" />
+            <nop-required />
+            <span asp-validation-for="Suburb"></span>
+        </div>
+        <div hidden id="cityDiv" class="inputs">
+            <label asp-for="CityName" asp-postfix=":"></label>
+            <input asp-for="CityName" id="city" />
+            <nop-required />
+            <span asp-validation-for="CityName"></span>
+        </div>
+        <div hidden id="stateProvinceDiv" class="inputs">
+            <label asp-for="StateProvince" asp-postfix=":"></label>
+            <input asp-for="StateProvince" id="stateProvince" />
+            <nop-required />
+            <span asp-validation-for="StateProvince"></span>
+        </div>
+        <div class="inputs" hidden>
+            <label asp-for="StateProvinceCode" asp-postfix=":"></label>
+            <input asp-for="StateProvinceCode" id="stateProvinceCode" />
+            <span asp-validation-for="StateProvinceCode"></span>
+        </div>
+        <div hidden id="postalCodeDiv" class="inputs">
+            <label asp-for="PostalCode" asp-postfix=":"></label>
+            <input asp-for="PostalCode" id="postalCode" />
+            <nop-required />
+            <span asp-validation-for="PostalCode"></span>
+        </div>
+        <div hidden id="countryDiv" class="inputs country-input">
+            <label asp-for="Country" asp-postfix=":"></label>
+            <input asp-for="Country" id="country" />
+            <nop-required />
+            <span asp-validation-for="Country"></span>
+        </div>
+        <div class="inputs" hidden>
+            <label asp-for="CountryCode" asp-postfix=":"></label>
+            <input asp-for="CountryCode" id="countryCode" />
+            <span asp-validation-for="CountryCode"></span>
+        </div>
+
+    </div>
+    <div class="b2c-delivery-address shipping-address-google-map">
+        <div class="address-input-card" id="address-input-card">
+            <div id="address-input-container">
+                <input id="address-input" type="text" placeholder="Enter your delivery address here or click to pin your location on the map below" />
+            </div>
+        </div>
+        <button id="toggle-map-button" class="toggle-map-button" value="map">Satellite</button>
+        <div id="map"></div>
+        <div id="infowindow-content">
+            <span id="place-name"></span><br />
+            <span id="place-address"></span><br />
+            <span id="place-lng"></span>
+            <span id="place-lat"></span>
+        </div>
+    </div>
+
+    <br />
+</div>
+
+
+<div class="fieldset">
+    <div class="title">
+        <strong>@T("Account.YourPassword")</strong>
+    </div>
+    <div class="form-fields">
+        <div class="result password-rules">
+            <p>Must meet the following rules: </p>
+            <ul>
+                <li>Must have at least 10 characters</li>
+                <li>Must have at least one uppercase</li>
+                <li>Must have at least one lowercase</li>
+                <li>Must have at least one digit</li>
+                <li>Must have at least one special character (e.g. #?!@@$%^&amp;*-)</li>
+            </ul>
+        </div>
+        <div class="inputs">
+            <label asp-for="Password" asp-postfix=":"></label>
+            <input asp-for="Password" />
+            <nop-required />
+            @{
+                hasPasswordError = ViewData.ModelState.TryGetValue("Password", out var passwordSte)
+                && passwordSte.Errors.Count > 0;
+            }
+            @if (hasPasswordError)
+            {
+                <!-- Custom HTML-rendered error for Password -->
+                <div class="field-validation-error">
+                    @foreach (var error in passwordSte.Errors)
+                    {
+                        @Html.Raw(error.ErrorMessage)
+                    }
+                </div>
+            }
+            else
+            {
+                <span asp-validation-for="Password"></span>
+            }
+            <span id="toggle-password"></span>
+            <script>
+                document.getElementById("toggle-password").addEventListener("click", function (event) {
+                    event.target.classList.toggle("active");
+                    const passwordInput = document.getElementById("Password");
+                    // Toggle the type attribute
+                    if (passwordInput.type === "password") {
+                        passwordInput.type = "text";  // Change to text to show the password
+                    } else {
+                        passwordInput.type = "password";  // Change back to password to hide it
+                    }
+                });
+            </script>
+        </div>
+        <div class="inputs">
+            <label asp-for="ConfirmPassword" asp-postfix=":"></label>
+            <input asp-for="ConfirmPassword" />
+            <nop-required />
+            <span asp-validation-for="ConfirmPassword"></span>
+            <span id="toggle-confirm-password"></span>
+            <script>
+                document.getElementById("toggle-confirm-password").addEventListener("click", function (event) {
+                    event.target.classList.toggle("active");
+                    const passwordInput = document.getElementById("ConfirmPassword");
+                    // Toggle the type attribute
+                    if (passwordInput.type === "password") {
+                        passwordInput.type = "text";  // Change to text to show the password
+                    } else {
+                        passwordInput.type = "password";  // Change back to password to hide it
+                    }
+                });
+            </script>
+        </div>
+        @if (Model.DisplayCaptcha)
+        {
+            <nop-captcha />
+        }
+        @if (Model.HoneypotEnabled)
+        {
+            @Html.Raw(Html.GenerateHoneypotInput())
+        }
+    </div>
+</div>
+
+@if (Model.AcceptPrivacyPolicyEnabled || Model.GdprConsents.Count > 0)
+{
+    <div class="fieldset">
+        <div class="title">
+            <strong>@T("Account.UserAgreement")</strong>
+        </div>
+        <div class="form-fields">
+            @if (Model.AcceptPrivacyPolicyEnabled)
+            {
+                <script asp-location="Footer">
+                    $(document).ready(function () {
+                        $('#register-button').on('click', function () {
+                            if ($('#accept-consent').is(':checked')) {
+                                //do some stuff
+                                return true;
+                            } else {
+                                //just show validation errors, don't post
+                                alert('@Html.Raw(JavaScriptEncoder.Default.Encode(T("Account.Fields.AcceptPrivacyPolicy.Required").Text))');
+                                return false;
+                            }
+                        });
+                    });
+                </script>
+                <div class="inputs accept-consent">
+                    <input id="accept-consent" type="checkbox" name="accept-consent" />
+                    <label for="accept-consent">@T("Account.Fields.AcceptPrivacyPolicy")</label>
+                    @if (Model.AcceptPrivacyPolicyPopup)
+                    {
+                        <span class="read" id="read-privacyinfo">@T("Account.Fields.AcceptPrivacyPolicy.Read")</span>
+                        <script asp-location="Footer">
+                            $(document).ready(function () {
+                                $('#read-privacyinfo').on('click',
+                                    function (e) {
+                                        displayPopupContentFromUrl(
+                                            '@Url.RouteUrl("TopicPopup", new { SystemName = "privacyinfo" })',
+                                            '@T("Account.Fields.AcceptPrivacyPolicy")');
+                                    });
+                            });
+                        </script>
+                    }
+                    else
+                    {
+                        <a class="read" id="read-privacyinfo" href="@Url.RouteTopicUrl("privacyinfo")">@T("Account.Fields.AcceptPrivacyPolicy.Read")</a>
+                    }
+                </div>
+            }
+
+            @if (Model.GdprConsents.Count > 0)
+            {
+                foreach (var consent in Model.GdprConsents)
+                {
+                    if (consent.IsRequired)
+                    {
+                        <script asp-location="Footer">
+                            $(document).ready(function () {
+                                $('#register-button').on('click', function () {
+                                    if ($('#consent@(consent.Id)').is(':checked')) {
+                                        //do some stuff
+                                        return true;
+                                    } else {
+                                        //just show validation errors, don't post
+                                        alert('@Html.Raw(JavaScriptEncoder.Default.Encode(consent.RequiredMessage))');
+                                        return false;
+                                    }
+                                });
+                            });
+                        </script>
+                    }
+                    <div class="inputs accept-consent">
+                        <input id="consent@(consent.Id)" type="checkbox" name="consent@(consent.Id)" checked="@consent.Accepted" />
+                        <label for="consent@(consent.Id)">@consent.Message</label>
+                    </div>
+                }
+
+            }
+        </div>
+    </div>
+}
+
+<div class="buttons">
+    <button type="submit" name="register-button" id="register-button" class="button-1 register-next-step-button">@T("Account.Register.Button")</button>
+</div>
+
+
+<div id="noShopZoneWarningDialog" class="custom-modal" title="@T("NopStation.Plugin.B2B.ManageB2CandB2BCustomer.B2CRegister.GivenAddressInNoShopZone.Title")" style="display: none;">
+    <div class="popup-content">
+        @T("NopStation.Plugin.B2B.ManageB2CandB2BCustomer.B2CRegister.GivenAddressInNoShopZone.Message")
+    </div>
+</div>
+<div id="dark-overlay-for-popup" style="display: none;"></div>
+
+<script asp-location="Footer">
+
+    const addressForm = document.getElementById("addressForm");
+    const countryDiv = document.getElementById("countryDiv");
+
+    $(document).ready(function () {
+        $("#country").change(function () {
+            ValidateCountry();
+        });
+    });
+
+    //add toggle button for default and satellite view
+    function placeButton() {
+        $('.toggle-map-button').prependTo('.gmnoprint[role="menubar"]');
+        $('.gm-style-mtc [aria-label="Show satellite imagery"]').hide();
+        $('.gm-style-mtc [aria-label="Show street map"]').hide();
+        $('a[rel="noopener"]').hide();
+    }
+
+    //toggle between default and satellite view
+    $(window).on('load', function () {
+        $('.toggle-map-button').on('click', function (e) {
+            e.stopPropagation();
+            e.preventDefault();
+            if ($('.toggle-map-button').val() == 'map') {
+                $('.gm-style-mtc [aria-label="Show satellite imagery"]').click();
+                $('.gm-style-mtc [aria-label="Show satellite imagery"]').attr('aria-checked', true);
+                $('.gm-style-mtc [aria-label="Show satellite imagery"]').parents('.gm-style-mtc').css('display', 'block');
+                $('.toggle-map-button').css('background-image', 'url("Plugins/NopStation.Plugin.B2B.ManageB2CandB2BCustomer/Content/img/map_thumb.png")');
+                $('.toggle-map-button').css('color', '#000');
+
+                $('.gm-style-mtc [aria-label="Show street map"]').attr('aria-checked', false);
+                $('.gm-style-mtc [aria-label="Show street map"]').parents('.gm-style-mtc').css('display', 'none');
+                $('.toggle-map-button').val('satellite');
+                $('.toggle-map-button').html('Map');
+            }
+            else {
+                $('.gm-style-mtc [aria-label="Show street map"]').click();
+                $('.gm-style-mtc [aria-label="Show street map"]').attr('aria-checked', true);
+                $('.gm-style-mtc [aria-label="Show street map"]').parents('.gm-style-mtc').css('display', 'block');
+                $('.toggle-map-button').css('background-image', 'url("Plugins/NopStation.Plugin.B2B.ManageB2CandB2BCustomer/Content/img/satellite_thumb.png")');
+                $('.toggle-map-button').css('color', '#fff');
+
+                $('.gm-style-mtc [aria-label="Show satellite imagery"]').attr('aria-checked', false);
+                $('.gm-style-mtc [aria-label="Show satellite imagery"]').parents('.gm-style-mtc').css('display', 'none');
+                $('.toggle-map-button').val('map');
+                $('.toggle-map-button').html('Satellite');
+            }
+        });
+        $(".toggle-map-button").hover(function () {
+            if ($(this).val() == 'map') {
+                $('.gm-style-mtc [aria-label="Show street map"] + ul[role="menu"]').css('display', 'block');
+            }
+            else {
+                $('.gm-style-mtc [aria-label="Show satellite imagery"] + ul[role="menu"]').css('display', 'block');
+            }
+        }, function () {
+            if ($(this).val() == 'map') {
+                $('.gm-style-mtc [aria-label="Show street map"] + ul[role="menu"]').css('display', 'none');
+            }
+            else {
+                $('.gm-style-mtc [aria-label="Show satellite imagery"] + ul[role="menu"]').css('display', 'none');
+            }
+        });
+    });
+
+    // validation checks when registration button is clicked
+    $('#register-button').on('click', function (e) {
+        e.preventDefault();
+
+        //use this flag to determine if privacy policy/gdpr consents have been checked
+        var flag = 0;
+
+        //validation for privacy policy checkbox
+        var pCheck = @Html.Raw(Json.Serialize(Model.AcceptPrivacyPolicyEnabled));
+        if (pCheck) {
+            if ($('#accept-consent').is(':checked')) {
+                $('#AcceptPrivacyPolicy-error').hide();
+                //console.log("checkbox valid checked");
+            }
+            else {
+                //console.log("checkbox invalid");
+                $('#AcceptPrivacyPolicy-error').show();
+                flag = 1;
+            }
+        }
+
+        //validattion for gdprConsents
+        var gdprConsents = @Html.Raw(Json.Serialize(Model.GdprConsents));
+        gdprConsents.forEach(function (consent) {
+            if ($('#consent(consent.Id)').is(':checked')) {
+                //console.log("gdpr valid checked");
+            } else {
+                alert('Html.Raw(JavaScriptEncoder.Default.Encode(consent.RequiredMessage))');
+                flag = 1;
+            }
+        });
+
+        //validate other fields only if the privacy policy/gdpr consents have been accepted (flag remains unset)
+        if (flag == 0) {
+            //console.log("flag 0");
+
+            //validation checks for address fields (not empty)
+            //fluent validation doesn't work on hidden fields. So remove the hidden attribute if any field is empty
+
+            //console.log(document.getElementById("latitude").value);
+            //console.log(document.getElementById("longitude").value);
+            //console.log(document.getElementById("houseNumber").value);
+            //console.log(document.getElementById("street").value);
+            //console.log(document.getElementById("suburb").value);
+            //console.log(document.getElementById("city").value);
+            //console.log(document.getElementById("stateProvince").value);
+            //console.log(document.getElementById("postalCode").value);
+            //console.log(document.getElementById("country").value);
+
+            if (document.getElementById("latitude").value == "") {
+                ShowDiv(document.getElementById("latitudeDiv"));
+                //console.log("lat show");
+            }
+            if (document.getElementById("longitude").value == "") {
+                ShowDiv(document.getElementById("longitudeDiv"));
+                //console.log("long show");
+            }
+            if (document.getElementById("houseNumber").value == "") {
+                ShowDiv(document.getElementById("houseNumberDiv"));
+                //console.log("hn show");
+            }
+            if (document.getElementById("street").value == "") {
+                ShowDiv(document.getElementById("streetDiv"));
+                //console.log("st show");
+            }
+            if (document.getElementById("suburb").value == "") {
+                ShowDiv(document.getElementById("suburbDiv"));
+                //console.log("su show");
+            }
+            if (document.getElementById("city").value == "") {
+                ShowDiv(document.getElementById("cityDiv"));
+                //console.log("ci show");
+            }
+            if (document.getElementById("stateProvince").value == "") {
+                ShowDiv(document.getElementById("stateProvinceDiv"));
+                //console.log("st show");
+            }
+            if (document.getElementById("postalCode").value == "") {
+                ShowDiv(document.getElementById("postalCodeDiv"));
+                //console.log("po show");
+            }
+            if (document.getElementById("country").value == "") {
+                ShowDiv(document.getElementById("countryDiv"));
+                //console.log("country show");
+            }
+
+            // submit the form for fluent validation to kick in with error messages
+            //console.log("submit form");
+            $("#B2CRegisterForm").submit();
+        }
+    });
+
+    function ShowDiv(element) {
+        RemoveHiddenAttribute(validationSummaryHeaderTop);
+        RemoveHiddenAttribute(addressForm);
+        RemoveHiddenAttribute(element);
+    }
+
+    function RemoveHiddenAttribute(element) {
+        element.hidden && element.removeAttribute("hidden");
+    }
+
+    function ValidateCountry() {
+        var countryValue = $("#country").val().toString().toLowerCase().trim();
+        if (countryValue != "" && countryValue == "south africa") {
+            $(".country-input span.field-validation-error").remove();
+            return true;
+        }
+        else {
+            $(".field-validation-error").show();
+            $(".country-input span.field-validation-error").remove();
+            $(".country-input").append('<span class="field-validation-error">@T("Country Must Be SouthAfrica")</span>');
+
+            ShowDiv(countryDiv);
+            return false;
+        }
+    }
+
+</script>
+
+<script>
+    function initMap() {
+
+        var latitude = document.getElementById("latitude");
+        var longitude = document.getElementById("longitude");
+        var houseNumber = document.getElementById("houseNumber");
+        var street = document.getElementById("street");
+        var suburb = document.getElementById("suburb");
+        var city = document.getElementById("city");
+        var stateProvince = document.getElementById("stateProvince");
+        var stateProvinceCode = document.getElementById("stateProvinceCode");
+        var country = document.getElementById("country");
+        var countryCode = document.getElementById("countryCode");
+        var postalCode = document.getElementById("postalCode");
+        var center = new google.maps.LatLng(@b2BB2CFeaturesSettings.Latitude, @b2BB2CFeaturesSettings.Longitude); // default Lati and Longi
+
+        const markerArray = [];
+        const card = document.getElementById("address-input-card");
+        const map = new google.maps.Map(document.getElementById("map"), {
+            center: center,
+            zoom: 13,
+            mapTypeControl: true,  //true = show satellite and default view
+            draggableCursor: 'default',
+
+        });
+
+        map.controls[google.maps.ControlPosition.TOP_LEFT].push(card);
+
+        //insert toggle button in the bottom left corner of the map
+        const layerbtn = document.getElementById("toggle-map-button");
+        map.controls[google.maps.ControlPosition.BOTTOM_LEFT].push(layerbtn);
+        layerbtn.style.left = "10px";
+
+        //get geolocation from browser
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const pos = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude,
+                    };
+
+                    //console.log(pos);
+                    map.setCenter(pos);
+                },
+                () => {
+                    handleLocationError(true, map.getCenter());
+                }
+            );
+        } else {
+            //browser doesn't support Geolocation
+            handleLocationError(false, map.getCenter());
+        }
+
+        const input = document.getElementById("address-input");
+        const options = {
+            componentRestrictions: { country: ["za"] }, // restrict suggestions within south africa only
+            fields: ["address_components", "formatted_address", "geometry", "name"],
+            strictBounds: false,
+        };
+        const autocomplete = new google.maps.places.Autocomplete(input, options);
+        autocomplete.bindTo("bounds", map);
+
+        const geocoder = new google.maps.Geocoder();
+
+        const infowindow = new google.maps.InfoWindow();
+        const infowindowContent = document.getElementById("infowindow-content");
+
+        infowindow.setContent(infowindowContent);
+
+        var marker = new google.maps.Marker({
+            map,
+            anchorPoint: new google.maps.Point(0, -29),
+        });
+
+        //get place info of the selected address from the autocomplete search box
+        autocomplete.addListener("place_changed", () => {
+            resetData();
+            clearMarkers();
+
+            const place = autocomplete.getPlace();
+
+            if (!place.geometry || !place.geometry.location) {
+                //console.log("No details available for input: '" + place.name + "'");
+                return;
+            }
+
+            if (place.geometry.viewport) {
+                map.fitBounds(place.geometry.viewport);
+            } else {
+                map.setCenter(place.geometry.location);
+                map.setZoom(17);
+            }
+
+            addMarker(place.geometry.location, map); //pin the selected place
+
+            infowindow.close();
+            marker.setVisible(false);
+
+            setInfoWindowFields(place);
+            setAddressFields(place.address_components);
+        });
+
+        //get plae info by clicking on map
+        google.maps.event.addListener(map, "click", (event) => {
+            event.stop();
+            resetData();
+            clearMarkers();
+            addMarker(event.latLng, map); //pin the selected place
+
+            //console.log("Click event: " + event);
+            //console.log("event.placeId: " + event.placeId);
+            //console.log("You clicked on: " + event.latLng);
+
+            if (event.placeId) {
+                //console.log("placeId found: ");
+                getPlaceInformation(event.placeId);
+            }
+            else {
+                //console.log("placeId not found found. using geocode.");
+                geocoder
+                    .geocode({ location: event.latLng })
+                    .then((response) => {
+                        if (response.results[0]) {
+
+                            //console.log("geocode response: ", response);
+                            //console.log("geocode response.result[0]: ", response.results[0]);
+
+                            if (response.results[0].geometry.viewport) {
+                                map.fitBounds(response.results[0].geometry.viewport);
+                            } else {
+                                map.setCenter(response.results[0].geometry.location);
+                                map.setZoom(17);
+                            }
+
+                            setInfoWindowFields(response.results[0]);
+                            setAddressFields(response.results[0].address_components);
+                        } else {
+                            //console.log("No results found");
+                        }
+                    })
+                    .catch((e) => console.log("Geocoder failed due to: " + e));
+            }
+        });
+
+        function getPlaceInformation(placeId) {
+            //console.log("getPlaceInformation: " + placeId);
+
+            infowindow.close();
+            marker.setVisible(false);
+
+            const place_service = new google.maps.places.PlacesService(map);
+
+            //console.log("place_service: ");
+
+            place_service.getDetails({ placeId: placeId }, (place, status) => {
+                //console.log("getDetails: " + place.name);
+
+                if (!place.geometry || !place.geometry.location) {
+                    //console.log("No details available for input: '" + place.name);
+                    return;
+                }
+
+                if (status == google.maps.places.PlacesServiceStatus.OK && place && place.geometry && place.geometry.location) {
+                    if (place.geometry.viewport) {
+                        map.fitBounds(place.geometry.viewport);
+                    } else {
+                        map.setCenter(place.geometry.location);
+                        map.setZoom(17);
+                    }
+
+                    setInfoWindowFields(place);
+                    setAddressFields(place.address_components);
+                }
+            });
+        }
+
+        function addMarker(location, map) {
+            marker = new google.maps.Marker({
+                position: location,
+                map: map,
+            });
+
+            markerArray.push(marker);
+        }
+
+        function clearMarkers() {
+            for (var i = 0; i < markerArray.length; i++) {
+                markerArray[i].setMap(null);
+            }
+        }
+
+        function resetData() {
+            //console.log("Reset");
+            latitude.value = "";
+            longitude.value = "";
+            houseNumber.value = "";
+            street.value = "";
+            suburb.value = "";
+            city.value = "";
+            stateProvince.value = "";
+            stateProvinceCode.value = "";
+            country.value = "";
+            countryCode.value = "";
+            postalCode.value = "";
+            infowindowContent.children["place-name"].textContent = "";
+            infowindowContent.children["place-address"].textContent = "";
+            infowindowContent.children["place-lng"].textContent = "";
+            infowindowContent.children["place-lat"].textContent = "";
+        }
+
+        function setInfoWindowFields(placeInfo) {
+            marker.setPosition(placeInfo.geometry.location);
+            marker.setVisible(true);
+
+            //console.log("infowindowContent: ");
+
+            var placeName = "";
+            if (placeInfo.name)
+                placeName = placeInfo.name + ", ";
+
+            infowindowContent.children["place-name"].textContent = placeName;
+            infowindowContent.children["place-address"].textContent = placeInfo.formatted_address;
+            infowindowContent.children["place-lng"].textContent = placeInfo.geometry.location.lng();
+            infowindowContent.children["place-lat"].textContent = placeInfo.geometry.location.lat();
+
+            //console.log("place name: ", placeName);
+            //console.log("place formatted address: ", placeInfo.formatted_address);
+            //console.log("place longitude: ", placeInfo.geometry.location.lng());
+            //console.log("place latitude: ", placeInfo.geometry.location.lat());
+
+            infowindow.open(map, marker);
+
+            input.value = placeName + placeInfo.formatted_address;
+            latitude.value = placeInfo.geometry.location.lat();
+            longitude.value = placeInfo.geometry.location.lng();
+        }
+
+        function setAddressFields(address_components) {
+            //console.log("place address components: ", address_components);
+            var addressComponents = address_components;
+
+            for (const component of addressComponents) {
+                const componentType = component.types;
+
+                if (componentType.includes("street_number")) {
+                    houseNumber.value = component.long_name;
+                }
+                else if (componentType.includes("route")) {
+                    street.value = component.long_name;
+                }
+                else if (componentType.includes("postal_code")) {
+                    postalCode.value = component.long_name;
+                }
+                else if (componentType.includes("locality")) {
+                    city.value = component.long_name;
+                }
+                else if (componentType.includes("sublocality")) {
+                    suburb.value = component.long_name;
+                }
+                else if (componentType.includes("sublocality_level_1")) {
+                    suburb.value = component.long_name;
+                }
+                else if (componentType.includes("sublocality_level_2")) {
+                    suburb.value = component.long_name;
+                }
+                else if (componentType.includes("administrative_area_level_1")) {
+                    stateProvince.value = component.long_name;
+                    stateProvinceCode.value = component.short_name;
+                }
+                else if (componentType.includes("country")) {
+                    country.value = component.long_name;
+                    countryCode.value = component.short_name;
+
+                    ValidateCountry();
+                }
+            }
+        }
+
+        function handleLocationError(browserHasGeolocation, pos) {
+            //console.log(pos);
+            browserHasGeolocation
+                ? console.log("Error: The Geolocation service failed")
+                : console.log("Error: The browser doesn't support geolocation");
+
+            map.setCenter(pos);
+        }
+    }
+    window.initMap = initMap;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // Load Google Maps API script here
+        var script = document.createElement("script");
+        script.src = "https://maps.googleapis.com/maps/api/js?key=@b2BB2CFeaturesSettings.GoogleMapsApiKey&callback=initMap&libraries=places&v=weekly";
+
+        document.head.appendChild(script);
+    });
+</script>
+
+<script asp-location="Footer">
+    $(document).ready(function () {
+        if ("@Model.ShowNoShopZoneAddressPopup" === "True") {
+            showPopupForNoShopZone();
+        }
+    });
+
+    function showPopupForNoShopZone() {
+        $("#dark-overlay-for-popup").show();
+        $("#noShopZoneWarningDialog").dialog({
+            modal: true,
+            draggable: false,
+            closeOnEscape: true
+        });
+
+        var closeButton = $("div[aria-describedby='noShopZoneWarningDialog'] .ui-dialog-titlebar-close");
+        closeButton.on("click", function () {
+            window.location.href = "/";
+        });
+    }
+</script>

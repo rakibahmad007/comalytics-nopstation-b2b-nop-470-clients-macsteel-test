@@ -1,0 +1,11 @@
+{
+  "Group": "Nop-Station",
+  "FriendlyName": "Manage B2C and B2B Customer",
+  "SystemName": "NopStation.Plugin.B2B.ManageB2CandB2BCustomer",
+  "Version": "4.70.10.1",
+  "SupportedVersions": [ "4.70" ],
+  "Author": "nopstation team",
+  "DisplayOrder": 5,
+  "FileName": "NopStation.Plugin.B2B.ManageB2CandB2BCustomer.dll",
+  "Description": "This plugin allows to Manage B2C and B2B customer registration and various address validations"
+}

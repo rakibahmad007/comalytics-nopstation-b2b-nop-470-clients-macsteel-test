@@ -1,0 +1,89 @@
+﻿@model ErpSalesOrgModel
+
+<div class="card-body">
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="@Model.AddB2CSalesOrgWarehouseModel.WarehouseId" />
+		</div>
+		<div class="col-md-9">
+			<nop-select asp-for="@Model.AddB2CSalesOrgWarehouseModel.WarehouseId" asp-items="@Model.AddB2CSalesOrgWarehouseModel.AvailableWarehouses" />
+			<span asp-validation-for="@Model.AddB2CSalesOrgWarehouseModel.WarehouseId"></span>
+		</div>
+	</div>
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="@Model.AddB2CSalesOrgWarehouseModel.B2CWarehouseCode" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="@Model.AddB2CSalesOrgWarehouseModel.B2CWarehouseCode" />
+			<span asp-validation-for="@Model.AddB2CSalesOrgWarehouseModel.B2CWarehouseCode"></span>
+		</div>
+	</div>
+	<div class="form-group row">
+		<div class="col-md-9 col-md-offset-3">
+			<button type="button" id="addB2CSalesOrgWareHouse" class="btn btn-primary">@T("Admin.Common.AddNewRecord")</button>
+		</div>
+	</div>
+
+	<button type="submit" class="btn btn-default" id="btnMarkPWH" style="display:none" />
+	<script>
+			var selectedId;
+			$(document).ready(function () {
+		   $("#btnMarkPWH-action-confirmation-submit-button").bind("click", function (event) {
+					event.preventDefault();
+					var postData = {
+						id: selectedId
+					};
+					addAntiForgeryToken(postData);
+					$.ajax({
+						cache: false,
+						type: "POST",
+						url: "@(Url.Action("MarkAsTradingWarehouse", "ErpSalesOrg"))",
+						data: postData,
+						success: function (data, textStatus, jqXHR) {
+							updateTable('#b2c-salesorg-warehouses-grid');
+						},
+						error: function (jqXHR, textStatus, errorThrown) {
+							$("#btnMarkPWHAlert").click();
+						}
+					});
+					$('#btnMarkPWH-action-confirmation').modal('toggle');
+				});
+			$('#addB2CSalesOrgWareHouse').click(function () {
+
+				console.log("clicked")
+				$('#addB2CSalesOrgWareHouse').attr('disabled', true);
+				var postData = {
+					WarehouseId: $("#@Html.IdFor(model => model.AddB2CSalesOrgWarehouseModel.WarehouseId)").val(),
+					B2CWarehouseCode: $("#@Html.IdFor(model => model.AddB2CSalesOrgWarehouseModel.B2CWarehouseCode)").val(),
+					IsB2CWarehouse: true
+				};
+				addAntiForgeryToken(postData);
+
+				$.ajax({
+					cache: false,
+					type: "POST",
+					url: "@Html.Raw(Url.Action("CreateB2CSalesOrgWareHouse", "ErpSalesOrg", new { salesOrgId = Model.Id }))",
+					data: postData,
+					success: function (data, textStatus, jqXHR) {
+						if (data.Result) {
+							updateTable('#b2c-salesorg-warehouses-grid');
+							$("#@Html.IdFor(model => model.AddB2CSalesOrgWarehouseModel.B2CWarehouseCode)").val('');
+						} else {
+							display_nop_error(data);
+						}
+					},
+					complete: function (jqXHR, textStatus) {
+						$('#addB2CSalesOrgWareHouse').attr('disabled', false);
+					}
+				});
+			});
+		});
+			function MarkAsTradingWarehouse(id) {
+				selectedId = id;
+				 $("#btnMarkPWH").click();
+			};
+	</script>
+</div>
+<nop-action-confirmation asp-button-id="btnMarkPWH" asp-additional-confirm="Plugins.Payments.B2BCustomerAccount.B2BSalesOrgWarehouse.AdditionalConfirm" />
+<nop-alert asp-alert-id="btnMarkPWHAlert" asp-alert-message="@T("Plugins.Payments.B2BCustomerAccount.B2BSalesOrgWarehouse.Alert.Error")" />

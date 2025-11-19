@@ -1,0 +1,34 @@
+@model SpecialIncludeExcludeModel
+
+@{
+    Layout = "_AdminLayout";
+    //page title
+    ViewBag.PageTitle = T("NopStation.Plugin.B2B.B2BB2CFeatures.SiteMapNode.Title.CustomerRestrictionHide").Text;
+    //active menu item (system name)
+    NopHtml.SetActiveMenuItemSystemName(B2BB2CFeaturesDefaults.CustomerRestrictionHide_SiteMapNode_SystemName);
+}
+
+<form asp-controller="B2BCustomerRestriction" asp-action="Create" method="post">
+    <div class="content-header clearfix">
+        <h1 class="float-left">
+            @T("Plugin.Misc.NopStation.Plugin.B2B.B2BB2CFeatures.HideProductsForAccount.AddNew")
+            <small>
+                <i class="fa fa-arrow-circle-left"></i>
+                <a asp-action="HideList">@T("Plugin.Misc.NopStation.Plugin.B2B.B2BB2CFeatures.B2BCustomerRestriction.BackToList")</a>
+            </small>
+        </h1>
+        <div class="float-right">
+            <button type="submit" name="save" class="btn btn-primary">
+                <i class="far fa-save"></i>
+                @T("Admin.Common.Save")
+            </button>
+            <button type="submit" name="save" class="btn btn-primary">
+                <i class="far fa-save"></i>
+                @T("Admin.Common.SaveContinue")
+            </button>
+        </div>
+    </div>
+    <input type="hidden" asp-for="SpecialTypeId" value="20" />
+    @await Html.PartialAsync("_CreateOrUpdate.cshtml", Model)
+
+</form>

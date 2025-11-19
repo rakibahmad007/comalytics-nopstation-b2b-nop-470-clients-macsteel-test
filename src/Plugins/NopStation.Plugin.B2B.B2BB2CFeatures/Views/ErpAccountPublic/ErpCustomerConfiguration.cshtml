@@ -1,0 +1,73 @@
+@using NopStation.Plugin.B2B.B2BB2CFeatures.Model.ErpAccountPublic
+@using Nop.Web.Models.Customer
+
+@model ErpCustomerConfigurationModel
+
+@{
+    Layout = "_ColumnsTwo";
+
+    NopHtml.AddTitleParts(T("Plugin.Payments.B2BCustomerAccount.Title.B2BCustomerConfiguration").Text);
+    NopHtml.AppendPageCssClassParts("html-account-page");
+
+    await Html.PartialAsync("~/Plugins/NopStation.Plugin.B2B.B2BB2CFeatures/Views/Shared/_DatatableScripts.cshtml");
+}
+<style>
+    .master-column-wrapper .center-2 .page-body .fieldset .form-fields {
+        display: block !important;
+    }
+
+    .inputs.accept-consent label {
+        width: fit-content;
+        color: #111 !important;
+    }
+
+</style>
+
+@section left
+{
+    @await Component.InvokeAsync(typeof(CustomerNavigationViewComponent),
+            new { selectedTabId = B2BB2CFeaturesDefaults.ErpCustomerNavigationEnum_ErpShippingAddresses })
+}
+
+<div class="page account-page customer-info-page customer-configuration">
+    <div class="page-title">
+        <h1>@T("Plugin.Payments.B2BCustomerAccount.Title.B2BCustomerConfiguration")</h1>
+    </div>
+    <div class="page-body">
+        <form asp-route="ErpCustomerConfiguration" method="post">
+            <div asp-validation-summary="ModelOnly" class="message-error"></div>
+            <div class="fieldset">
+                <div class="title">
+                    <strong>@T("Plugin.Payments.B2BCustomerAccount.Title.B2BCustomerConfiguration")</strong>
+                </div>
+                <div class="form-fields">
+                    <div class="form-group">
+                        <div class="inputs accept-consent">
+                            <input asp-for="IsHidePricingNote" />
+                            <label asp-for="IsHidePricingNote"></label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="inputs">
+                            <input asp-for="IsHideWeightInfo" />
+                            <label asp-for="IsHideWeightInfo"></label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="buttons">
+                <input type="submit" id="register-button" class="button-1 register-next-step-button" value="@T("common.save")" name="register-button" />
+            </div>
+        </form>
+    </div>
+</div>
+<script asp-location="Footer">
+    $(document).ready(function () {
+        $('.block-account-navigation .listbox .list>li').each(function () {
+            $(this).removeClass("active").addClass("inactive");
+        });
+
+        $('.b2baccount-ErpCustomerConfiguration').removeClass("inactive").addClass("active");
+    });
+</script>
+

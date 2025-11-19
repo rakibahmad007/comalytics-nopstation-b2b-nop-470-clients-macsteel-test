@@ -1,0 +1,6 @@
+﻿using Nop.Web.Framework.Models;
+
+namespace NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Models;
+public partial record B2CSalesOrgWarehouseListModel : BasePagedListModel<B2CSalesOrgWarehouseModel>
+{
+}

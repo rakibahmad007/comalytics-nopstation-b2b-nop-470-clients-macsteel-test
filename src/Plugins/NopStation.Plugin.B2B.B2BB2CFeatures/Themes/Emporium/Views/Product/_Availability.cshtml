@@ -1,0 +1,46 @@
+﻿@model ProductDetailsModel
+
+@{
+    var isErpCustomer = await erpCustomerFunctionality.GetActiveErpAccountByCustomerAsync(await workContext.GetCurrentCustomerAsync()) != null;
+    var isHideAddToCart = await erpCustomerFunctionality.IsHideAddToCartAsync();
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.StockAvailability) || Model.DisplayBackInStockSubscription)
+{
+<div class="availability">
+    @if (!string.IsNullOrWhiteSpace(Model.StockAvailability))
+    {
+    <div class="stock">
+        @if (!isHideAddToCart)
+        {
+            <span class="label">@T("Products.Availability"):</span>
+            <span class="value" id="stock-availability-value-@Model.Id">@Model.StockAvailability</span>
+        }
+    </div>
+        @if (isErpCustomer)
+        {
+            <script asp-location="Footer">
+                $(function () {
+                    var data = { productId: '@Model.Id' };
+                    $.ajax({
+                        cache: true,
+                            url: "@Url.RouteUrl("LoadErpProductLiveStock-ProductDetailsPage")",
+                        type: 'GET',
+                        data: data,
+                        dataType: "json",
+                        success: function (response) {
+                            if (response.Data) {
+                                $('#stock-availability-value-@Model.Id').html("" + response.Data +"");
+                            }
+                        },
+                        error: function () {
+                            console.log("Can Not Load B2B Product Live Stock");
+                        }
+                    });
+                });
+            </script>
+            @await Html.PartialAsync("_BackInStockSubscription", Model)
+        }
+    }
+</div>
+}

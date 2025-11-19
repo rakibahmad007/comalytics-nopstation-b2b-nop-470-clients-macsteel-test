@@ -1,0 +1,83 @@
+@model ConfigurationModel
+
+<div class="card-body">
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-override-store-checkbox asp-for="DisplayQuantityColumnInExcel_OverrideForStore" asp-input="DisplayQuantityColumnInExcel" asp-store-scope="@Model.ActiveStoreScopeConfiguration" />
+			<nop-label asp-for="DisplayQuantityColumnInExcel" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="DisplayQuantityColumnInExcel" />
+			<span asp-validation-for="DisplayQuantityColumnInExcel"></span>
+		</div>
+	</div>
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-override-store-checkbox asp-for="DisplayUOMColumnInExcelAndPdf_OverrideForStore" asp-input="DisplayUOMColumnInExcelAndPdf" asp-store-scope="@Model.ActiveStoreScopeConfiguration" />
+			<nop-label asp-for="DisplayUOMColumnInExcelAndPdf" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="DisplayUOMColumnInExcelAndPdf" />
+			<span asp-validation-for="DisplayUOMColumnInExcelAndPdf"></span>
+		</div>
+	</div>
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-override-store-checkbox asp-for="DisplayPricingNoteColumnInExcelAndPdf_OverrideForStore" asp-input="DisplayPricingNoteColumnInExcelAndPdf" asp-store-scope="@Model.ActiveStoreScopeConfiguration" />
+			<nop-label asp-for="DisplayPricingNoteColumnInExcelAndPdf" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="DisplayPricingNoteColumnInExcelAndPdf" />
+			<span asp-validation-for="DisplayPricingNoteColumnInExcelAndPdf"></span>
+		</div>
+	</div>
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-override-store-checkbox asp-for="DisplayWeightColumnInExcelAndPdf_OverrideForStore" asp-input="DisplayWeightColumnInExcelAndPdf" asp-store-scope="@Model.ActiveStoreScopeConfiguration" />
+			<nop-label asp-for="DisplayWeightColumnInExcelAndPdf" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="DisplayWeightColumnInExcelAndPdf" />
+			<span asp-validation-for="DisplayWeightColumnInExcelAndPdf"></span>
+		</div>
+	</div>
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-override-store-checkbox asp-for="DisplayAllCategoriesPriceListInCategoryPage_OverrideForStore" asp-input="DisplayAllCategoriesPriceListInCategoryPage" asp-store-scope="@Model.ActiveStoreScopeConfiguration" />
+			<nop-label asp-for="DisplayAllCategoriesPriceListInCategoryPage" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="DisplayAllCategoriesPriceListInCategoryPage" />
+			<span asp-validation-for="DisplayAllCategoriesPriceListInCategoryPage"></span>
+		</div>
+	</div>
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-override-store-checkbox asp-for="DisplayCategoryPriceListInCategoryPage_OverrideForStore" asp-input="DisplayCategoryPriceListInCategoryPage" asp-store-scope="@Model.ActiveStoreScopeConfiguration" />
+			<nop-label asp-for="DisplayCategoryPriceListInCategoryPage" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="DisplayCategoryPriceListInCategoryPage" />
+			<span asp-validation-for="DisplayCategoryPriceListInCategoryPage"></span>
+		</div>
+	</div>
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="EnableAccountStatementDownload" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="EnableAccountStatementDownload" />
+			<span asp-validation-for="EnableAccountStatementDownload"></span>
+		</div>
+	</div>
+    <div class="form-group row">
+        <div class="col-md-3">
+            <nop-override-store-checkbox asp-for="LastNOrdersPerAccount_OverrideForStore" asp-input="LastNOrdersPerAccount" asp-store-scope="@Model.ActiveStoreScopeConfiguration" />
+            <nop-label asp-for="LastNOrdersPerAccount" />
+        </div>
+        <div class="col-md-9">
+            <nop-editor asp-for="LastNOrdersPerAccount" />
+            <span asp-validation-for="LastNOrdersPerAccount"></span>
+        </div>
+    </div>
+</div>

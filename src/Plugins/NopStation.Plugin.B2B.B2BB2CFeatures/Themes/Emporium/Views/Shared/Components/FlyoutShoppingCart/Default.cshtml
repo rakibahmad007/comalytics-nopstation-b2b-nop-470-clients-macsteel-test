@@ -1,0 +1,154 @@
+﻿@using Nop.Core
+@using Nop.Core.Domain.Orders
+@using Nop.Services.Catalog
+@model MiniShoppingCartModel
+
+@inject IWorkContext workContext
+@inject IPriceFormatter priceFormatter
+
+@{
+    var subZero = await priceFormatter.FormatPriceAsync(0m, false, await workContext.GetWorkingCurrencyAsync(), (await workContext.GetWorkingLanguageAsync()).Id, true);
+    var checkUserRegisteredLink = Url.Action("CheckUserRegistered", "ErpAccountPublic");
+    var shoppingCartTypeId = (int)ShoppingCartType.ShoppingCart;
+
+    NopHtml.AppendScriptParts(ResourceLocation.Footer, "~/Plugins/NopStation.Plugin.B2B.B2BB2CFeatures/Content/scripts/b2bminicart.js");
+}
+<style>
+    .quantity-adjust-block {
+        display: inline-flex;
+        margin-top: 5px;
+    }
+
+    .quantity-adjust {
+        margin-right: 5px !important;
+    }
+
+    .counter-btn {
+        min-width: 20px;
+        min-height: 20px;
+        background-color: #0270d3;
+        border: solid 1px #0270d3;
+        border-radius: 3px;
+        color: #fff;
+    }
+
+    .b2bProductMiniCartQty {
+        max-width: 60px;
+        min-width: 20px;
+        text-align: center;
+    }
+</style>
+
+<div id="flyout-cart" class="flyout-cart" data-removeItemFromCartUrl="@Url.Action("RemoveItemFromCart", "EmporiumTheme")" data-flyoutCartUrl="@Url.Action("FlyoutShoppingCart", "EmporiumTheme")">
+    <div id="topcartlink">
+        <a href="@Url.RouteUrl("ShoppingCart")" class="ico-cart">
+            <span class="cart-qty">@Model.TotalProducts</span>
+            <span class="cart-label">
+                @if (Model.TotalProducts == 0)
+                {
+                    @subZero
+                }
+                else
+                {
+                    @Model.SubTotal
+                }
+            </span>
+        </a>
+    </div>
+    <div class="mini-shopping-cart">
+        <div class="flyout-cart-scroll-area">
+            @if (Model.TotalProducts > 0)
+            {
+                <div class="items-cart">
+                    @for (var i = 0; i < Model.Items.Count; i++)
+                    {
+                        var item = Model.Items[i];
+                        <div class="item @(i == 0 ? "first" : null)" data-shoppingCartId="@item.Id">
+                            @if (Model.ShowProductImages)
+                            {
+                                <div class="picture">
+                                    <a href="@(Url.RouteUrl<Product>(new { SeName = item.ProductSeName }))" title="@item.Picture.Title">
+                                        <img alt="@item.Picture.AlternateText" src="@item.Picture.ImageUrl" title="@item.Picture.Title" />
+                                    </a>
+                                </div>
+                            }
+                            <div>
+                                <div class="product">
+                                    <div class="left">
+                                        <div class="name">
+                                            <a href="@(Url.RouteUrl<Product>(new { SeName = item.ProductSeName }))">@item.ProductName</a>
+                                        </div>
+                                        @if (!string.IsNullOrEmpty(item.AttributeInfo))
+                                        {
+                                            <div class="attributes">
+                                                @Html.Raw(item.AttributeInfo)
+                                            </div>
+                                        }
+                                    </div>
+                                    <div class="right">
+                                        <div class="price"> <span>@item.UnitPrice</span></div>
+                                        <div class="quantity-adjust-block">
+                                            <div>
+                                                <button type="button" class="btn-primary counter-btn quantity-adjust" onclick="B2BMiniCart.adjustMiniCartQuantity(false,@item.ProductId,@shoppingCartTypeId);return false;">-</button>
+                                            </div>
+                                            <div class="quantity quantity-adjust">
+                                                <input id="b2bMiniCartProductQty_@item.ProductId" class="b2bMiniCartProductQty_@item.ProductId b2bProductMiniCartQty" data-productid="@item.ProductId" name="b2bminicartproductQty" value="@item.Quantity" oninput="B2BMiniCart.updateMiniCartQuantity(@item.ProductId,@shoppingCartTypeId);return false;">
+                                            </div>
+                                            <div>
+                                                <button type="button" class="btn-primary counter-btn quantity-adjust" onclick="B2BMiniCart.adjustMiniCartQuantity(true,@item.ProductId,@shoppingCartTypeId);return false;">+</button>
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                    <a class="remove-item" href="javascript:;" title="remove">remove</a>
+                                </div>
+                            </div>
+
+                        </div>
+                    }
+                </div>
+                <div class="flyout-lower">
+                    <div class="count">
+                        @if (Model.TotalProducts == 0)
+                        {
+                            @T("ShoppingCart.Mini.NoItems")
+                        }
+                        else
+                        {
+                            @Html.Raw(string.Format($"<a href=\"{Url.RouteUrl("ShoppingCart")}\">{string.Format(T("ShoppingCart.Mini.Items").Text, Model.TotalProducts)}</a>"))
+                        }
+                    </div>
+                    <div class="totals">@T("ShoppingCart.Totals.SubTotal"): <strong>@Model.SubTotal</strong></div>
+                    <div class="buttons">
+                        @if (Model.DisplayCheckoutButton)
+                        {
+                            var checkoutUrl = "";
+                            if (Model.AnonymousCheckoutAllowed && Model.CurrentCustomerIsGuest)
+                            {
+                                checkoutUrl = Url.RouteUrl("LoginCheckoutAsGuest", new { returnUrl = Url.RouteUrl("ShoppingCart") });
+                            }
+                            else
+                            {
+                                checkoutUrl = Url.RouteUrl("Checkout");
+                            }
+                            <input type="button" value="@T("Checkout.Button")" class="button-1 checkout-button" onclick="setLocation('@checkoutUrl')" />
+                        }
+                        @if (Model.DisplayShoppingCartButton)
+                        {
+                            <input type="button" value="@T("ShoppingCart.Mini.ViewCart")" class="button-1 cart-button" onclick="setLocation('@(Url.RouteUrl("ShoppingCart"))')" />
+
+                        }
+                    </div>
+                </div>
+            }
+            else
+            {
+                <p>@T("ShoppingCart.Mini.NoItems")</p>
+            }
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript" asp-location="Footer">
+
+</script>

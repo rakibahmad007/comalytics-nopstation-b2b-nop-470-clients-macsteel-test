@@ -1,0 +1,552 @@
+﻿/** PopUp UI Starts**/
+
+body .ui-widget-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: .3 !important;
+}
+
+body .ui-dialog .ui-dialog-title {
+  width: 100%
+}
+
+body .ui-dialog .ui-dialog-titlebar-close {
+  position: absolute;
+  right: 5px;
+  top: 50%;
+  width: 20px;
+  transform: translateY(-50%);
+  height: 20px;
+  margin: 0;
+  font-size: 0;
+  padding: 1px;
+}
+
+body .ui-dialog-titlebar button:before {
+  content: "z";
+  text-transform: none;
+  font-weight: normal;
+  font-size: 14px;
+  line-height: 15px !important;
+  text-align: center !important;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+body .ui-dialog .ui-dialog-titlebar {
+  position: relative;
+  padding: 15px 25px;
+  border-radius: 0;
+  margin: 0;
+  width: 100%;
+}
+
+body .ui-dialog,
+body .ui-widget.ui-widget-content {
+  padding: 0;
+  font-size: 16px;
+  z-index: 99999;
+}
+
+body .ui-widget.ui-widget-content,
+body .ui-widget-header {
+  border: none;
+}
+
+body .ui-dialog .ui-dialog-content {
+  padding: 30px 20px !important;
+  text-align: center;
+  max-height: 80vh !important;
+}
+
+.ui-dialog-content li a:hover {
+  text-decoration: underline;
+}
+
+body .ui-dialog-content .popup-content {
+  text-align: center;
+  font-size: 16px;
+  margin-bottom: 20px;
+}
+
+.custom-modal .popup-input-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+  .custom-modal .popup-input-wrapper label {
+    width: 120px;
+    text-align: center;
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  .custom-modal .popup-input-wrapper input {
+    width: calc(100% - 130px);
+  }
+
+    /* Ensure placeholder is visible in modal inputs */
+    .custom-modal .popup-input-wrapper input::placeholder {
+      color: #8c8c8c !important;
+      opacity: 1 !important;
+      font-style: normal !important;
+    }
+
+    .custom-modal .popup-input-wrapper input::-webkit-input-placeholder {
+      color: #8c8c8c !important;
+      opacity: 1 !important;
+      font-style: normal !important;
+    }
+
+    .custom-modal .popup-input-wrapper input::-moz-placeholder {
+      color: #8c8c8c !important;
+      opacity: 1 !important;
+      font-style: normal !important;
+    }
+
+    .custom-modal .popup-input-wrapper input:-ms-input-placeholder {
+      color: #8c8c8c !important;
+      opacity: 1 !important;
+      font-style: normal !important;
+    }
+
+/* Additional fix for jQuery UI dialog inputs */
+.ui-dialog .custom-modal .popup-input-wrapper input::placeholder {
+  color: #8c8c8c !important;
+  opacity: 1 !important;
+  font-style: normal !important;
+}
+
+.ui-dialog .custom-modal .popup-input-wrapper input::-webkit-input-placeholder {
+  color: #8c8c8c !important;
+  opacity: 1 !important;
+  font-style: normal !important;
+}
+
+.ui-dialog .custom-modal .popup-input-wrapper input::-moz-placeholder {
+  color: #8c8c8c !important;
+  opacity: 1 !important;
+  font-style: normal !important;
+}
+
+.ui-dialog .custom-modal .popup-input-wrapper input:-ms-input-placeholder {
+  color: #8c8c8c !important;
+  opacity: 1 !important;
+  font-style: normal !important;
+}
+
+.custom-modal .popup-input-wrapper .popup-validation {
+  width: 100%;
+}
+
+.custom-modal .popup-button-wrapper {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+  .custom-modal .popup-button-wrapper .popup-button {
+    border: 0;
+    height: 45px;
+    padding: 0 25px;
+    border-radius: 3px;
+    font-weight: 700;
+    transition: all .2s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 0 !important;
+    min-width: 220px;
+  }
+
+div[aria-describedby="addressModal"] {
+  z-index: 100000 !important
+}
+
+  div[aria-describedby="addressModal"] + .ui-widget-overlay {
+    z-index: 99999 !important;
+  }
+
+@media(max-width: 767px) {
+  .custom-modal .popup-input-wrapper {
+    flex-direction: column;
+    gap: 20px;
+  }
+
+    .custom-modal .popup-input-wrapper label {
+      width: 100%;
+    }
+
+    .custom-modal .popup-input-wrapper input {
+      width: 100%;
+    }
+}
+
+/** PopUp Color Starts**/
+
+body .ui-widget-overlay {
+  background: #000 !important;
+}
+
+body .ui-dialog .ui-dialog-titlebar {
+  background: #002269 !important;
+}
+
+body .ui-dialog .ui-dialog-title {
+  color: #fff !important;
+}
+
+.custom-modal .popup-button-wrapper .popup-button {
+  background-color: #0270d3 !important;
+  color: #fff;
+}
+
+  .custom-modal .popup-button-wrapper .popup-button:hover {
+    background-color: #001440 !important;
+  }
+
+body .ui-dialog-content li a {
+  color: #337ab7;
+}
+
+body .ui-dialog-content .popup-content,
+body .ui-dialog-content p {
+  color: #111 !important;
+}
+/** PopUp Color Ends**/
+
+/** PopUp UI Ends**/
+
+input[type="checkbox"]:checked + label:before {
+  content: "✔" !important;
+}
+
+.message-error.validation-summary-errors {
+  font-size: 13px;
+  text-align: left;
+}
+
+.b2cRegisterDescription {
+  line-height: 20px;
+  font-size: 17px;
+  color: #111;
+  font-weight: 400;
+}
+
+.validationSummaryHeaderTop {
+  font-size: 13px;
+  text-align: left;
+  color: #ff4f60;
+}
+
+.bar-notification .content a {
+  font-weight: 700;
+}
+
+.applicable {
+  clear: both;
+  display: block;
+  font-size: 10px;
+  position: relative;
+  line-height: 14px;
+  top: -10px;
+}
+
+.pac-target-input::placeholder {
+  opacity: 1 !important;
+  color: #888 !important;
+}
+
+#flyout-cart.active .mini-shopping-cart {
+  display: block;
+}
+
+.flyout-cart .items-cart {
+  position: relative;
+  padding: 0 10px;
+  margin-bottom: 15px;
+  border-radius: 3px 3px 0 0;
+  background: #fff;
+  text-align: left;
+  overflow: hidden;
+  overflow-y: auto;
+}
+
+@media (min-width: 1025px) {
+  .flyout-cart .items-cart {
+    padding: 0 20px;
+    max-height: calc(100vh - 320px);
+    overflow: hidden;
+    overflow-y: auto;
+  }
+}
+
+
+/* For WebKit browsers (Chrome, Safari, Edge) */
+.flyout-cart .items-cart::-webkit-scrollbar {
+  width: 18px;
+}
+
+.flyout-cart .items-cart::-webkit-scrollbar-thumb {
+  background-color: #888; /* scrollbar thumb color */
+  border-radius: 10px;
+}
+
+  .flyout-cart .items-cart::-webkit-scrollbar-thumb:hover {
+    background-color: #555;
+  }
+
+.flyout-cart .items-cart::-webkit-scrollbar-track {
+  background-color: #f1f1f1; /* scrollbar track color */
+}
+
+/* For Firefox */
+.flyout-cart .items-cart {
+  scrollbar-width: thin;
+  scrollbar-color: #bababa #f1f1f1;
+}
+
+  /* Hide scrollbar arrows in Firefox */
+  .flyout-cart .items-cart::-webkit-scrollbar-button {
+    display: none;
+    height: 0;
+  }
+
+.mini-shopping-cart .counter-btn {
+  font-size: 14px;
+}
+
+/*Add to Cart Section Styles start*/
+
+.add-to-cart-section .counter-minus,
+.add-to-cart-section .counter-plus {
+  width: 30px;
+  height: 34px;
+  background: #0270d3;
+  border: 1px solid #0270d3;
+  color: #fff;
+  border-radius: 3px;
+  padding: 0 !important;
+}
+
+.overview .add-to-cart .add-to-cart-section .counter-minus,
+.overview .add-to-cart .add-to-cart-section .counter-plus,
+.overview .add-to-cart .add-to-cart-section .add-to-cart-button,
+.overview .add-to-cart .add-to-cart-section input[name="addToCartBtn"],
+.overview .add-to-cart .add-to-cart-section input[name="productQty"] {
+  height: 45px !important;
+}
+
+.add-to-cart-section .add-to-cart-button,
+.add-to-cart-section input[name="addToCartBtn"] {
+  height: 34px;
+  min-width: 105px !important;
+  color: #fff;
+  border-radius: 3px;
+  padding: 0 10px;
+  font-weight: normal;
+  font-size: 12px;
+  white-space: nowrap;
+  margin: 0 0 0 10px;
+}
+
+.add-to-cart-section input[name="productQty"],
+.cart .qty-input {
+  margin: 0 5px !important;
+  max-width: 55px !important;
+  height: 34px !important;
+  text-align: center !important;
+  border: 1px solid #ccc !important;
+  border-radius: 4px;
+  color: #8c8c8c;
+}
+
+/*Add to Cart Section Styles end*/
+
+
+.order-summary-content #shopping-cart-form .cart-footer {
+  margin-top: -180px;
+}
+
+.order-details-page .section.products .erpOrderLineNum,
+.order-details-page .section.products .erpOrderLineStatus,
+.order-details-page .section.products .erpDataReq {
+  display: none !important;
+}
+
+.order-details-area .billing-info-wrap {
+  justify-content: flex-start !important;
+}
+
+.checkout-title h1,
+#ErpShiptoAddressForm .title.quote-customer-reference-title strong {
+  font-size: 30px !important;
+  color: #002169 !important;
+  text-transform: uppercase !important;
+  border-bottom: 2px solid #001f69 !important;
+  display: inline-block !important;
+}
+
+.FullLoadRequired-div {
+  font-size: 15px;
+  margin-top: 0px;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.FullLoadRequired-div-hide {
+  display: none !important;
+}
+
+.header .topic-block {
+  margin: 0;
+  width: 100%;
+  max-width: 100%;
+  padding: 15px;
+  background: #002169;
+  border-bottom: 1px solid #fff;
+}
+
+.maintenance-message {
+  display: block !important;
+}
+
+
+.header .topic-block p {
+  color: #fff;
+  font-size: 12px;
+}
+
+#close-message {
+  display: inline-block;
+  padding: 5px 10px;
+  background: #0270d3;
+  margin-top: 15px;
+}
+
+.page.login-page .message-error.validation-summary-errors {
+  text-align: center;
+}
+#close-message a {
+  color: #fff;
+  text-decoration: none;
+}
+
+.macsteel-quote-massage {
+  padding: 0 25px 25px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: red;
+}
+
+
+.terms-and-conditions-massage {
+  padding: 0 25px 25px !important;
+  text-align: center !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+}
+
+.quick-order-heading-input {
+  font-size: 36px;
+  float: left;
+  text-transform: uppercase;
+  font-family: 'Source Sans Pro', sans-serif;
+  padding: 0;
+  margin: 0;
+  height: 46px;
+  line-height: 43px;
+}
+
+#erp-accounts-dropdown {
+  width: auto;
+}
+
+.dialog-center-logintoupdatecart h2 {
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.store-locator .content p,
+.store-locator .content ul li {
+  font-size: 13px;
+  margin-bottom: 0px;
+  color: #8c8c8c
+}
+
+.store-locator .section .title strong {
+  font-weight: bold !important;
+}
+
+th.product-picture {
+  font-size: 0 !important;
+}
+
+.customer-order-number {
+  margin-bottom: 15px;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.b2c-order-items .warehouse-info {
+  justify-content: start;
+}
+
+
+.warehouse-info {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.b2c-order-items .warehouse-info .warehouse-name {
+  min-width: 200px;
+  width: auto;
+  padding: 0 15px 15px 15px;
+  background-color: #f6f6f6;
+}
+
+.b2c-order-items .warehouse-info .delivery-date {
+  width: 200px;
+  padding-bottom: 10px;
+  padding-left: 20px;
+}
+
+.registration-result-page .result p {
+  color: #111 !important;
+  font-weight: 400;
+}
+
+.page.registration-result-page .result p {
+  line-height: 24px;
+}
+
+.account-page .description, .reward-points-overview, .result {
+  padding: 0 10px;
+}
+
+.registration-result-page .result {
+  margin: 0 0 30px;
+  color: #8c8c8c;
+}
+
+.page.registration-result-page .section.register-complete {
+  padding-right: 100px;
+  text-align: left;
+}
+
+.section.order-completed, .section.checkout-image, .section.register-complete, .section.register-image {
+  display: inline-block;
+  width: 50%;
+  float: left;
+}

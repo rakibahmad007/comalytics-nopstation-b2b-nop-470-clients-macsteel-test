@@ -1,0 +1,12 @@
+﻿@{
+    var customerEmail = ViewBag.CustomerEmail;
+}
+
+<style>
+    .ddl-sales-rep-options {
+        font-size: 13px;
+    }
+</style>
+<li>
+    <a href="@Url.Action("List", "CustomerImpersonate")">@customerEmail</a>
+</li>

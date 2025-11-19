@@ -1,0 +1,649 @@
+﻿@model CheckoutErpShippingAddressModel
+@using System.Globalization
+@using Nop.Core
+@using Nop.Core.Domain.Catalog;
+@using NopStation.Plugin.B2B.B2BB2CFeatures.Contexts
+@using NopStation.Plugin.B2B.ERPIntegrationCore.Enums
+@using NopStation.Plugin.B2B.ERPIntegrationCore.Services
+@using NopStation.Plugin.B2B.B2BB2CFeatures.Infrastructure
+@using NopStation.Plugin.B2B.B2BB2CFeatures.Model.Checkout
+@using NopStation.Plugin.B2B.B2BB2CFeatures.Services.ErpCustomerFunctionality
+
+@inject IWebHelper webHelper
+@inject B2BB2CFeaturesSettings b2BB2CFeaturesSettings
+@inject IErpCustomerFunctionalityService b2BCustomerFunctionality
+@inject IB2BSalesOrgPickupPointService b2bSalesOrgPickupPointService
+
+<style>
+    #DeliveryDate, #DeliveryDateString, #CustomDeliveryDateString {
+        width: 40%;
+    }
+
+    #noDeliveryDatesAvailableB2C input {
+        width: 100% !important;
+    }
+
+</style>
+
+<div class="page checkout-page b2c-shipping-address-page">
+    @await Component.InvokeAsync(typeof(CheckoutProgressViewComponent), new { step = CheckoutProgressStep.Shipping })
+    <div class="page-title">
+        <h1>@T("Checkout.ShippingAddress.SelectDeliverOrCollect")</h1>
+    </div>
+    <div class="page-body checkout-data">
+        <form id="ErpShiptoAddressForm" asp-controller="ErpCheckout" asp-action="ErpShippingAddress" method="post">
+            @{
+                var groupedItems = Model.B2CShoppingCartItemModels.GroupBy(x => x.WarehouseCode);
+            }
+            <div class="checkout-shipping-tab checkout-left-section" id="checkoutShippingTabs">
+                <ul class="tab-links">
+                    @if (Model.DeliveryOptions == DeliveryOption.DeliverOrCollect)
+                    {
+                        <li class="tab-item" id="deliver"><a href="#shippingTabDeliver">@T("B2B.Shipping.Deliver")</a></li>
+                    }
+
+                    <li class="tab-item" id="collect"><a href="#shippingTabCollect">@T("B2B.Shipping.Collect")</a></li>
+                </ul>
+                <input hidden asp-for="ErpToDetermineDate" value="@Model.ErpToDetermineDate" />
+                <input hidden asp-for="ErpAccountId" value="@Model.ErpAccountId" />
+                <input hidden asp-for="ErpShipToAddressId" value="@Model.ErpShipToAddressId" />
+                <input hidden asp-for="DeliveryOptions" value="@Model.DeliveryOptions" />
+
+                @if (Model.DeliveryOptions == DeliveryOption.DeliverOrCollect)
+                {
+                    <div id="shippingTabDeliver" class="tab-content deliver">
+                        <h1 id="delivery-header-text">@T("Checkout.ShippingAddress.SelectYourDeliveryAddress")</h1>
+                        @{
+                            <div class="shipping-addresses" id="shipping-addresses-form">
+                                @await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.CheckoutShippingAddressTop, additionalData = Model })
+
+                                @if (Model.SelectedShipToAddress != null)
+                                {
+                                    <div class="section select-shipping-address">
+                                        <div class="shipping-address-body">
+                                            @{
+                                                var addressLine = string.Join(", ", new string[] {
+                                                    Model.SelectedShipToAddress.ShipToName,
+                                                    Model.SelectedShipToAddress.ShipToCode,
+                                                    Model.SelectedShipToAddress.Address1,
+                                                    Model.SelectedShipToAddress.Address2,
+                                                    Model.SelectedShipToAddress.Suburb,
+                                                    Model.SelectedShipToAddress.City,
+                                                    Model.SelectedShipToAddress.StateProvinceName,
+                                                    Model.SelectedShipToAddress.ZipPostalCode
+                                                }.Where(s => !string.IsNullOrEmpty(s)));
+
+                                                <p class="address-line">@addressLine</p>
+                                            }
+                                        </div>
+                                        <a class="trigger-ship-to-address-selector-button button-1">@T("Plugins.Payments.B2BCustomerAccount.B2CShipToAddressSelector")</a>
+                                    </div>
+                                }
+                            </div>
+
+                            @await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.CheckoutShippingAddressMiddle, additionalData = Model })
+                            <div class="section new-shipping-address" id="shippingaddress-new-form"></div>
+                            @await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.CheckoutShippingAddressBottom, additionalData = Model })
+
+                            int i = 0;
+                            foreach (var item in groupedItems)
+                            {
+                                var defaultItem = item.FirstOrDefault();
+                                var warehouseId = defaultItem?.NopWarehouseId;
+                                var isDeliveryDatesCallSuccessful = defaultItem?.IsDeliveryDatesCallSuccessful ?? false;
+                                var isFullLoadRequired = defaultItem?.IsFullLoadRequired ?? false;
+                                var deliveryDateDropDown = defaultItem?.AvailableDeliveryDates;
+                                <div class="section select-delivery-date">
+                                    <div class="title delivery-date-title">
+                                        <strong>@T("B2B.Checkout.SelectDeliveryDate")</strong>
+                                    </div>
+                                    <div class="delivery-date-body">
+                                        @{
+                                            var name = defaultItem?.NopWarehouseName;
+                                        }
+                                        <div class="delivery-date-header">
+                                            <div class="b2c-delivery-date-section">
+                                                @if (Model.ErpToDetermineDate && isDeliveryDatesCallSuccessful)
+                                                {
+                                                    <div id="deliveryDateDropdown" class="inputs">
+                                                        <label asp-for="DeliveryDate" asp-postfix=":"></label>
+                                                    </div>
+                                                    if (isFullLoadRequired)
+                                                    {
+                                                        <h3 class="FullLoadRequired-div">@T("B2B.DeliveryDate.FullLoadRequired")</h3>
+                                                        <span id="selectedDeliveryDate-@(warehouseId)" data-warehouseId="@warehouseId" data-fullLoadRequired="true" class="selectedDeliveryDate-@(warehouseId)" style="display:none"></span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <select id="selectedDeliveryDate-@(warehouseId)" data-warehouseId="@warehouseId" asp-items="@deliveryDateDropDown" class="selectedDeliveryDate-@(warehouseId) selected-date-dropdown"></select>
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    <div id="noDeliveryDatesAvailableB2C" class="inputs date-picker">
+                                                        <label asp-for="DeliveryDate" asp-postfix=":"></label>
+                                                        <input id="noDeliveryDateText" type="text" value="@T("B2C.DeliveryDate.NoDeliveryDates")" />
+                                                    </div>
+                                                }
+                                            </div>
+                                            <div class="warehouse-name-title"> 
+                                                <label class="warehouse-name">@name </label>
+                                            </div>
+                                        </div>
+                                        <div class="table-wrapper">
+                                            <table class="cart">
+                                                <colgroup>
+                                                    <col width="1" />
+                                                    <col width="350" />
+                                                    <col width="1" />
+                                                    <col width="1" />
+                                                    <col width="350" />
+                                                </colgroup>
+                                                <thead>
+                                                    <tr class="cart-header-row">
+                                                        <th class="product-picture">@T("ShoppingCart.Image")</th>
+                                                        <th class="product">@T("ShoppingCart.Product(s)")</th>
+                                                        <th class="uom">@T("Plugins.Payment.B2BCustomerAccount.OrderSummery.Product(s).UOM")</th>
+                                                        <th class="quantity">@T("ShoppingCart.Quantity")</th>
+                                                        <th class="instruction">@T("Plugins.Payment.B2CCustomerAccount.Checkout.SpecialInstructions")</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach (var b2CSciModel in item)
+                                                    {
+                                                        var productUrl = Url.RouteUrl<Product>(new { SeName = b2CSciModel.ShoppingCartItemModel.ProductSeName });
+                                                        <tr class="cart-item-row">
+                                                            <td class="product-picture">
+                                                                <a href="@productUrl">
+                                                                    @if (viewComponentSelector.SelectComponent("LazyLoadImage") != null)
+                                                                    {
+                                                                        @await Component.InvokeAsync("LazyLoadImage", new (string Key, string Value)[]
+                                                                        {
+                                                                            ("src", @b2CSciModel.ShoppingCartItemModel.Picture.ImageUrl),
+                                                                            ("alt", @b2CSciModel.ShoppingCartItemModel.Picture.AlternateText),
+                                                                            ("title", @b2CSciModel.ShoppingCartItemModel.Picture.Title)
+                                                                        })
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        <img alt="@b2CSciModel.ShoppingCartItemModel.Picture.AlternateText" src="@b2CSciModel.ShoppingCartItemModel.Picture.ImageUrl" title="@b2CSciModel.ShoppingCartItemModel.Picture.Title" />
+                                                                    }
+                                                                </a>
+                                                            </td>
+                                                            <td class="product">
+                                                                <a href="@productUrl" class="product-name">@b2CSciModel.ShoppingCartItemModel.ProductName</a>
+                                                            </td>
+                                                            <td class="uom">@b2CSciModel.UOM</td>
+                                                            <td class="quantity"><input type="text" value="@(b2CSciModel.ShoppingCartItemModel.Quantity)" readonly="readonly" /></td>
+                                                            <td class="instruction"><input type="text" asp-for="@Model.B2CShoppingCartItemModels[i].SpecialInstructions" value="@b2CSciModel.SpecialInstructions" placeholder="Instructions are subject to Macsteel’s approval" /></td>
+                                                        </tr>
+
+                                                        <input hidden asp-for="@Model.B2CShoppingCartItemModels[i].NopWarehouseId" value="@b2CSciModel.NopWarehouseId" />
+                                                        <input hidden asp-for="@Model.B2CShoppingCartItemModels[i].WarehouseCode" value="@b2CSciModel.WarehouseCode" />
+                                                        <input hidden asp-for="@Model.B2CShoppingCartItemModels[i].IsFullLoadRequired" value="@b2CSciModel.IsFullLoadRequired" />
+                                                        <input hidden name="B2CShoppingCartItemModels[@(i)].DeliveryDate" class="itemDeliveryDate-@(warehouseId)" value="@b2CSciModel.DeliveryDate" />
+                                                        <input hidden asp-for="@Model.B2CShoppingCartItemModels[i].ShoppingCartItemModelId" value="@b2CSciModel.ShoppingCartItemModelId" />
+                                                        <input hidden asp-for="@Model.B2CShoppingCartItemModels[i].B2CSalesOrgWarehouseId" value="@b2CSciModel.B2CSalesOrgWarehouseId" />
+
+                                                        i++;
+                                                    }
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </div>
+                }
+
+                @if (Model.DeliveryOptions == DeliveryOption.DeliverOrCollect || Model.DeliveryOptions == DeliveryOption.Collect)
+                {
+                    <div id="shippingTabCollect" class="tab-content collect" style="display: none;">
+                        <input hidden asp-for="PickupInStore" value="@Model.PickupInStore" />
+
+                        <div class="section select-delivery-date">
+                            <div class="title delivery-date-title">
+                                <strong>@T("Plugins.Payments.B2BCustomerAccount.Checkout.CollectionPoint")</strong>
+                            </div>
+                            <p class="collection-message">@T("Plugins.Payments.B2BCustomerAccount.Checkout.CollectionMessage")</p>
+                        </div>
+                        @{
+                            int j = 0;
+                            foreach (var item in groupedItems)
+                            {
+                                var defaultItem = item.FirstOrDefault();
+                                <div class="section select-delivery-date">
+                                    <div class="delivery-date-body">
+                                        @{
+                                            var b2bSalesOrgId = defaultItem?.B2CSalesOrgWarehouse?.ErpSalesOrgId ?? 0;
+                                            var pickupPointId = (await b2bSalesOrgPickupPointService.GetAllB2BSalesOrgPickupPointsBySalesOrganisationIdAsync(b2bSalesOrgId))?.Select(x => x.NopPickupPointId)?.FirstOrDefault() ?? 0;
+                                            var pickUpPoint = Model.PickupPointsModel.PickupPoints.FirstOrDefault(x => x.Id == $"{pickupPointId}");
+
+                                            var name = string.Join(", ", new[]
+                                            {
+                                                pickUpPoint?.Name,
+                                                pickUpPoint?.Address,
+                                                pickUpPoint?.County,
+                                                pickUpPoint?.City,
+                                                pickUpPoint?.StateName,
+                                                pickUpPoint?.CountryName
+                                            }.Where(value => !string.IsNullOrWhiteSpace(value)));
+                                        }
+                                        <div class="delivery-date-header">
+                                            <div class="warehouse-name-title">
+                                                <label class="warehouse-name">@name</label>
+                                            </div>
+                                        </div>
+                                        <div class="table-wrapper">
+                                            <table class="cart">
+                                                <colgroup>
+                                                    <col width="1" />
+                                                    <col width="350" />
+                                                    <col width="1" />
+                                                    <col width="1" />
+                                                    <col width="350" />
+                                                </colgroup>
+                                                <thead>
+                                                    <tr class="cart-header-row">
+                                                        <th class="product-picture">@T("ShoppingCart.Image")</th>
+                                                        <th class="product">@T("ShoppingCart.Product(s)")</th>
+                                                        <th class="uom">@T("Plugins.Payment.B2BCustomerAccount.OrderSummery.Product(s).UOM")</th>
+                                                        <th class="quantity">@T("ShoppingCart.Quantity")</th>
+                                                        <th class="instruction">@T("Plugins.Payment.B2CCustomerAccount.Checkout.SpecialInstructions")</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach (var b2CSciModel in item)
+                                                    {
+                                                        var productUrl = Url.RouteUrl<Product>(new { SeName = b2CSciModel.ShoppingCartItemModel.ProductSeName });
+                                                        <tr class="cart-item-row">
+                                                            <td class="product-picture">
+                                                                <a href="@productUrl">
+                                                                    @if (viewComponentSelector.SelectComponent("LazyLoadImage") != null)
+                                                                    {
+                                                                        @await Component.InvokeAsync("LazyLoadImage", new (string Key, string Value)[]
+                                                                        {
+                                                                            ("src", @b2CSciModel.ShoppingCartItemModel.Picture.ImageUrl),
+                                                                            ("alt", @b2CSciModel.ShoppingCartItemModel.Picture.AlternateText),
+                                                                            ("title", @b2CSciModel.ShoppingCartItemModel.Picture.Title)
+                                                                        })
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        <img alt="@b2CSciModel.ShoppingCartItemModel.Picture.AlternateText" src="@b2CSciModel.ShoppingCartItemModel.Picture.ImageUrl" title="@b2CSciModel.ShoppingCartItemModel.Picture.Title" />
+                                                                    }
+                                                                </a>
+                                                            </td>
+                                                            <td class="product"><a href="@productUrl" class="product-name">@b2CSciModel.ShoppingCartItemModel.ProductName</a></td>
+                                                            <td class="uom">@b2CSciModel.UOM</td>
+                                                            <td class="quantity"><input type="text" value="@(b2CSciModel.ShoppingCartItemModel.Quantity)" readonly="readonly" /></td>
+                                                            <td class="instruction"><input type="text" asp-for="@Model.B2CShoppingCartItemModels[j].SpecialInstructions" value="@b2CSciModel.SpecialInstructions" placeholder="Instructions are subject to Macsteel’s approval" /></td>
+                                                        </tr>
+                                                        <input hidden asp-for="@Model.B2CShoppingCartItemModels[j].NopWarehouseId" value="@b2CSciModel.NopWarehouseId" />
+                                                        <input hidden asp-for="@Model.B2CShoppingCartItemModels[j].WarehouseCode" value="@b2CSciModel.WarehouseCode" />
+                                                        <input hidden asp-for="@Model.B2CShoppingCartItemModels[j].ShoppingCartItemModelId" value="@b2CSciModel.ShoppingCartItemModelId" />
+                                                        <input hidden asp-for="@Model.B2CShoppingCartItemModels[j].B2CSalesOrgWarehouseId" value="@b2CSciModel.B2CSalesOrgWarehouseId" />
+                                                        j++;
+                                                    }
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </div>
+                }
+
+                <div class="section quote-customer-reference">
+                    <div class="title quote-customer-reference-title">
+                        <strong>@T("Plugin.Misc.NopStation.ERPIntegrationCore.ErpOrder.Fields.CustomerReference")</strong>
+                    </div>
+                    <div class="quote-customer-reference-body">
+                        <div id="customerReferenceText" class="inputs" style="text-align: center;">
+                            <input asp-for="CustomerReference" class="quote-customer-reference-input" placeholder="
+                                @T("Plugin.Misc.NopStation.ERPIntegrationCore.ErpOrder.Fields.CustomerReference.Hint")" />
+                            <span class="shipping-address-error" asp-validation-for="CustomerReference"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section special-instructions">
+                    <div class="title special-instructions-title">
+                        <strong>@T("Plugin.Misc.NopStation.ERPIntegrationCore.ErpOrder.Fields.SpecialInstructions")</strong>
+                    </div>
+                    <div class="special-instructions-body">
+                        <div id="specialInstructionsTextarea" class="inputs" style="text-align: center;">
+                            <textarea asp-for="SpecialInstructions" placeholder="@T("Plugin.Misc.NopStation.ERPIntegrationCore.ErpOrder.Fields.SpecialInstructions.Hint")" class="special-instructions-textarea"></textarea>
+                            <span class="shipping-address-error" asp-validation-for="SpecialInstructions"></span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <div class="section order-summary checkout-right-section">
+                <div class="title">
+                    <strong>@T("Checkout.OrderSummary")</strong>
+                </div>
+                <div class="div-order-totals">
+                    @await Component.InvokeAsync(typeof(OrderTotalsViewComponent))
+                </div>
+                <div class="buttons">
+                    <button hidden id="shippingaddress-next-button" type="submit" name="b2cnextstep" class="button-1 new-address-next-step-button">@(Model.IsQuoteOrder ? T("Checkout.ConfirmButton") : T("Checkout.NextButton"))
+                    </button>
+                    <button id="confirmButton" type="button" class="button-1 new-address-next-step-button">
+                        @(Model.IsQuoteOrder ? T("Checkout.ConfirmButton") : T("Checkout.NextButton"))
+                    </button>
+                </div>
+            </div>
+        </form>
+
+        <style>
+            .tab-links {
+                display: flex;
+                list-style: none;
+                padding: 0;
+            }
+
+            .tab-item {
+                margin-right: 20px;
+            }
+
+                .tab-item input[type="radio"] {
+                    display: inline;
+                    margin-right: 5px;
+                }
+        </style>
+
+        <script asp-location="Footer">
+            $(document).ready(function () {
+                document.querySelectorAll('.tab-links .tab-item a').forEach((tab) => {
+                    tab.addEventListener('click', (event) => {
+                        event.preventDefault();
+
+                        // Hide all tab contents
+                        document.querySelectorAll('.tab-content').forEach((content) => {
+                            content.style.display = 'none';
+                        });
+
+                        // Determine which tab was clicked and show the corresponding content
+                        const selectedTabId = tab.parentElement.id === 'deliver' ? 'shippingTabDeliver' : 'shippingTabCollect';
+                        document.getElementById(selectedTabId).style.display = 'block';
+                    });
+                });
+            });
+            CheckoutShipping.init('#ErpShiptoAddressForm');
+            $('#edit-shipping-address-button').show();
+            $('#delete-shipping-address-button').show();
+        </script>
+    </div>
+</div>
+
+<div id="DeliverWarningDialog" title="@T(" Plugins.Payments.B2BCustomerAccount.ShippingAddress.Deliver.Warning.Title")" style="display: none;">
+    <div>
+        <h2>
+            @T("Plugins.Payments.B2BCustomerAccount.ShippingAddress.Deliver.Warning")
+        </h2>
+    </div>
+</div>
+
+
+@if (Model.IsB2CShippingCostERPCallUnSuccessful)
+{
+    <script asp-location="Footer">
+        $(document).ready(function () {
+            clearShippingOptionAndSavePickupPoint();
+            $("#DeliverWarningDialog").dialog({
+                modal: true,
+                draggable: false,
+                closeOnEscape: true
+            });
+        });
+    </script>
+}
+
+<script asp-location="Footer">
+    $(document).ready(function () {
+        $("#checkoutShippingTabs").tabs();
+        $('.trigger-ship-to-address-selector-button').show();
+        displayAjaxLoading(true);
+        if (@Model.SelectedShipToAddress.DeliveryOptionId == @((int)DeliveryOption.DeliverOrCollect))
+        {
+            clearPickUpPointAndSaveShippingOption();
+        }
+        else
+        {
+            clearShippingOptionAndSavePickupPoint();
+        }
+    });
+
+    $("#collect").click(function () {
+        $('.trigger-ship-to-address-selector-button').hide();
+
+        var isPISChecked = $('#PickupInStore').is(':checked');
+        if (!isPISChecked) {
+            $('#PickupInStore').click();
+        }
+        $("#PickupInStore").val("True");
+
+        displayAjaxLoading(true);
+        clearShippingOptionAndSavePickupPoint();
+    });
+
+    $("#deliver").click(function () {
+        $('.trigger-ship-to-address-selector-button').show();
+
+        var isPISChecked = $('#PickupInStore').is(':checked');
+        if (isPISChecked) {
+            $('#PickupInStore').click();
+        }
+        $("#PickupInStore").val("False");
+
+        displayAjaxLoading(true);
+        clearPickUpPointAndSaveShippingOption();
+    });
+
+    function clearPickUpPointAndSaveShippingOption() {
+        $.ajax({
+            cache: false,
+            type: "GET",
+            url: "@(Url.Action("ClearPickUpPointAndSaveShippingOption", "ErpCheckout"))",
+            success: function (data, textStatus, jqXHR) {
+                if (data.success == undefined) {
+                    //console.log("shipping cost found");
+                    $('.div-order-totals').empty();
+                    $('.div-order-totals').html(data);
+                }
+                else if (data.success && data.isB2CShippingCostERPCallUnSuccessful) {
+                    //console.log("shipping cost not found");
+                    $(".deliver-list").hide();
+                    $(".deliver-list").removeClass("ui-tabs-active ui-state-active");
+                    $(".collect-list").click();
+                    $(".collect-list").addClass("ui-tabs-active ui-state-active");
+                    $("#DeliverWarningDialog").dialog({
+                        modal: true,
+                        draggable: false,
+                        closeOnEscape: true
+                    });
+                }
+                else if (!data.success && data.redirectToShoppingCart) {
+                    setLocation("/cart");
+                }
+                displayAjaxLoading(false);
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+                console.error(errorThrown);
+                alert("Something went wrong");
+                setLocation("/cart");
+            }
+        });
+    }
+
+    function clearShippingOptionAndSavePickupPoint() {
+        $.ajax({
+            cache: false,
+            type: "GET",
+            url: "@(Url.Action("ClearShippingOptionAndSavePickupPoint", "ErpCheckout"))",
+            success: function (data, textStatus, jqXHR) {
+                $('.div-order-totals').empty();
+                $('.div-order-totals').html(data);
+                displayAjaxLoading(false);
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+                console.error(errorThrown);
+                alert("Something went wrong.");
+                setLocation("/cart");
+            }
+        });
+    }
+
+    $(".trigger-ship-to-address-selector-button").click(function (e) {
+        e.preventDefault();
+        if ($('.b2c-address-selector-button').length) {
+            $('.b2c-address-selector-button').click();
+        }
+    });
+</script>
+
+<script aps-location="Footer">
+    let quoteInput = document.getElementById('CustomerReference');
+    quoteInput.setAttribute('value', '');
+</script>
+
+<script>
+    $(document).ready(function () {
+        $("#confirmButton").click(function (e) {
+            e.preventDefault();
+            displayAjaxLoading(true);
+            var error = false;
+            var dp = false;
+
+            $('*[id*=selectedDeliveryDate]').each(function () {
+                var wholeData = $(this);
+                //console.log("this: ", wholeData);
+
+                var warehouseId = $(this).attr("data-warehouseId");
+                //console.log("warehouse id:", warehouseId);
+
+                var date;
+                var isFullLoadRequired = false;
+                if (wholeData.is('.hasDatepicker')) {
+                    date = wholeData.datepicker('getDate');
+                    //console.log("date from datepicker: ", date);
+                    dp = true;
+                    //date = wholeData.val();
+                    //console.log("date from element: ", wholeData.val());
+                }
+                else {
+                    if ($(this).attr("data-fullLoadRequired"))
+                        isFullLoadRequired = true;
+
+                    //console.log("isFullLoadRequired: ", isFullLoadRequired);
+                    if (isFullLoadRequired === false) {
+                        date = wholeData.find(":selected").val();
+                        //console.log("date from select list: ", date);
+                    }
+                }
+
+                if (isFullLoadRequired === false) {
+                    if (!date || date == '') {
+                        //console.log("validation error");
+                        $(".selectedDeliveryDate-" + warehouseId).closest('.delivery-date-header').append('<div class="validation-error"><span class="field-validation-error" style="font-size:16px;">@T("Plugins.Payments.B2BCustomerAccount.Checkout.SelectDeliveryDate")</span><div>');
+                        error = true;
+                    }
+                    else {
+                        $('#selectedDeliveryDate-1').closest('.delivery-date-header').find('.validation-error').remove();
+
+                        var day, year, month, splittedDate;
+                        //console.log("dp", dp);
+                        if (dp === true) {
+                            day = date.getDate(), month = date.getMonth() + 1, year = date.getFullYear(), hour = date.getHours();
+
+                            month = (month < 10 ? "0" : "") + month;
+                            day = (day < 10 ? "0" : "") + day;
+                            hour = (hour < 10 ? "0" : "") + hour;
+                        }
+
+                        else {
+                            splittedDate = date.toString().replaceAll('/', '-');
+                            //console.log("date replaced /: ", splittedDate);
+                            var pieces = splittedDate.split(/[\s-]+/);
+                            //console.log(pieces.length);
+                            day = pieces[pieces.length - 3];
+                            month = pieces[pieces.length - 2];
+                            year = pieces[pieces.length - 1];
+                            //console.log("pieces: ", day, month, year);
+                        }
+
+                        $('.itemDeliveryDate-' + warehouseId).each(function () {
+
+                            var formattedDateVal = year + "-" + month + "-" + day;
+
+                            $(this).val(formattedDateVal);
+                            //console.log("item delivery date: ", $(this).val());
+                        });
+                    }
+                }
+            });
+
+            var specialInstructions = $('#@Html.IdFor(model => model.SpecialInstructions)').val();
+            if (specialInstructions) {
+                var len = specialInstructions.length;
+                if (len > 90) {
+                    error = true;
+                }
+            }
+
+            if (error === false) {
+                //console.log("click submit button");
+                $('#shippingaddress-next-button').click();
+            }
+
+            displayAjaxLoading(false);
+        });
+    });
+</script>
+
+<style>
+    .checkout-shipping-tab .ui-state-active a::after {
+        content: "";
+        display: block;
+        background: #0270d3;
+        height: 8px;
+        width: 8px;
+        border-radius: 50%;
+        position: absolute;
+        left: 1px;
+        top: 5px;
+        transform: translate(calc(20px/2 - 4px), calc(20px/2 - 4px));
+    }
+
+    .checkout-shipping-tab .tab-item a::before {
+        content: "";
+        display: block;
+        background: #fff;
+        height: 20px;
+        width: 20px;
+        border-radius: 50%;
+        margin-right: 10px;
+        border: 1px solid #0270d3;
+        float: left;
+    }
+
+    .checkout-shipping-tab .tab-item a {
+        position: relative;
+    }
+
+    .checkout-left-section .ui-tabs-nav .tab-item a {
+        color: #444;
+        border: 0;
+        text-transform: capitalize;
+    }
+
+    .checkout-shipping-tab .tab-content {
+        margin: 0px !important;
+        padding: 0 !important;
+        background-color: transparent;
+    }
+</style>

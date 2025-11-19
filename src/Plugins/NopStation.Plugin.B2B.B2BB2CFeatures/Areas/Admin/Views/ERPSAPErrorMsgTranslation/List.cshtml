@@ -1,0 +1,199 @@
+@using NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Models.ERPSAPErrorMsgTranslations
+@model ERPSAPErrorMsgSearchModel
+
+@{
+    Layout = "_AdminLayout";
+    //page title
+    NopHtml.AddTitleParts(T("NopStation.Plugin.B2B.B2BB2CFeatures.SiteMapNode.Title.ERPSAPErrorMsgTranslations").Text);
+    ViewBag.Title = T("NopStation.Plugin.B2B.B2BB2CFeatures.SiteMapNode.Title.ERPSAPErrorMsgTranslations").Text;
+    //active menu item (system name)
+    NopHtml.SetActiveMenuItemSystemName(B2BB2CFeaturesDefaults.ERPSAPErrorMsgTranslations_SiteMapNode_SystemName);
+}
+
+@{
+    const string hideSearchBlockAttributeName = "ErrorMessageListPage.HideSearchBlock";
+    var hideSearchBlock = await genericAttributeService.GetAttributeAsync<bool>(await workContext.GetCurrentCustomerAsync(), hideSearchBlockAttributeName);
+}
+
+<div class="content-header clearfix">
+    <h1 class="pull-left">
+        @T("NopStation.Plugin.B2B.B2BB2CFeatures.B2BSAPErrorMsgTranslations.B2BSAPErrorMsgTranslations")
+    </h1>
+</div>
+
+<div class="content">
+    <div class="form-horizontal">
+        <div class="cards-group">
+            <div class="card card-default card-search">
+                <div class="card-body">
+                    <div class="row search-row @(!hideSearchBlock ? "opened" : "")" data-hideAttribute="@hideSearchBlockAttributeName">
+                        <div class="search-text">@T("Admin.Common.Search")</div>
+                        <div class="icon-search"><i class="fa fa-search" aria-hidden="true"></i></div>
+                        <div class="icon-collapse"><i class="fa fa-angle-down" aria-hidden="true"></i></div>
+                    </div>
+                    <div class="search-body @(hideSearchBlock ? "closed" : "")">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group row">
+                                    <div class="col-md-3">
+                                        <nop-label asp-for="@Model.SearchErrorMsg" />
+                                    </div>
+                                    <div class="col-md-9">
+                                        <nop-editor asp-for="@Model.SearchErrorMsg" />
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <div class="col-md-3">
+                                        <nop-label asp-for="SearchUserTranslation" />
+                                    </div>
+                                    <div class="col-md-9">
+                                        <nop-editor asp-for="SearchUserTranslation" />
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <div class="col-md-9 offset-md-4">
+                                        <button type="button" id="search-error-message" class="btn btn-primary btn-search">
+                                            <i class="fa fa-search"></i>
+                                            @T("Admin.Common.Search")
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card card-default">
+                <div class="card-body">
+                    @await Html.PartialAsync("Table", new DataTablesModel
+                    {
+                        Name = "error-message-grid",
+                        UrlRead = new DataUrl("ListData", "ERPSAPErrorMsgTranslation", null),
+                        UrlUpdate = new DataUrl("ErrorMsgUpdate", "ERPSAPErrorMsgTranslation", null),
+                        UrlDelete = new DataUrl("ErrorMsgDelete", "ERPSAPErrorMsgTranslation", null),
+                        SearchButtonId = "search-error-message",
+                        Length = Model.PageSize,
+                        LengthMenu = Model.AvailablePageSizes,
+                        Filters = new List<FilterParameter>
+                        {
+                            new FilterParameter(nameof(Model.SearchErrorMsg)),
+                            new FilterParameter(nameof(Model.SearchUserTranslation))
+                        },
+                        ColumnCollection = new List<ColumnProperty>
+                        {
+                            new ColumnProperty(nameof(ERPSAPErrorMsgTranslationModel.ErrorMsg))
+                            {
+                                Title = T("NopStation.Plugin.B2B.B2BB2CFeatures.ERPSAPErrorMsgTranslationModel.Fields.ErrorMsg").Text,
+                                Width = "300",
+                                Editable = true,
+                                EditType = EditType.String
+                            },
+                            new ColumnProperty(nameof(ERPSAPErrorMsgTranslationModel.UserTranslation))
+                            {
+                                Title = T("NopStation.Plugin.B2B.B2BB2CFeatures.ERPSAPErrorMsgTranslationModel.Fields.UserTranslation").Text,
+                                Width = "300",
+                                Editable = true,
+                                EditType = EditType.String
+                            },
+                            new ColumnProperty(nameof(ERPSAPErrorMsgTranslationModel.Id))
+                            {
+                                Title = T("Admin.Common.Edit").Text,
+                                Width = "200",
+                                ClassName =  NopColumnClassDefaults.Button,
+                                Render = new RenderButtonsInlineEdit()
+                            },
+                            new ColumnProperty(nameof(ERPSAPErrorMsgTranslationModel.Id))
+                            {
+                                Title = T("Admin.Common.Delete").Text,
+                                Width = "100",
+                                ClassName =  NopColumnClassDefaults.Button,
+                                Render = new RenderButtonRemove(T("Admin.Common.Delete").Text)
+                            }
+                        }
+                    })
+                    <div class="card card-default no-margin">
+                        <div class="card-heading">
+                            @T("Admin.Common.AddNewRecord")
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group row">
+                                <div class="col-md-3">
+                                    <nop-label asp-for="@Model.AddB2BSAPErrorMsgTranslationModel.ErrorMsg" />
+                                </div>
+                                <div class="col-md-9">
+                                    <nop-editor asp-for="@Model.AddB2BSAPErrorMsgTranslationModel.ErrorMsg" />
+                                    <span asp-validation-for="@Model.AddB2BSAPErrorMsgTranslationModel.ErrorMsg"></span>
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <div class="col-md-3">
+                                    <nop-label asp-for="@Model.AddB2BSAPErrorMsgTranslationModel.UserTranslation" />
+                                </div>
+                                <div class="col-md-9">
+                                    <nop-editor asp-for="@Model.AddB2BSAPErrorMsgTranslationModel.UserTranslation" />
+                                    <span asp-validation-for="@Model.AddB2BSAPErrorMsgTranslationModel.UserTranslation"></span>
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <div class="col-md-9 offset-md-3">
+                                    <button type="button" id="addErrorMsgString" class="btn btn-primary">@T("Admin.Common.AddNewRecord")</button>
+                                </div>
+                            </div>
+                        </div>
+                        <script>
+                            $(document).ready(function () {
+                                $('#addErrorMsgString').click(function () {
+                                    $('#addErrorMsgString').attr('disabled', true);
+                                    var postData = {
+                                        ErrorMsg: $("#@Html.IdFor(model => model.AddB2BSAPErrorMsgTranslationModel.ErrorMsg)").val(),
+                                        UserTranslation: $("#@Html.IdFor(model => model.AddB2BSAPErrorMsgTranslationModel.UserTranslation)").val()
+                                    };
+                                    addAntiForgeryToken(postData);
+
+                                    $.ajax({
+                                        cache: false,
+                                        type: "POST",
+                                        url: "@Html.Raw(Url.Action("Create", "ERPSAPErrorMsgTranslation"))",
+                                        data: postData,
+                                        success: function (data, textStatus, jqXHR) {
+                                            if (data.Result) {
+                                                //reload grid
+                                                updateTable('#error-message-grid');
+
+                                                //clear input value
+                                                $("#@Html.IdFor(model => model.AddB2BSAPErrorMsgTranslationModel.ErrorMsg)").val('');
+                                                $("#@Html.IdFor(model => model.AddB2BSAPErrorMsgTranslationModel.UserTranslation)").val('');
+                                            } else {
+                                                //display errors if returned
+                                                display_nop_error(data);
+                                            }
+                                        },
+                                        complete: function (jqXHR, textStatus) {
+                                            $('#addErrorMsgString').attr('disabled', false);
+                                        }
+                                    });
+                                });
+                            });
+                        </script>
+                    </div>
+                    <div class="card card-default no-margin">
+                        <div class="card-heading">
+                            Instruction
+                        </div>
+                        <div class="card-body">
+                            <p>
+                                Current error message resource string is "B2B.ERPIntegration.PlaceB2BOrder.DefaultIntegrationErrorMessage",
+                                <br>which contains the value "@T("B2B.ERPIntegration.PlaceB2BOrder.DefaultIntegrationErrorMessage")",
+                                <br>where {0} and {1} will be replaced by {Order Type} and {Error Msg}.
+                                <br><mark>So, only {Error Msg} part will be transalted from the above table.</mark>
+                                <br>If you need to change anything on the full value please change resource string value.
+                                <br>But make sure that it must contains {0} and {1} in it's value
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,163 @@
+﻿@model NopStation.Plugin.Payments.B2BAccount.Models.B2BAccountPaymentInfoModel
+@inherits Nop.Web.Framework.Mvc.Razor.NopRazorPage<TModel>
+
+<div class="info-block">
+    <table id="b2bPaymentTable" width="100%" cellpadding="0" cellspacing="0">
+        <input type="hidden" asp-for="ErpAccountId" />
+        <tr>
+            <td>
+                <label>@T("Plugins.Payments.B2BCustomerAccount.PaymentInfo.AccountNumber"):</label>
+            </td>
+            <td>
+                <p>@Model.ErpAccountNumber</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <label>@T("Plugins.Payments.B2BCustomerAccount.PaymentInfo.PaymentMethod"):</label>
+            </td>
+            <td>
+                <p>@Model.PaymentMethod</p>
+            </td>
+        </tr>
+        @if (!Model.HasB2BQuoteAssistantRole && !Model.HasB2BOrderAssistantRole)
+        {
+            <tr>
+                <td>
+                    <label>@T("Plugins.Payments.NopStation.B2B.Account.Title.CreditLimit"):</label>
+                </td>
+                <td>
+                    <p id="CreditLimit">@Model.CreditLimitStr</p>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label>@T("Plugins.Payments.NopStation.B2B.Account.Title.CreditLimitAvailable"):</label>
+                </td>
+                <td>
+                    <p id="AvailableCredit">@Model.CreditLimitAvailableStr</p>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label>@T("Plugins.Payments.NopStation.B2B.Account.Title.CurrentBalance"):</label>
+                </td>
+                <td>
+                    <p id="CurrentBalance">@Model.CurrentBalanceStr</p>
+                </td>
+            </tr>
+        }
+        <tr id="CustomerReferenceAsPo" hidden>
+            <td>
+                <label asp-for="CustomerReferenceAsPO">@T("Plugins.Payments.NopStation.B2B.Account.PaymentInfo.CustomerReferenceAsPO"):</label>
+            </td>
+            <td>
+                <input type="text" asp-for="CustomerReferenceAsPO" style="width:165px;" autocomplete="off" required />
+                <span asp-validation-for="CustomerReferenceAsPO" id="Customer-Ref-Validation"></span>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<div id="creditWarningDialog" class="custom-modal" title="@T("common.warning")" style="display: none;">
+    <div class="popup-content" id="credit-warning-message"></div>
+    <div class="quote-order-confirm-buttons popup-button-wrapper">
+        <input type="button" name="gotocart" onclick="gotocart()" value="@T("shoppingcart.mini.viewcart")" class="button-1 popup-button" />
+        <input type="button" name="cancel" onclick="closeCreditWarningDialogPopup()" value="@T("B2B.TermsAndConditionAccept.Cancel")" class="button-1 popup-button" />
+    </div>
+    <script asp-location="Footer">
+        function closeCreditWarningDialogPopup() {
+            $('.ui-dialog .ui-dialog-titlebar-close').trigger('click');
+        }
+        function gotocart() {
+            $("#creditWarningDialog").dialog("destroy");
+            setLocation('@Url.RouteUrl("ShoppingCart")');
+        }
+    </script>
+</div>
+
+<script asp-location="Footer">
+
+    $(document).ready(function () {
+        $.ajax({
+            cache: true,
+            type: "GET",
+            url: "@Url.RouteUrl("LoadB2BAccountInfoWithCurrentOrderFromErp")",
+            dataType: "json",
+            success: function (response, textStatus, jqXHR) {
+                var data = response.data
+                if (data.CreditLimit) {
+                    $('#CreditLimit').html(data.CreditLimit);
+                }
+                if (data.CurrentBalance) {
+                    $('#CurrentBalance').html(data.CurrentBalance);
+                }
+                if (data.AvailableCredit) {
+                    $('#AvailableCredit').html(data.AvailableCredit);
+                }
+                if (!data.AllowOverSpend) {
+                    if (data.IsOverSpend) {
+                        $('.payment-info-next-step-button').last().addClass('btn-cursor-disabled');
+                        $('.payment-info-next-step-button').prop('disabled', true);
+                        $('.payment-info-next-step-button').hide();
+                        $('#CustomerReferenceAsPo').hide();
+                        $("#credit-warning-message").text(data.CreditWarningMessage)
+                        $("#creditWarningDialog").dialog({
+                            modal: true,
+                            draggable: false,
+                            closeOnEscape: true
+                        });
+                        return;
+                    }
+                }
+                $('.payment-info-next-step-button').show();
+                $('#CustomerReferenceAsPo').show();
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+                console.log("Live account data sync failed");
+            }
+        });
+    });
+
+</script>
+
+<style>
+    .info-block {
+        padding: 20px;
+        background-color: #f5f5f5;
+        box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+    }
+
+        .info-block td:first-child {
+            text-align: left !important;
+        }
+
+    #b2bPaymentTable {
+        border: 0px solid #eee !important;
+        border-radius: 3px !important;
+        margin: 0 !important;
+    }
+
+        #b2bPaymentTable label {
+            font-size: 16px;
+        }
+
+    h2 {
+        color: #333;
+    }
+
+    p {
+        color: #666;
+    }
+
+    #CustomerReferenceAsPO {
+        border-radius: 10px;
+        font-size: 16px;
+        font-family: 'Source Sans Pro', sans-serif;
+        color: #111;
+    }
+
+    #Customer-Ref-Validation {
+        width: 250px;
+    }
+</style>

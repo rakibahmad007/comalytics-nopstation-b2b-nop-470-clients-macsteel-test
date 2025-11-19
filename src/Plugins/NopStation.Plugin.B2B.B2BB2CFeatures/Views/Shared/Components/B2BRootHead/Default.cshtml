@@ -1,0 +1,260 @@
+﻿@using Microsoft.AspNetCore.Http
+@using Nop.Core
+@using Nop.Core.Domain.Customers
+@using Nop.Services.Configuration
+@using Nop.Services.Forums
+@using NopStation.Plugin.B2B.ERPIntegrationCore
+@using NopStation.Plugin.B2B.B2BB2CFeatures
+@using NopStation.Plugin.B2B.B2BB2CFeatures.Contexts
+@using NopStation.Plugin.B2B.ERPIntegrationCore.Services
+@using NopStation.Plugin.B2B.ERPIntegrationCore.Enums
+@using NopStation.Plugin.B2B.B2BB2CFeatures.Services.ErpPriceSyncFunctionality
+
+@inject IWebHelper webHelper
+@inject B2BB2CFeaturesSettings b2BB2CFeaturesSettings
+@inject IErpAccountService erpAccountService
+@inject IErpNopUserService erpNopUserService
+@inject IErpPriceSyncFunctionalityService erpPriceSyncFunctionalityService
+@inject IThemeContext themeContext
+@inject IErpCustomerFunctionalityService erpCustomerFunctionalityService
+
+@{
+    var customer = await workContext.GetCurrentCustomerAsync();
+    var erpNopUser = await erpNopUserService.GetErpNopUserByCustomerIdAsync(customer.Id, showHidden: false);
+    var erpAccount = await erpAccountService.GetErpAccountByIdWithActiveAsync(erpNopUser?.ErpAccountId ?? 0);
+    var prefilterFacets = erpAccount?.PreFilterFacets ?? string.Empty;
+    var specialIncludes = erpAccount?.SpecialIncludes ?? string.Empty;
+    var searchParamsTypes = string.IsNullOrEmpty(prefilterFacets) ? "exclude" : "filter";
+    var (isTermsAndConditionAcceptRequired, isFirstTime) = await erpCustomerFunctionalityService.IsTermsAndConditionAcceptRequiredAndIsFirstTimeAsync();
+    var isUserSignedIn = EngineContext.Current.Resolve<IHttpContextAccessor>().HttpContext.User.Identity.IsAuthenticated;
+
+    var isPriceSyncRequired = false;
+    if (erpAccount != null && !isTermsAndConditionAcceptRequired)
+    {
+        isPriceSyncRequired = await erpPriceSyncFunctionalityService.IsB2BPriceSyncRequiredAsync();
+    }
+
+    var controllerName = Url.ActionContext.RouteData.Values["controller"].ToString();
+    var actionName = Url.ActionContext.RouteData.Values["action"].ToString();
+    var isTopicPage = controllerName.Equals("topic", StringComparison.InvariantCultureIgnoreCase) &&
+                actionName.Equals("topicdetails", StringComparison.InvariantCultureIgnoreCase);
+
+    var forumService = EngineContext.Current.Resolve<IForumService>();
+
+    if (!string.IsNullOrEmpty(prefilterFacets))
+    {
+        if (!string.IsNullOrEmpty(specialIncludes))
+        {
+            prefilterFacets += $",{specialIncludes}";
+        }
+    }
+    else
+    {
+        prefilterFacets = specialIncludes;
+    }
+    var prefilterFacetsArr = prefilterFacets.Split(",");
+    var excludedprefilterFacets = erpAccount?.SpecialExcludes;
+    prefilterFacets = string.Join(',', prefilterFacetsArr);
+
+    var themeName = await themeContext.GetWorkingThemeNameAsync();
+    NopHtml.AppendCssFileParts($"~/Plugins/NopStation.Plugin.B2B.B2BB2CFeatures/Themes/{themeName}/Content/css/styles.css");
+    NopHtml.AppendCssFileParts($"~/Plugins/NopStation.Plugin.B2B.B2BB2CFeatures/Themes/{themeName}/Content/css/styles2.css");
+    NopHtml.AppendScriptParts(ResourceLocation.Footer, "~/Plugins/NopStation.Plugin.B2B.B2BB2CFeatures/Content/scripts/b2baccount.common.js");
+    NopHtml.AppendScriptParts(ResourceLocation.Footer, "~/Plugins/NopStation.Plugin.B2B.B2BB2CFeatures/Content/scripts/b2bajaxcart.js");
+    NopHtml.AppendScriptParts(ResourceLocation.Footer, "~/Plugins/NopStation.Plugin.B2B.B2BB2CFeatures/Content/scripts/b2bminicart.js");
+}
+
+
+@if (isUserSignedIn && isTermsAndConditionAcceptRequired && !isTopicPage)
+{
+    <style>
+        .ui-widget-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #aaaaaa;
+            opacity: 0.3;
+        }
+
+        .ui-front {
+            z-index: 100;
+        }
+    </style>
+
+    <div id="customTermsAndConditionAcceptDialog" class="custom-modal" title="@T("Checkout.TermsOfService")" style="display: none;">
+        <form asp-controller="ErpAccountPublic" asp-action="TermsAndConditionResponse" class="terms-and-condition-accept-form" method="post" enctype="multipart/form-data">
+            <div class="info popup-content">
+                @T(isFirstTime ? "Checkout.TermsOfService.PleaseAccept" : "Checkout.TermsOfService.PleaseAcceptUpdated")
+            </div>
+            <div class="terms-and-condition-buttons popup-button-wrapper">
+                <input type="submit" name="accept" value="@T("B2B.TermsAndConditionAccept.Accept")" class="button-1 accept popup-button" />
+            </div>
+            <div class="info popup-content" style="margin-top: 20px">
+                @T("NopStation.Plugin.B2BB2CFeatures.TermsOfService.ClickHere")
+                <a class="read" id="read-terms" href="@Url.RouteTopicUrl("TermsAndConditions")" target="_blank" style="text-decoration: underline;">
+                    @T("NopStation.Plugin.B2BB2CFeatures.TermsOfService.Link")
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <script asp-location="Footer">
+        $(document).ready(function () {
+            $("#customTermsAndConditionAcceptDialog").dialog({
+                modal: true,
+                draggable: false,
+                closeOnEscape: false,
+                open: function (event, ui) { $(".ui-dialog-titlebar-close").hide(); }
+            });
+        });
+    </script>
+}
+
+@if (isPriceSyncRequired)
+{
+    <script asp-location="Footer">
+        $(document).ready(function () {
+            displayPopupNotification("@T("NopStation.Plugin.B2B.B2BB2CFeatures.PriceSync.PopUp.Message")", 'success');
+            $.ajax({
+                cache: false,
+                type: "GET",
+                url: "@Url.Action("AllProductsLivePriceSync", "ErpAccountPublic")",
+                error: function (jqXHR, textStatus, errorThrown) {
+                    console.log("Products Live Price Sync Failed");
+                }
+            });
+        });
+    </script>
+}
+
+<script asp-location="Footer">
+    B2BAjaxCart.init(false, '.cart-qty', '.header-links .wishlist-qty', '.flyout-cart');
+    ErpAccountCommon.init("@Url.RouteUrl("LoadErpProductData")", "@Url.RouteUrl("LoadErpNoItemsMsg")", "@Url.RouteUrl("LoadProductInCartQuantity")");
+</script>
+<script asp-location="Footer">
+    var doofinder_script = '//cdn.doofinder.com/media/js/doofinder-fullscreen.7.latest.min.js';
+    (function (d, t) {
+        var f = d.createElement(t), s = d.getElementsByTagName(t)[0]; f.async = 1;
+        f.src = ('https:' == location.protocol ? 'https:' : 'http:') + doofinder_script;
+        f.setAttribute('charset', 'utf-8');
+        s.parentNode.insertBefore(f, s)
+    }(document, 'script'));
+
+    var changePrice = function (result) {
+        result.price = 0;
+        return result;
+    };
+
+    var facets = '@prefilterFacets';
+    var facetArr = facets.split(',');
+
+    var excludeFacets = '@excludedprefilterFacets';
+    var excludeFacetArr = excludeFacets.split(',');
+
+    if (!'@isUserSignedIn') {
+        var dfFullscreenLayers = [{
+            "hashid": "dd1c9857353648733a7d530e8f07fb92",
+            "zone": "eu1",
+            "display": {
+                "lang": "en",
+                //"wait": 1000,
+                "templateVars": {
+                    "placeholderText": "@T("Doofinder.PlaceholderText")",
+                    "topbarLogo": "https://macsteeltestupgrade.comalytics.com/images/thumbs/0038638_0053802_0025935_Screenshot 2021-07-16 at 09.19.55.png",
+                    "topbarLogoLink": "/"
+                }
+            },
+            "searchParams": {
+                "filter": {
+                    "g:prefilter": facetArr,
+                },
+                "exclude": {
+                    "g:prefilter": excludeFacetArr
+                }
+            },
+            "toggleInput": "#small-searchterms"
+        }];
+    }
+    else {
+
+        var dfFullscreenLayers = [{
+            "hashid": "dd1c9857353648733a7d530e8f07fb92",
+            "zone": "eu1",
+            "display": {
+                "lang": "en",
+                //"wait": 1000,
+                "templateVars": {
+                    "placeholderText": "@T("Doofinder.PlaceholderText")",
+                    "topbarLogo": "https://macsteeltestupgrade.comalytics.com/images/thumbs/0038638_0053802_0025935_Screenshot 2021-07-16 at 09.19.55.png",
+                    "topbarLogoLink": "/"
+                }
+            },
+            "searchParams": {
+                "@searchParamsTypes": {
+                    "g:prefilter": facetArr,
+                },
+            },
+            "toggleInput": "#small-searchterms"
+        }];
+
+    }
+
+
+    function GetProductPrice(productId) {
+        return $.ajax({
+            cache: true,
+            url: "@Url.RouteUrl("LoadB2BProductPrice")",
+            data: {
+                productId: productId
+            },
+            type: 'Get',
+            async: false
+        });
+    }
+
+    function delay(fn, ms) {
+        let timer = 0
+        return function (args) {
+            clearTimeout(timer)
+            timer = setTimeout(fn.bind(this, args), ms || 0)
+        }
+    }
+
+    $(document).ready(delay(function (e) {
+        var isFocused = $("#small-searchterms").is(":focus");
+        if (isFocused) {
+            $('#dffullscreen').attr("visible", true);
+            $('#dffullscreen').attr("hidden", false);
+        }
+    }, 800));
+</script>
+
+
+<script asp-location="Footer">
+	$(document).ready(function () {
+		downloadFromMegaMenuPriceList();
+	});
+
+	function downloadFromMegaMenuPriceList() {
+		$('.price-list-customer ul li').each(function (i, obj) {
+			if ($(this).find('a').length > 0) {
+				$(this).click(function (event) {
+					event.preventDefault();
+					ErpAccountCommon.downloadFromUrl($(this).find('a').attr('href'));
+				});
+			}
+		});
+	}
+</script>
+
+<script asp-location="Footer">
+	$(document).ready(function () {
+		appendNotificationMessageToAjaxLoader();
+	});
+
+	function appendNotificationMessageToAjaxLoader() {
+		$('.ajax-loading-block-window').append('<div class="ajax-loading-message-block"><span class="ajax-loading-message">@T("Plugin.Misc.NopStation.B2BB2CFeatures.AjaxLoading.NotifcationMessage")</span></div>')
+	}
+</script>

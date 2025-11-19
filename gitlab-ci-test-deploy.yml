@@ -1,0 +1,144 @@
+# List of stages for jobs, and their order of execution
+stages:
+  - checkout
+  - build
+  - publish
+  - stop_website
+  - deploy
+  - rollback
+  - start_website
+
+
+variables:
+  ARTIFACTS_DIR_TEST: "C:\\Gitlab-CI-CD\\artifacts"
+  PLUGINS_DIR_TEST: "C:\\Gitlab-CI-CD\\artifacts\\Plugins"
+  DEPLOY_DIR_SITE1_TEST: "C:\\HostingSpaces\\MAC005\\macsteeltest.comalytics.com\\wwwroot\\Plugins"
+  ROOT_DIR_TEST: "C:\\Gitlab-CI-CD"
+  SCRIPT_DIR_TEST: "C:\\Gitlab-CI-CD\\scripts"
+  CACHE_DIR_TEST: "C:\\Gitlab-Runner\\builds\\t3_NsAiAy\\0\\nop-station\\comalytics-nopstation-b2b-nop-470\\src\\Presentation\\Nop.Web\\Plugins"
+  BACKUP_DIR_SITE1_TEST: "C:\\Gitlab-CI-CD\\backup\\macsteel"
+  TEST_SITE1_NAME: "macsteeltest.comalytics.com"
+  BRANCH_TEST: "clients/macsteel/test"
+
+checkout_test:
+  stage: checkout
+  tags:
+    - b2b-test-server
+  script:
+    - git config --system core.longpaths true
+    - git config --global advice.nameTooLong false
+    - git config --global safe.directory '*'
+    - git checkout $BRANCH_TEST
+    - git branch
+    - echo $CI_COMMIT_REF_NAME
+    - git pull
+  only:
+    - clients/macsteel/test
+
+build_test:
+  stage: build
+  tags:
+    - b2b-test-server
+  script:
+    - cd $SCRIPT_DIR_TEST
+    - ls
+    - powershell -File build_project.ps1
+  only:
+    - clients/macsteel/test
+  cache:
+    key: "${CI_COMMIT_REF_NAME}-build-cache"
+    paths:
+      - $CACHE_DIR_TEST
+
+
+publish_test:
+  stage: publish
+  tags:
+    - b2b-test-server
+  environment: production
+  script:
+    - |
+      try {
+        if (Test-Path $ARTIFACTS_DIR_TEST) {
+          Remove-Item -Path "$ARTIFACTS_DIR_TEST\*" -Recurse -Force
+          Write-Host "Cleaned existing artifacts from $ARTIFACTS_DIR_TEST"
+        }
+      } catch {
+        Write-Host "Warning: Could not clean artifacts directory: $_"
+      }
+    - |
+      try {
+        if (-not (Test-Path $ARTIFACTS_DIR_TEST)) {
+          New-Item -ItemType Directory -Path $ARTIFACTS_DIR_TEST -Force
+          Write-Host "Created artifacts directory: $ARTIFACTS_DIR_TEST"
+        }
+      } catch {
+        Write-Host "Error: Could not create artifacts directory: $_"
+        exit 1
+      }
+    - cd $SCRIPT_DIR_TEST
+    - ls
+    - powershell -File publish_project.ps1
+  only:
+    - clients/macsteel/test
+  cache:
+    key: "${CI_COMMIT_REF_NAME}-build-cache"
+    paths:
+      - $CACHE_DIR_TEST
+
+stop-website_test:
+  stage: stop_website
+  tags:
+    - b2b-test-server
+  script:
+    - Stop-Website $TEST_SITE1_NAME
+    - Stop-WebAppPool -Name $TEST_SITE1_NAME 
+    - echo "Waiting for 2 minutes to ensure file locks are released..."
+    - powershell -Command "Start-Sleep -Seconds 120"
+  only:
+    - clients/macsteel/test
+
+deploy_test:
+  stage: deploy
+  tags:
+    - b2b-test-server
+  script:
+    - |
+      try {
+        xcopy $DEPLOY_DIR_SITE1_TEST $BACKUP_DIR_SITE1_TEST /y /c /h /e /r /s
+      } catch {
+        Write-Host "Warning: Some files could not be backed up from $DEPLOY_DIR_SITE1_TEST to $BACKUP_DIR_SITE1_TEST."
+      }
+    - |
+      try {
+        xcopy $PLUGINS_DIR_TEST $DEPLOY_DIR_SITE1_TEST /y /c /h /e /r /s
+      } catch {
+        Write-Host "Warning: Some files could not be copied from $PLUGINS_DIR_TEST to $DEPLOY_DIR_SITE1_TEST."
+      }
+  only:
+    - clients/macsteel/test
+  retry: 2    
+
+rollback_test:
+  stage: rollback
+  tags:
+    - b2b-test-server
+  script:
+    - echo "Deploy failed. Rolling back to previous version..."
+    - xcopy "$BACKUP_DIR_SITE1_TEST\\" "$DEPLOY_DIR_SITE1_TEST" /y /c /h /e /r /s
+  only:
+    - clients/macsteel/test
+  when: on_failure
+  needs:
+    - deploy_test
+
+start-website_test:
+  stage: start_website
+  tags:
+    - b2b-test-server
+  script:
+    - Start-WebAppPool -Name $TEST_SITE1_NAME
+    - Start-Website $TEST_SITE1_NAME
+  only:
+    - clients/macsteel/test
+  when: always

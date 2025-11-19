@@ -1,0 +1,163 @@
+﻿@using NopStation.Plugin.B2B.B2BB2CFeatures.Model;
+@using NopStation.Plugin.B2B.ERPIntegrationCore.Enums;
+@using NopStation.Plugin.B2B.B2BB2CFeatures;
+@model ErpShipToAddressListModel
+
+@{
+    Layout = "_ColumnsTwo";
+
+    //title
+    NopHtml.AddTitleParts(T("PageTitle.Account").Text);
+    //page class
+    NopHtml.AppendPageCssClassParts("html-account-page");
+}
+
+@section left
+{
+    @await Component.InvokeAsync(typeof(CustomerNavigationViewComponent), 
+    new { selectedTabId = B2BB2CFeaturesDefaults.ErpCustomerNavigationEnum_ErpShippingAddresses })
+}
+
+<style>
+    .account-shipto-collapsible {
+        background-color: #777;
+        color: white;
+        cursor: pointer;
+        padding: 18px;
+        width: 100%;
+        border: none;
+        text-align: left;
+        outline: none;
+        font-size: 15px;
+        margin-bottom: 10px;
+    }
+
+        .account-shipto-collapsible:hover {
+            background-color: #555;
+        }
+
+    .account-shipto-address {
+        padding: 0 18px;
+        overflow: hidden;
+        background-color: #f1f1f1;
+    }
+</style>
+
+<div class="page account-page customer-info-page shipping-address">
+    <div class="page-title custom-title-margin">
+        <h1>@T("Plugin.Payments.B2BCustomerAccount.Title.B2BShippingAddresses")</h1>
+    </div>
+    <div class="page-body">
+        @if (Model.ErpNopUser != null &&
+        Model.ErpNopUser.ErpUserType == ErpUserType.B2BUser &&
+        Model.ErpShipToAddressList.Count() > 0)
+        {
+            @foreach (var shipto in Model.ErpShipToAddressList)
+            {
+                var buttonText = shipto.ShipToCode + " (" + shipto.ShipToName + ")";
+                <button type="button" class="account-shipto-collapsible">@buttonText</button>
+                <div class="fieldset account-shipto-address">
+                    <div class="inputs">
+                        <label asp-for="@shipto.ShipToCode" asp-postfix=":"></label>
+                        <label>@shipto.ShipToCode</label>
+                    </div>
+                    <div class="inputs">
+                        <label asp-for="@shipto.ShipToName" asp-postfix=":"></label>
+                        <label>@shipto.ShipToName</label>
+                    </div>
+                    <div class="inputs">
+                        <label asp-for="@shipto.Company" asp-postfix=":"></label>
+                        <label>@shipto.Company</label>
+                    </div>
+                    <div class="inputs">
+                        <label asp-for="@shipto.CountryId" asp-postfix=":"></label>
+                        <label>@shipto.CountryName</label>
+                    </div>
+                    <div class="inputs">
+                        <label asp-for="@shipto.City" asp-postfix=":"></label>
+                        <label>@shipto.City</label>
+                    </div>
+                    <div class="inputs">
+                        <label asp-for="@shipto.Address1" asp-postfix=":"></label>
+                        <label>@shipto.Address1</label>
+                    </div>
+                    <div class="inputs">
+                        <label asp-for="@shipto.Address2" asp-postfix=":"></label>
+                        <label>@shipto.Address2</label>
+                    </div>
+                    <div class="inputs">
+                        <label asp-for="@shipto.Suburb" asp-postfix=":"></label>
+                        <label>@shipto.Suburb</label>
+                    </div>
+                    <div class="inputs">
+                        <label asp-for="@shipto.PostalCode" asp-postfix=":"></label>
+                        <label>@shipto.PostalCode</label>
+                    </div>
+                    <div class="inputs">
+                        <label asp-for="@shipto.Phone" asp-postfix=":"></label>
+                        <label>@shipto.Phone</label>
+                    </div>
+                </div>
+            }
+        }
+        else if (Model.ErpNopUser != null &&
+        Model.ErpNopUser.ErpUserType == ErpUserType.B2CUser &&
+        Model.ErpShipToAddressList.Count() > 0)
+        {
+            <p class="b2cshipto-address-instructions">@T("Plugins.Payments.B2BCustomerAccount.B2CShipToAddressSelector.Instructions")</p>
+            <div class="b2cshipto-address-div">
+                <button class="trigger-ship-to-address-selector-button button-1">@T("Plugins.Payments.B2BCustomerAccount.B2CShipToAddressSelector.SelectAddDelete")</button>
+            </div>
+            <p class="list-of-b2cshipto-addresses">@T("Plugins.Payments.B2BCustomerAccount.B2CShipToAddressSelector.CurrentAddresses")</p>
+            @foreach (var b2CShipTo in Model.ErpShipToAddressList)
+            {
+                var addressLine = "";
+                if (!string.IsNullOrEmpty(b2CShipTo.HouseNumber))
+                    addressLine += b2CShipTo.HouseNumber;
+
+                if (!string.IsNullOrEmpty(b2CShipTo.Street))
+                    addressLine += (addressLine != "" ? ", " : "") + b2CShipTo.Street;
+
+                if (!string.IsNullOrEmpty(b2CShipTo.Suburb))
+                    addressLine += (addressLine != "" ? ", " : "") + b2CShipTo.Suburb;
+
+                if (!string.IsNullOrEmpty(b2CShipTo.City))
+                    addressLine += (addressLine != "" ? ", " : "") + b2CShipTo.City;
+
+                if (!string.IsNullOrEmpty(b2CShipTo.StateProvinceName))
+                    addressLine += (addressLine != "" ? ", " : "") + b2CShipTo.StateProvinceName;
+
+                if (!string.IsNullOrEmpty(b2CShipTo.PostalCode))
+                    addressLine += (addressLine != "" ? ", " : "") + b2CShipTo.PostalCode;
+
+				if (b2CShipTo.Id == Model.ErpNopUser.ErpShipToAddressId)
+                {
+                    addressLine += " " + T("NopStation.Plugin.B2B.ManageB2CandB2BCustomer.B2CShipToAddressSelector.Default").ToString();
+                }
+                <div class="b2cshipto-address-line">@addressLine</div>
+            }
+        }
+        else
+        {
+            <p>No Ship to address found with this account</p>
+        }
+    </div>
+</div>
+
+<script asp-location="Footer">
+    $(document).ready(function () {
+        $('.block-account-navigation .listbox .list>li>a').each(function () {
+            $(this).removeClass("active").addClass("inactive");
+        });
+
+        $('.b2baccount-shipping-addresses a').removeClass("inactive").addClass("active");
+    });
+
+    $(".trigger-ship-to-address-selector-button").click(function (e) {
+        e.preventDefault();
+        if ($('.b2c-address-selector-button').length) {
+            console.log("button found");
+            $('.b2c-address-selector-button').click();
+        }
+    });
+</script>

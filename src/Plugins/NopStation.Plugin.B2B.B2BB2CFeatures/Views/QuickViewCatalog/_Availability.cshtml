@@ -1,0 +1,25 @@
+﻿@model ProductDetailsModel
+
+@{
+    var currCustomer = await workContext.GetCurrentCustomerAsync();
+    var isErpCustomer = await erpAccountService.GetActiveErpAccountByCustomerIdAsync(currCustomer.Id) != null;
+    var isHideAddToCart = await erpCustomerFunctionality.IsHideAddToCartAsync();
+}
+
+@if ((!string.IsNullOrWhiteSpace(Model.StockAvailability) || Model.DisplayBackInStockSubscription)  && !isHideAddToCart)
+{
+    <div class="availability">
+        @if (!string.IsNullOrWhiteSpace(Model.StockAvailability))
+        {
+            <div class="stock test-stock">
+                <span class="label">@T("Products.Availability"):</span>
+                <span class="value" id="stock-availability-value-@Model.Id">@Model.StockAvailability</span>
+            </div>
+            @if (isErpCustomer)
+            {
+                @await Html.PartialAsync("_BackInStockSubscription", Model)
+            }
+        }
+        @* @await Html.PartialAsync("_BackInStockSubscription", Model) *@
+    </div>
+}

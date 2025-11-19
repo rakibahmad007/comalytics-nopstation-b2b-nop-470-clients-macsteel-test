@@ -1,0 +1,91 @@
+﻿@using Nop.Web.Models.Customer
+@using NopStation.Plugin.B2B.B2BB2CFeatures.Model.Checkout
+@model ErpBillingAddressModel
+
+@{
+    Layout = "_ColumnsTwo";
+
+    //title
+    NopHtml.AddTitleParts(T("PageTitle.Account").Text);
+    //page class
+    NopHtml.AppendPageCssClassParts("html-account-page");
+
+    await Html.PartialAsync("~/Plugins/NopStation.Plugin.B2B.B2BB2CFeatures/Views/Shared/_DatatableScripts.cshtml");
+}
+
+@section left
+{
+    @await Component.InvokeAsync(typeof(CustomerNavigationViewComponent),
+    new { selectedTabId = B2BB2CFeaturesDefaults.ErpCustomerNavigationEnum_ErpShippingAddresses })
+}
+
+<div class="page account-page customer-info-page billing-address">
+    <div class="page-title">
+        <h1>@T("Plugin.Payments.B2BCustomerAccount.Title.B2BBillingAddresses")</h1>
+    </div>
+    <div class="page-body">
+        @if (Model.Id > 0)
+        {
+            <div class="fieldset">
+                <div class="inputs">
+                    <label asp-for="FirstName" asp-postfix=":"></label>
+                    <label>@Model.FirstName</label>
+                </div>
+                <div class="inputs">
+                    <label asp-for="LastName" asp-postfix=":"></label>
+                    <label>@Model.LastName</label>
+                </div>
+                <div class="inputs">
+                    <label asp-for="Email" asp-postfix=":"></label>
+                    <label>@Model.Email</label>
+                </div>
+                <div class="inputs">
+                    <label asp-for="Company" asp-postfix=":"></label>
+                    <label>@Model.Company</label>
+                </div>
+                <div class="inputs">
+                    <label asp-for="CountryId" asp-postfix=":"></label>
+                    <label>@Model.CountryName</label>
+                </div>
+                <div class="inputs">
+                    <label asp-for="City" asp-postfix=":"></label>
+                    <label>@Model.City</label>
+                </div>
+                <div class="inputs">
+                    <label asp-for="Address1" asp-postfix=":"></label>
+                    <label>@Model.Address1</label>
+                </div>
+                <div class="inputs">
+                    <label asp-for="Address2" asp-postfix=":"></label>
+                    <label>@Model.Address2</label>
+                </div>
+                <div class="inputs">
+                    <label asp-for="Suburb" asp-postfix=":"></label>
+                    <label>@Model.Suburb</label>
+                </div>
+                <div class="inputs">
+                    <label asp-for="ZipPostalCode" asp-postfix=":"></label>
+                    <label>@Model.ZipPostalCode</label>
+                </div>
+                <div class="inputs">
+                    <label asp-for="PhoneNumber" asp-postfix=":"></label>
+                    <label>@Model.PhoneNumber</label>
+                </div>
+            </div>
+        }
+        else
+        {
+            <p>No billing address found with this account</p>
+        }
+    </div>
+</div>
+
+<script asp-location="Footer">
+    $(document).ready(function () {
+        $('.block-account-navigation .listbox .list>li').each(function () {
+            $(this).removeClass("active").addClass("inactive");
+        });
+
+        $('.b2baccount-billing-addresses').removeClass("inactive").addClass("active");
+    });
+</script>

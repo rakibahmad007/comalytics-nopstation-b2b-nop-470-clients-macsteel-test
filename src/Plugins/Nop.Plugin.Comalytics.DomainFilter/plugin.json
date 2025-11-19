@@ -1,0 +1,11 @@
+﻿{
+  "Group": "Comalytics",
+  "FriendlyName": "Domain Filter",
+  "SystemName": "Comalytics.DomainFilter",
+  "Version": "1.2",
+  "SupportedVersions": [ "4.70" ],
+  "Author": "comalytics",
+  "DisplayOrder": 1,
+  "FileName": "Nop.Plugin.Comalytics.DomainFilter.dll",
+  "Description": "This plugin allows you to filter domains during customer registration and login."
+}

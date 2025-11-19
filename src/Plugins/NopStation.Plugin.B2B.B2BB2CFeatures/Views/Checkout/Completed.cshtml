@@ -1,0 +1,1739 @@
+﻿@model OrderDetailsModel
+@using Newtonsoft.Json
+@using Nop.Core.Domain.Catalog
+@using Nop.Core.Domain.Orders
+@using Nop.Services.Localization
+@using Nop.Services.Catalog
+@using NopStation.Plugin.B2B.ERPIntegrationCore.Domain
+@using NopStation.Plugin.B2B.ERPIntegrationCore.Services
+@using NopStation.Plugin.B2B.B2BB2CFeatures.Services.ErpCustomerFunctionality
+@inject OrderSettings orderSettings
+@inject B2BB2CFeaturesSettings b2BB2CFeaturesSettings
+@inject ILocalizationService _localizationService
+@inject IErpOrderAdditionalDataService erpOrderAdditionalDataService
+@inject IErpCustomerFunctionalityService erpCustomerFunctionalityService
+@inject IWorkContext workContext
+@inject IPriceFormatter priceFormatter
+@{
+	Layout = "_ColumnsOne";
+
+	//title
+	NopHtml.AddTitleParts(T("PageTitle.OrderDetails").Text);
+	//page class
+	NopHtml.AppendPageCssClassParts("html-order-details-page");
+	NopHtml.AppendScriptParts(ResourceLocation.Footer, "~/Plugins/NopStation.Plugin.B2B.B2BB2CFeatures/Content/scripts/b2bajaxcart.js");
+}
+
+@{
+	var erpOrder = await erpOrderAdditionalDataService.GetErpOrderAdditionalDataByNopOrderIdAsync(Model.Id);
+	var isQuoteOrder = (erpOrder != null &&
+								(erpOrder.ErpOrderType == ErpOrderType.B2CQuote || erpOrder.ErpOrderType == ErpOrderType.B2BQuote));
+	var currentCustomer = await workContext.GetCurrentCustomerAsync();
+	var erpNopUser = await erpCustomerFunctionalityService.GetActiveErpNopUserByCustomerAsync(currentCustomer);
+	var erpAccount = await erpAccountService.GetErpAccountByIdAsync(erpNopUser?.ErpAccountId ?? 0);
+	var hasErpAccount = erpNopUser != null && erpAccount != null;
+
+	var isB2BUser = erpNopUser.ErpUserType == ErpUserType.B2BUser ? true : false;
+	var isB2CUser = erpNopUser.ErpUserType == ErpUserType.B2CUser ? true : false;
+
+	bool isProductForQuote = false;
+	var checkQuoteOrderStatus = false;
+	var isQuoteExpired = true;
+	var isQuoteAlreadyConverted = true;
+	var hasQuoteExpireDate = false;
+	var isQuoteRejectedOrFailed = true;
+	var customerOrderNumber = string.Empty;
+	var formattedCashRounding = string.Empty;
+	var isERPOrder = erpOrder.ErpOrderOriginType == ErpOrderOriginType.StandardOrder ? true : false;
+
+	if (Model.CustomProperties.TryGetValue("ProductForQuote", out var value) &&
+		bool.TryParse(value?.ToString(), out var productForQuote))
+	{
+		isProductForQuote = productForQuote;
+	}
+
+	if (erpOrder != null)
+	{
+		if (isQuoteOrder)
+		{
+			checkQuoteOrderStatus = await erpOrderAdditionalDataService.CheckQuoteOrderStatusAsync(erpOrder);
+			if (erpOrder.QuoteExpiryDate != null)
+			{
+				isQuoteExpired = DateTime.UtcNow.Date >= erpOrder.QuoteExpiryDate.Value.Date ? true : false;
+				hasQuoteExpireDate = true;
+			}
+			isQuoteRejectedOrFailed = erpOrder.ERPOrderStatus == "Failed" || erpOrder.ERPOrderStatus == "Rejected";
+			isQuoteAlreadyConverted = erpOrder.QuoteSalesOrderId.HasValue && erpOrder.QuoteSalesOrderId.Value > 0;
+		}
+		customerOrderNumber = erpOrder?.CustomerReference ?? string.Empty;
+	}
+
+	if (erpNopUser.ErpUserType == ErpUserType.B2CUser)
+	{
+		if (erpOrder.CashRounding.HasValue)
+		{
+			formattedCashRounding = await priceFormatter.FormatPriceAsync(erpOrder.CashRounding.Value) + "-";
+		}
+		else
+		{
+			formattedCashRounding = await priceFormatter.FormatPriceAsync(decimal.Zero);
+		}
+
+		if (isProductForQuote)
+		{
+			formattedCashRounding = await _localizationService.GetResourceAsync("Products.ProductForQuote");
+		}
+	}
+}
+
+<div class="page order-details-page">
+
+	<div class="page checkout-page order-completed-page">
+		<div class="row">
+			@if (!orderSettings.OnePageCheckoutEnabled)
+			{
+				@await Component.InvokeAsync(typeof(CheckoutProgressViewComponent), new { step = CheckoutProgressStep.Complete })
+			}
+		</div>
+		<div class="row">
+			@if (hasErpAccount)
+			{
+				<div class="page-title"></div>
+			}
+			else
+			{
+				<div class="page-title">
+					<h1>@T("Checkout.ThankYou")</h1>
+				</div>
+			}
+
+			<div>
+				@await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.CheckoutCompletedTop, additionalData = Model })
+				<div class="section order-completed">
+					<div class="title">
+						@if (hasErpAccount)
+						{
+							<strong></strong>
+						}
+						else
+						{
+							<strong>@T("Checkout.YourOrderHasBeenSuccessfullyProcessed")</strong>
+						}
+					</div>
+
+					<div class="details">
+						<div class="order-number">
+							@if (hasErpAccount)
+							{
+								<strong></strong>
+							}
+							else
+							{
+								<strong>@T("Checkout.OrderNumber"): @Model.CustomOrderNumber</strong>
+							}
+						</div>
+					</div>
+
+
+					<div class="flex-buttons">
+						@if (!isProductForQuote)
+						{
+							@if (!Model.PdfInvoiceDisabled)
+							{
+								<a href="@Url.RouteUrl("GetOrderPdfInvoice", new { orderId = Model.Id })" class="button-2 pdf-invoice-button">@T("Order.GetPDFInvoice")</a>
+							}
+							<a href="@Url.RouteUrl("PrintOrderDetails", new { orderId = Model.Id })" target="_blank" class="btn btn-primary button-2 print-order-button">@T("Order.Print")</a>
+							@if (isQuoteOrder)
+							{
+								<input type="button" value="@T("B2B.Quote.Completed.ConvertToOrder")" class="button-1 re-order-button quote-order-details-reorder-button" onclick="CheckItemsInCart('@Model.Id')" />
+							}
+							else
+							{
+								<input type="button" value="@T("B2B.Order.Completed.Reorder")" class="button-1 re-order-button quote-order-details-reorder-button" onclick="CheckItemsInCart('@Model.Id')" />
+							}
+						}
+
+						@if (b2BB2CFeaturesSettings.DisplayAddToQuickListFavouriteButton)
+						{
+							<div id="quickListFavouriteDialog" title="@T("B2B.AddToQuickListFavourite.Title")">
+								<form asp-controller="QuickOrder" asp-action="CreateUsingOrder" class="quick-order-create-using-order-form" method="post" enctype="multipart/form-data">
+									<div class="fieldset">
+										<div class="form-fields">
+											<div class="inputs">
+												<input type="hidden" value="" required id="templateName" name="templateName">
+												<input type="hidden" value="@Model.Id" required id="orderId" name="orderId">
+											</div>
+										</div>
+									</div>
+									<div class="buttons">
+										<input type="submit" id="quickListFavouriteButton" name="quickListFavouriteButton" value="@T("B2B.AddToQuickListFavourite.Button")" class="button-1 add-quick-list-favourite-button" />
+									</div>
+								</form>
+							</div>
+						}
+					</div>
+				</div>
+				<div class="section checkout-image">
+					<img src="~/Plugins/NopStation.Plugin.B2B.B2BB2CFeatures/Themes/Emporium/Content/img/checkout-image.png"
+						 alt="Checkout complete thank you page" />
+				</div>
+				@await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.CheckoutCompletedBottom, additionalData = Model })
+			</div>
+		</div>
+	</div>
+
+	<div class="page-body">
+		@await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.OrderDetailsPageTop, additionalData = Model })
+		<div class="order-overview">
+			@if (isB2BUser || isB2CUser)
+			{
+				@if (isQuoteOrder)
+				{
+					<div class="order-number">
+						<strong>@T("B2B.Quote.Quote#")</strong>
+					</div>
+					<div class="customer-order-number">
+						<strong>@T("Quote.QuoteReference"):@customerOrderNumber</strong>
+					</div>
+					<ul class="order-overview-content">
+						<li class="order-date">
+							@T("B2B.Quote.QuoteDate"): @Model.CreatedOn.ToString("D")
+						</li>
+						<li class="order-status">
+							@T("B2B.Quote.QuoteStatus"):
+						</li>
+						<li class="order-total">
+							@T("B2B.Quote.QuoteTotal"): <strong>@Model.OrderTotal</strong>
+						</li>
+					</ul>
+				}
+				else
+				{
+					<div class="order-number">
+						<strong>@T("Order.Order#")</strong>
+					</div>
+					<div class="customer-order-number">
+						<strong>@T("Order.CustomerOrderNumber"):@customerOrderNumber</strong>
+					</div>
+					<ul class="order-overview-content">
+						<li class="order-date">
+							@T("Order.OrderDate"): @Model.CreatedOn.ToString("D")
+						</li>
+						<li class="order-status">
+							@T("Order.OrderStatus"):
+						</li>
+						<li class="order-total">
+							@T("Order.OrderTotal"): <strong>@Model.OrderTotal</strong>
+						</li>
+					</ul>
+				}
+			}
+			else
+			{
+				<div class="order-number">
+					<strong>@T("Order.Order#")@Model.CustomOrderNumber</strong>
+				</div>
+				<div class="customer-order-number">
+					<strong>@T("Order.CustomerOrderNumber"):@customerOrderNumber</strong>
+				</div>
+				<ul class="order-overview-content">
+					<li class="order-date">
+						@T("Order.OrderDate"): <strong>@Model.CreatedOn.ToString("D")</strong>
+					</li>
+					<li class="order-status">
+						@T("Order.OrderStatus"): <strong>@Model.OrderStatus</strong>
+					</li>
+					<li class="order-total">
+						@T("Order.OrderTotal"): <strong>@Model.OrderTotal</strong>
+					</li>
+				</ul>
+			}
+
+			@await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.OrderDetailsPageOverview, additionalData = Model })
+		</div>
+		<div class="order-details-area">
+			<div class="billing-info-wrap">
+				<div class="billing-info">
+					<div class="title">
+						<strong>@T("Order.BillingAddress")</strong>
+					</div>
+					<ul class="info-list">
+						<li class="name">
+							@Model.BillingAddress.FirstName @Model.BillingAddress.LastName
+						</li>
+						<li class="email">
+							@T("Order.Email"): @Model.BillingAddress.Email
+						</li>
+						@if (Model.BillingAddress.PhoneEnabled)
+						{
+							<li class="phone">
+								@T("Order.Phone"): @Model.BillingAddress.PhoneNumber
+							</li>
+						}
+						@if (Model.BillingAddress.FaxEnabled)
+						{
+							<li class="fax">
+								@T("Order.Fax"): @Model.BillingAddress.FaxNumber
+							</li>
+						}
+						@if (Model.BillingAddress.CompanyEnabled && !string.IsNullOrEmpty(Model.BillingAddress.Company))
+						{
+							<li class="company">
+								@Model.BillingAddress.Company
+							</li>
+						}
+						@if (Model.BillingAddress.StreetAddressEnabled)
+						{
+							<li class="address1">
+								@Model.BillingAddress.Address1
+							</li>
+						}
+						@if (Model.BillingAddress.StreetAddress2Enabled && !string.IsNullOrEmpty(Model.BillingAddress.Address2))
+						{
+							<li class="address2">
+								@Model.BillingAddress.Address2
+							</li>
+						}
+						@if (Model.BillingAddress.CityEnabled && !string.IsNullOrEmpty(Model.BillingAddress.City) ||
+											Model.BillingAddress.CountyEnabled && !string.IsNullOrEmpty(Model.BillingAddress.County) ||
+											Model.BillingAddress.StateProvinceEnabled && !string.IsNullOrEmpty(Model.BillingAddress.StateProvinceName) ||
+											Model.BillingAddress.ZipPostalCodeEnabled && !string.IsNullOrEmpty(Model.BillingAddress.ZipPostalCode))
+						{
+							<li class="city-state-zip">
+								@if (Model.BillingAddress.CityEnabled && !string.IsNullOrEmpty(Model.BillingAddress.City))
+								{
+									@Model.BillingAddress.City
+									@if (Model.BillingAddress.CountyEnabled && !string.IsNullOrEmpty(Model.BillingAddress.County) ||
+														Model.BillingAddress.StateProvinceEnabled && !string.IsNullOrEmpty(Model.BillingAddress.StateProvinceName) ||
+														Model.BillingAddress.ZipPostalCodeEnabled && !string.IsNullOrEmpty(Model.BillingAddress.ZipPostalCode))
+									{
+										<text>, </text>
+									}
+								}
+								@if (Model.BillingAddress.CountyEnabled && !string.IsNullOrEmpty(Model.BillingAddress.County))
+								{
+									@Model.BillingAddress.County
+									@if (Model.BillingAddress.StateProvinceEnabled && !string.IsNullOrEmpty(Model.BillingAddress.StateProvinceName) ||
+														Model.BillingAddress.ZipPostalCodeEnabled && !string.IsNullOrEmpty(Model.BillingAddress.ZipPostalCode))
+									{
+										<text>, </text>
+									}
+								}
+								@if (Model.BillingAddress.StateProvinceEnabled && !string.IsNullOrEmpty(Model.BillingAddress.StateProvinceName))
+								{
+									@Model.BillingAddress.StateProvinceName
+									@if (Model.BillingAddress.ZipPostalCodeEnabled && !string.IsNullOrEmpty(Model.BillingAddress.ZipPostalCode))
+									{
+										<text>, </text>
+									}
+								}
+								@if (Model.BillingAddress.ZipPostalCodeEnabled && !string.IsNullOrEmpty(Model.BillingAddress.ZipPostalCode))
+								{
+									@Model.BillingAddress.ZipPostalCode
+								}
+							</li>
+						}
+						@if (Model.BillingAddress.CountryEnabled && !string.IsNullOrEmpty(Model.BillingAddress.CountryName))
+						{
+							<li class="country">
+								@Model.BillingAddress.CountryName
+							</li>
+						}
+						@if (!string.IsNullOrEmpty(Model.VatNumber))
+						{
+							<li class="vat">
+								<span class="label">
+									@T("Order.VATNumber")
+								</span>
+								<span class="value">
+									@Model.VatNumber
+								</span>
+							</li>
+						}
+						@if (!string.IsNullOrEmpty(Model.BillingAddress.FormattedCustomAddressAttributes))
+						{
+							<li class="custom-attributes-view">
+								@Html.Raw(Model.BillingAddress.FormattedCustomAddressAttributes)
+							</li>
+						}
+						@if (Model.CustomValues != null)
+						{
+							foreach (var item in Model.CustomValues)
+							{
+								<li class="custom-value">
+									<span class="label">
+										@item.Key:
+									</span>
+									<span class="value">
+										@(item.Value != null ? item.Value.ToString() : "")
+									</span>
+								</li>
+							}
+						}
+						@await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.OrderDetailsBillingAddress, additionalData = Model })
+					</ul>
+				</div>
+				@if (!string.IsNullOrEmpty(Model.PaymentMethod))
+				{
+					<div class="payment-method-info">
+						<div class="title">
+							<strong>@T("Order.Payment")</strong>
+						</div>
+						<ul class="info-list">
+							<li class="payment-method">
+								<span class="label">
+									@T("Order.Payment.Method"):
+								</span>
+								<span class="value">
+									@Model.PaymentMethod
+								</span>
+							</li>
+							@if (!Model.PrintMode)
+							{
+								<li class="payment-method-status">
+									<span class="label">
+										@T("Order.Payment.Status"):
+									</span>
+									<span class="value">
+										@Model.PaymentMethodStatus
+									</span>
+								</li>
+							}
+							@if (!Model.PrintMode && Model.CanRePostProcessPayment)
+							{
+								@*Complete payment (for redirection payment methods)*@
+								<li class="repost">
+									<form asp-route="OrderDetails" method="post">
+										<button type="submit" name="repost-payment" class="button-2 re-order-button">@T("Order.RetryPayment")</button>
+										<p class="hint">
+											<em>@T("Order.RetryPayment.Hint")</em>
+										</p>
+									</form>
+								</li>
+							}
+						</ul>
+					</div>
+				}
+			</div>
+			@if (Model.IsShippable)
+			{
+				<div class="shipping-info-wrap">
+					<div class="shipping-info">
+						<div class="title">
+							@if (isB2BUser)
+							{
+								<strong>@(Model.PickupInStore ? T("Order.PickupAddress") : T("Order.ShippingAddress"))</strong>
+							}
+							@if (isB2CUser)
+							{
+								<strong>@(Model.PickupInStore ? T("Order.Shipping") : T("Order.ShippingAddress"))</strong>
+							}
+						</div>
+						<ul class="info-list">
+							@if (!Model.PickupInStore)
+							{
+								<li class="name">
+									@Model.ShippingAddress.FirstName @Model.ShippingAddress.LastName
+								</li>
+								<li class="email">
+									@T("Order.Email"): @Model.ShippingAddress.Email
+								</li>
+								if (Model.ShippingAddress.PhoneEnabled)
+								{
+									<li class="phone">
+										@T("Order.Phone"): @Model.ShippingAddress.PhoneNumber
+									</li>
+								}
+								if (Model.ShippingAddress.FaxEnabled)
+								{
+									<li class="fax">
+										@T("Order.Fax"): @Model.ShippingAddress.FaxNumber
+									</li>
+								}
+								if (Model.ShippingAddress.CompanyEnabled && !string.IsNullOrEmpty(Model.ShippingAddress.Company))
+								{
+									<li class="company">
+										@Model.ShippingAddress.Company
+									</li>
+								}
+								if (Model.ShippingAddress.StreetAddressEnabled)
+								{
+									<li class="address1">
+										@Model.ShippingAddress.Address1
+									</li>
+								}
+								if (Model.ShippingAddress.StreetAddress2Enabled && !string.IsNullOrEmpty(Model.ShippingAddress.Address2))
+								{
+									<li class="address2">
+										@Model.ShippingAddress.Address2
+									</li>
+								}
+								@if (Model.ShippingAddress.CityEnabled && !string.IsNullOrEmpty(Model.ShippingAddress.City) ||
+													Model.ShippingAddress.CountyEnabled && !string.IsNullOrEmpty(Model.ShippingAddress.County) ||
+													Model.ShippingAddress.StateProvinceEnabled && !string.IsNullOrEmpty(Model.ShippingAddress.StateProvinceName) ||
+													Model.ShippingAddress.ZipPostalCodeEnabled && !string.IsNullOrEmpty(Model.ShippingAddress.ZipPostalCode))
+								{
+									<li class="city-state-zip">
+										@if (Model.ShippingAddress.CityEnabled && !string.IsNullOrEmpty(Model.ShippingAddress.City))
+										{
+											@Model.ShippingAddress.City
+											@if (Model.ShippingAddress.CountyEnabled && !string.IsNullOrEmpty(Model.ShippingAddress.County) ||
+																Model.ShippingAddress.StateProvinceEnabled && !string.IsNullOrEmpty(Model.ShippingAddress.StateProvinceName) ||
+																Model.ShippingAddress.ZipPostalCodeEnabled && !string.IsNullOrEmpty(Model.ShippingAddress.ZipPostalCode))
+											{
+												<text>, </text>
+											}
+										}
+										@if (Model.ShippingAddress.CountyEnabled && !string.IsNullOrEmpty(Model.ShippingAddress.County))
+										{
+											@Model.ShippingAddress.County
+											@if (Model.ShippingAddress.StateProvinceEnabled && !string.IsNullOrEmpty(Model.ShippingAddress.StateProvinceName) ||
+																Model.ShippingAddress.ZipPostalCodeEnabled && !string.IsNullOrEmpty(Model.ShippingAddress.ZipPostalCode))
+											{
+												<text>, </text>
+											}
+										}
+										@if (Model.ShippingAddress.StateProvinceEnabled && !string.IsNullOrEmpty(Model.ShippingAddress.StateProvinceName))
+										{
+											@Model.ShippingAddress.StateProvinceName
+											@if (Model.ShippingAddress.ZipPostalCodeEnabled && !string.IsNullOrEmpty(Model.ShippingAddress.ZipPostalCode))
+											{
+												<text>, </text>
+											}
+										}
+										@if (Model.ShippingAddress.ZipPostalCodeEnabled && !string.IsNullOrEmpty(Model.ShippingAddress.ZipPostalCode))
+										{
+											@Model.ShippingAddress.ZipPostalCode
+										}
+									</li>
+								}
+								if (Model.ShippingAddress.CountryEnabled && !string.IsNullOrEmpty(Model.ShippingAddress.CountryName))
+								{
+									<li class="country">
+										@Model.ShippingAddress.CountryName
+									</li>
+								}
+								if (!string.IsNullOrEmpty(Model.ShippingAddress.FormattedCustomAddressAttributes))
+								{
+									<li class="custom-attributes-view">
+										@Html.Raw(Model.ShippingAddress.FormattedCustomAddressAttributes)
+									</li>
+								}
+								@await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.OrderDetailsShippingAddress, additionalData = Model })
+							}
+							else
+							{
+								if (isB2BUser)
+								{
+									if (!string.IsNullOrEmpty(Model.PickupAddress.Address1))
+									{
+										<li class="address1">
+											@Model.PickupAddress.Address1
+										</li>
+									}
+									if (!string.IsNullOrEmpty(Model.PickupAddress.City) ||
+									!string.IsNullOrEmpty(Model.PickupAddress.County) ||
+									!string.IsNullOrEmpty(Model.PickupAddress.StateProvinceName) ||
+									!string.IsNullOrEmpty(Model.PickupAddress.ZipPostalCode))
+									{
+										<li class="city-state-zip">
+											@if (!string.IsNullOrEmpty(Model.PickupAddress.City))
+											{
+												@Model.PickupAddress.City
+												@if (!string.IsNullOrEmpty(Model.PickupAddress.County) ||
+																	!string.IsNullOrEmpty(Model.PickupAddress.StateProvinceName) ||
+																	!string.IsNullOrEmpty(Model.PickupAddress.ZipPostalCode))
+												{
+													<text>, </text>
+												}
+											}
+											@if (!string.IsNullOrEmpty(Model.PickupAddress.County))
+											{
+												@Model.PickupAddress.County
+												@if (!string.IsNullOrEmpty(Model.PickupAddress.StateProvinceName) ||
+																	!string.IsNullOrEmpty(Model.PickupAddress.ZipPostalCode))
+												{
+													<text>, </text>
+												}
+											}
+											@if (!string.IsNullOrEmpty(Model.PickupAddress.StateProvinceName))
+											{
+												@Model.PickupAddress.StateProvinceName
+												@if (!string.IsNullOrEmpty(Model.PickupAddress.ZipPostalCode))
+												{
+													<text>, </text>
+												}
+											}
+											@if (!string.IsNullOrEmpty(Model.PickupAddress.ZipPostalCode))
+											{
+												@Model.PickupAddress.ZipPostalCode
+											}
+										</li>
+									}
+									if (!string.IsNullOrEmpty(Model.PickupAddress.CountryName))
+									{
+										<li class="country">
+											@Model.PickupAddress.CountryName
+										</li>
+									}
+								}
+								if (isB2CUser)
+								{
+									<li class="shipping-method">
+										<span class="value">
+											@T("Order.Collection.Address.Below")
+										</span>
+									</li>
+									<li class="shipping-status">
+										<span class="value">
+											@Model.ShippingStatus
+										</span>
+									</li>
+								}
+							}
+						</ul>
+					</div>
+
+					@if (isB2BUser || !Model.PickupInStore)
+					{
+						<div class="shipping-method-info">
+							<div class="title">
+								<strong>@T("Order.Shipping")</strong>
+							</div>
+							<ul class="info-list">
+								<li class="shipping-method">
+									<span class="label">
+										@T("Order.Shipping.Name"):
+									</span>
+									<span class="value">
+										@Model.ShippingMethod
+									</span>
+								</li>
+								@if (!Model.PrintMode)
+								{
+									<li class="shipping-status">
+										<span class="label">
+											@T("Order.Shipping.Status"):
+										</span>
+										<span class="value">
+											@Model.ShippingStatus
+										</span>
+									</li>
+								}
+							</ul>
+						</div>
+					}
+					@if (isB2CUser && Model.PickupInStore)
+					{
+						<div class="shipping-method-info">
+						</div>
+					}
+				</div>
+			}
+		</div>
+		@if (!Model.PrintMode && Model.Shipments.Count > 0)
+		{
+			<div class="section shipments">
+				<div class="title">
+					<strong>@T("Order.Shipments")</strong>
+				</div>
+				<div class="table-wrapper">
+					<table class="data-table">
+						<colgroup>
+							<col width="1" />
+							<col />
+							<col />
+							<col />
+							<col />
+						</colgroup>
+						<thead>
+							<tr>
+								<th class="shipment-id">
+									@T("Order.Shipments.ID")
+								</th>
+								<th class="tracking-number">
+									@T("Order.Shipments.TrackingNumber")
+								</th>
+								@if (Model.PickupInStore)
+								{
+									<th class="ready-for-pickup-date">
+										@T("Order.Shipments.ReadyForPickupDate")
+									</th>
+								}
+								else
+								{
+									<th class="shipping-date">
+										@T("Order.Shipments.ShippedDate")
+									</th>
+								}
+								<th class="delivery-date">
+									@T("Order.Shipments.DeliveryDate")
+								</th>
+								<th class="view-details">
+									@T("Order.Shipments.ViewDetails")
+								</th>
+							</tr>
+						</thead>
+						<tbody>
+							@foreach (var item in Model.Shipments)
+							{
+								<tr>
+									<td class="shipment-id">
+										<label>@T("Order.Shipments.ID"):</label>
+										<span>@item.Id.ToString()</span>
+									</td>
+									<td class="tracking-number">
+										<label>@T("Order.Shipments.TrackingNumber"):</label>
+										@item.TrackingNumber
+									</td>
+									@if (Model.PickupInStore)
+									{
+										<td class="ready-for-pickup-date">
+											<label>@T("Order.Shipments.ReadyForPickupDate"):</label>
+											@if (item.ReadyForPickupDate.HasValue)
+											{
+												<span>@item.ReadyForPickupDate.Value.ToString("D")</span>
+											}
+											else
+											{
+												<span>@T("Order.Shipments.ReadyForPickupDate.NotYet")</span>
+											}
+										</td>
+									}
+									else
+									{
+										<td class="shipped-date">
+											<label>@T("Order.Shipments.ShippedDate"):</label>
+											@if (item.ShippedDate.HasValue)
+											{
+												<span>@item.ShippedDate.Value.ToString("D")</span>
+											}
+											else
+											{
+												<span>@T("Order.Shipments.ShippedDate.NotYet")</span>
+											}
+										</td>
+									}
+									<td class="delivery-date">
+										<label>@T("Order.Shipments.DeliveryDate"):</label>
+										@if (item.DeliveryDate.HasValue)
+										{
+											<span>@item.DeliveryDate.Value.ToString("D")</span>
+										}
+										else
+										{
+											<span>@T("Order.Shipments.DeliveryDate.NotYet")</span>
+										}
+									</td>
+									<td class="view-details">
+										<a href="@Url.RouteUrl("ShipmentDetails", new { shipmentId = item.Id })" title="@T("Order.Shipments.ViewDetails")">@T("Order.Shipments.ViewDetails")</a>
+									</td>
+								</tr>
+							}
+						</tbody>
+					</table>
+				</div>
+			</div>
+		}
+		@if (Model.Items.Count > 0)
+		{
+			if (!Model.PrintMode && Model.OrderNotes.Count > 0)
+			{
+				<div class="section order-notes">
+					<div class="title">
+						<strong>@T("Order.Notes")</strong>
+					</div>
+					<div class="table-wrapper">
+						<table class="data-table">
+							<colgroup>
+								<col />
+								<col />
+							</colgroup>
+							<thead>
+								<tr>
+									<th class="created-on">
+										@T("Order.Notes.CreatedOn")
+									</th>
+									<th class="note">
+										@T("Order.Notes.Note")
+									</th>
+								</tr>
+							</thead>
+							<tbody>
+								@foreach (var item in Model.OrderNotes)
+								{
+									<tr>
+										<td class="created-on">
+											@item.CreatedOn.ToString()
+										</td>
+										<td class="note">
+											@Html.Raw(item.Note)
+											@if (item.HasDownload)
+											{
+												<p class="download">
+													<a href="@Url.RouteUrl("GetOrderNoteFile", new { ordernoteid = item.Id })">@T("Order.Notes.Download")</a>
+												</p>
+											}
+										</td>
+									</tr>
+								}
+							</tbody>
+						</table>
+					</div>
+				</div>
+			}
+
+			@await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.OrderDetailsPageBeforeproducts, additionalData = Model })
+
+			@if (!isB2CUser)
+			{
+				<div class="section products">
+					<div class="table-wrapper">
+						<table class="data-table">
+							<colgroup>
+								@if (Model.ShowSku)
+								{
+									<col width="1" />
+								}
+								<col width="1" />
+								<col width="1" />
+								@if (Model.ShowVendorName)
+								{
+									<col width="1" />
+								}
+								@if (isB2BUser && b2BB2CFeaturesSettings.DisplayWeightInformation)
+								{
+									<col width="1" />
+								}
+								@if (isB2BUser && !isERPOrder)
+								{
+									<col width="1" />
+									@if (b2BB2CFeaturesSettings.EnableOnlineSavings)
+									{
+										<col width="1" />
+									}
+								}
+								else
+								{
+									<col width="1" />
+								}
+								@if (isB2BUser)
+								{
+									<col width="1" />
+								}
+								<col width="1" />
+								<col width="1" />
+								<col width="1" />
+							</colgroup>
+							<thead>
+								<tr>
+									@if (Model.ShowSku)
+									{
+										<th class="sku">
+											@T("Order.Product(s).SKU")
+										</th>
+									}
+									<th class="name">
+										@T("Order.Product(s).Name")
+									</th>
+									<th class="on-special-product-data"></th>
+									@if (Model.ShowVendorName)
+									{
+										<th class="vendor">
+											@T("Order.Product(s).VendorName")
+										</th>
+									}
+									@if (isB2BUser && b2BB2CFeaturesSettings.DisplayWeightInformation)
+									{
+										<th class="itemweight table-header">
+											@T("Plugin.Misc.NopStation.B2BB2CFeatures.Order.Product(s).Weight")
+										</th>
+									}
+
+									@if (isB2BUser && !isERPOrder)
+									{
+										<th class="price table-header price-header">
+											@T("Plugin.Misc.NopStation.B2BB2CFeatures.OrderSummery.Product(s).UnitPriceWithOutDiscount")
+										</th>
+										@if (b2BB2CFeaturesSettings.EnableOnlineSavings)
+										{
+											<th class="price table-header price-header">
+												@T("Order.Product(s).Price")
+											</th>
+										}
+									}
+									else
+									{
+										<th class="price table-header price-header">
+											@T("Order.Product(s).Price")
+										</th>
+									}
+									@if (isB2BUser)
+									{
+										<th class="erpsalesuom table-header">
+											@T("Plugin.Misc.NopStation.B2BB2CFeatures.Order.Product(s).ERPSalesUoM")
+										</th>
+									}
+
+									<th class="quantity table-header">
+										@T("Order.Product(s).Quantity")
+									</th>
+									<th class="total table-header">
+										@T("Order.Product(s).Total")
+									</th>
+								</tr>
+							</thead>
+							<tbody>
+								@foreach (var item in Model.Items)
+								{
+									item.CustomProperties.TryGetValue(B2BB2CFeaturesDefaults.ProductIsOnSpecial, out var OnSpecialProduct);
+									<tr>
+										@if (Model.ShowSku)
+										{
+											<td class="sku">
+												<label class="td-title">@T("Order.Product(s).SKU"):</label>
+												<span class="sku-number">@item.Sku</span>
+											</td>
+										}
+
+										<td class="product">
+											@if (!Model.PrintMode)
+											{
+												<em><a href="@(Url.RouteUrl<Product>(new { SeName = item.ProductSeName }))">@item.ProductName</a></em>
+											}
+											else
+											{
+												@item.ProductName
+											}
+											@if (!string.IsNullOrEmpty(item.AttributeInfo))
+											{
+												<div class="attributes">
+													@Html.Raw(item.AttributeInfo)
+												</div>
+											}
+											@if (!string.IsNullOrEmpty(item.RentalInfo))
+											{
+												<div class="rental-info">
+													@Html.Raw(item.RentalInfo)
+												</div>
+											}
+											@if (item.DownloadId > 0)
+											{
+												<div class="download">
+													<a href="@Url.RouteUrl("GetDownload", new { orderItemId = item.OrderItemGuid })">@T("DownloadableProducts.Fields.Download")</a>
+												</div>
+											}
+											@if (item.LicenseId > 0)
+											{
+												<div class="download license">
+													<a href="@Url.RouteUrl("GetLicense", new {orderItemId = item.OrderItemGuid})">@T("DownloadableProducts.Fields.DownloadLicense")</a>
+												</div>
+											}
+											@await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.OrderDetailsProductLine, additionalData = item })
+										</td>
+
+										<td class="on-special-product-data">
+											@if (bool.TryParse(OnSpecialProduct, out var isOnSpecial) && isOnSpecial)
+											{
+												<div class="on-special-product">
+													<img src="@Url.Content(B2BB2CFeaturesDefaults.ProductIsOnSpecialIconPath)" alt="Product On Special" />
+													<span class="tooltip-text">@T("Plugin.Misc.NopStation.B2BB2CFeatures.SpecialProductMessage")</span>
+												</div>
+											}
+										</td>
+
+										@if (Model.ShowVendorName)
+										{
+											<td class="vendor">
+												<label class="td-title">@T("Order.Product(s).VendorName"):</label>
+												<span class="vendor-name">@item.VendorName</span>
+											</td>
+										}
+										@if (isB2BUser && b2BB2CFeaturesSettings.DisplayWeightInformation)
+										{
+											<td class="itemweight wrap-cell" id="itemweight_@item.Id">
+												<label class="td-title">@T("Plugin.Misc.NopStation.B2BB2CFeatures.Order.Product(s).Weight"):</label>
+												<span class="product-itemweight"></span>
+											</td>
+										}
+
+										@if (isB2BUser && !isERPOrder)
+										{
+											<td class="unit-price" id="priceWithoutSavings_@item.Id">
+												<label class="td-title">@T("Plugin.Misc.NopStation.B2BB2CFeatures.OrderSummery.Product(s).UnitPriceWithOutDiscount"):</label>
+												<span class="product-unit-price" id="priceWithoutSavings_value_@item.Id"></span>
+											</td>
+											@if (b2BB2CFeaturesSettings.EnableOnlineSavings)
+											{
+												<td class="unit-price">
+													<label class="td-title">@T("Plugin.Misc.NopStation.B2BB2CFeatures.OrderSummery.Product(s).UnitPriceWithDiscount"):</label>
+													<span class="product-unit-price">@item.UnitPrice</span>
+												</td>
+											}
+										}
+										else
+										{
+											<td class="unit-price wrap-cell">
+												<label class="td-title">@T("Order.Product(s).Price"):</label>
+												<span class="product-unit-price">@item.UnitPrice</span>
+											</td>
+										}
+										@if (isB2BUser)
+										{
+											<td class="erpsalesuom wrap-cell" id="erpsalesuom_@item.Id">
+												<label class="td-title">@T("Plugin.Misc.NopStation.B2BB2CFeatures.Order.Product(s).ERPSalesUoM"):</label>
+												<span class="product-erpsalesuom"></span>
+											</td>
+										}
+										<td class="quantity wrap-cell">
+											<label class="td-title">@T("Order.Product(s).Quantity"):</label>
+											<span class="product-quantity">@item.Quantity</span>
+										</td>
+										<td class="total wrap-cell">
+											<label class="td-title">@T("Order.Product(s).Total"):</label>
+											<span class="product-subtotal">@item.SubTotal</span>
+										</td>
+										<th class="total table-header">
+											@T("Plugin.Misc.NopStation.B2BB2CFeatures.Order.Product(s).SpecialInstruction")
+										</th>
+									</tr>
+								}
+							</tbody>
+						</table>
+						@if (isB2BUser)
+						{
+							var itemIdList = Model.Items.Select(x => x.Id).ToList();
+							var itemIds = string.Join(",", itemIdList);
+							<script asp-location="Footer">
+								$(function () {
+									ajaxB2BDataLoad.loadOrderItemB2BData("@itemIds");
+								});
+							</script>
+						}
+					</div>
+					@if (Model.Items.Count > 0 && Model.DisplayTaxShippingInfo)
+					{
+						var inclTax = Model.PricesIncludeTax;
+						//tax info is already included in the price (incl/excl tax). that's why we display only shipping info here
+						//of course, you can modify appropriate locales to include VAT info there
+						<div class="tax-shipping-info">
+							@T(inclTax ? "Order.TaxShipping.InclTax" : "Order.TaxShipping.ExclTax", Url.RouteTopicUrl("shippinginfo"))
+						</div>
+					}
+				</div>
+			}
+			else
+			{
+				var itemIdList = Model.Items.Select(x => x.Id).ToList();
+				var itemIds = string.Join(",", itemIdList);
+				<script asp-location="Footer">
+					$(function () {
+						ajaxB2CDataLoad.loadOrderItemB2CData("@itemIds");
+					});
+				</script>
+				<div class="b2c-order-items"></div>
+			}
+
+			@await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.OrderDetailsPageAfterproducts, additionalData = Model })
+			<div class="section options">
+				@if (!string.IsNullOrEmpty(Model.CheckoutAttributeInfo))
+				{
+					<div class="selected-checkout-attributes">
+						@Html.Raw(Model.CheckoutAttributeInfo)
+					</div>
+				}
+			</div>
+
+
+
+			<div class="section totals">
+				<div class="title">
+					<strong>@T("Order.TotalSection.Title")</strong>
+				</div>
+				<div class="total-info">
+					<table class="cart-total">
+						<tbody>
+
+							@if (b2BB2CFeaturesSettings.DisplayWeightInformation)
+							{
+								<tr>
+									<td class="cart-total-left">
+										<label>Total Weight:</label>
+									</td>
+									<td class="cart-total-right" id="total_weight">
+										<span><strong></strong></span>
+									</td>
+								</tr>
+							}
+
+							@if (!isERPOrder)
+							{
+								@if (b2BB2CFeaturesSettings.EnableOnlineSavings)
+								{
+									<tr>
+										<td class="cart-total-left">
+											<label>@T("Plugin.Misc.NopStation.B2BB2CFeatures.OrderTotal.SubtotalWithoutDiscountAndVat"):</label>
+										</td>
+										<td class="cart-total-right">
+											<span id="totalPriceWithOutSavingsExcTax"></span>
+										</td>
+									</tr>
+									<tr>
+										<td class="cart-total-left">
+											<label>@T("Plugin.Misc.NopStation.B2BB2CFeatures.OrderTotal.TotalOnlineDiscount"):</label>
+										</td>
+										<td class="cart-total-right">
+											<span id="b2BOnlineOrderDiscountExcTax"></span>
+										</td>
+									</tr>
+									<tr>
+										<td class="cart-total-left">
+											<label>@T("Plugin.Misc.NopStation.B2BB2CFeatures.OrderTotal.SubtotalWithDiscount"):</label>
+										</td>
+										<td class="cart-total-right">
+											<span>@Model.OrderSubtotal</span>
+										</td>
+									</tr>
+								}
+								else
+								{
+									<tr>
+										<td class="cart-total-left">
+											<label>@T("Order.SubTotal"):</label>
+										</td>
+										<td class="cart-total-right">
+											<span>@Model.OrderSubtotal</span>
+										</td>
+									</tr>
+								}
+							}
+							else
+							{
+								<tr>
+									<td class="cart-total-left">
+										<label>@T("Order.SubTotal"):</label>
+									</td>
+									<td class="cart-total-right">
+										<span>@Model.OrderSubtotal</span>
+									</td>
+								</tr>
+							}
+							@if (!isProductForQuote && !string.IsNullOrEmpty(Model.OrderSubTotalDiscount))
+							{
+								<tr>
+									<td class="cart-total-left">
+										<label>@T("Order.SubTotalDiscount"):</label>
+									</td>
+									<td class="cart-total-right">
+										<span>@Model.OrderSubTotalDiscount</span>
+									</td>
+								</tr>
+							}
+							@if (Model.IsShippable)
+							{
+								<tr>
+									<td class="cart-total-left">
+										<label>@T("Order.Shipping"):</label>
+									</td>
+									<td class="cart-total-right">
+										<span>@Model.OrderShipping</span>
+									</td>
+								</tr>
+							}
+							@if (!isProductForQuote && !string.IsNullOrEmpty(Model.PaymentMethodAdditionalFee))
+							{
+								<tr>
+									<td class="cart-total-left">
+										<label>@T("Order.PaymentMethodAdditionalFee"):</label>
+									</td>
+									<td class="cart-total-right">
+										<span>@Model.PaymentMethodAdditionalFee</span>
+									</td>
+								</tr>
+							}
+							@if (Model.DisplayTaxRates && Model.TaxRates.Count > 0)
+							{
+								foreach (var taxRate in Model.TaxRates)
+								{
+									<tr>
+										<td class="cart-total-left">
+											<label>@string.Format(T("Order.TaxRateLine").Text, taxRate.Rate):</label>
+										</td>
+										<td class="cart-total-right">
+											<span>@taxRate.Value</span>
+										</td>
+									</tr>
+								}
+							}
+							@if (isB2CUser)
+							{
+								<tr>
+									<td class="cart-total-left">
+										<label>@T("Plugin.Misc.NopStation.B2BB2CFeatures.OrderTotal.CashRounding"):</label>
+									</td>
+									<td class="cart-total-right">
+										<span>@formattedCashRounding</span>
+									</td>
+								</tr>
+							}
+							@if (Model.DisplayTax)
+							{
+								<tr>
+									<td class="cart-total-left">
+										<label>@T("Order.Tax"):</label>
+									</td>
+									<td class="cart-total-right">
+										<span>@Model.Tax</span>
+									</td>
+								</tr>
+							}
+							<tr>
+								<td class="cart-total-left">
+									<label>@T("Order.OrderTotal"):</label>
+								</td>
+								<td class="cart-total-right">
+									<span><strong>@Model.OrderTotal</strong></span>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+				@if (!Model.PrintMode)
+				{
+					<div id="qouteOrderConvertConfirmAcceptDialog" class="custom-modal" title="@T("Plugins.Payments.B2BCustomerAccount.B2BQouteOrder.ConvertConfirm")" style="display: none;">
+						<form asp-controller="OverridenOrder" asp-action="ReOrder" class="order-confirm-accept-form" method="post" enctype="multipart/form-data">
+							<div class="popup-content">
+								@T("Plugins.Payments.B2BCustomerAccount.B2BQouteOrder.ConfirmRemoveFromCart")
+							</div>
+							<div class="order-confirm-buttons popup-button-wrapper">
+								<button id="quoteOrderDetailsPopupClearCartButton" type="button" value="@T("Plugins.Payments.B2BCustomerAccount.Orders.ConfirmAcceptDialog.ClearCart")"
+										class="button-1 popup-button qoute-order-details-popup-clear-cart-button" onclick="quoteOrderDetailspopUpPlaceOrder(this, @Model.Id);">
+									<span>@T("Plugins.Payments.B2BCustomerAccount.Orders.ConfirmAcceptDialog.ClearCart")</span>
+								</button>
+								<button type="button" name="addtocartbutton" value="@T("Plugins.Payments.B2BCustomerAccount.ShoppingCart.KeepItemInCart")"
+										class="button-1 popup-button qoute-order-details-popup-add-to-cart-button" onclick="quoteOrderDetailspopUpPlaceOrder(this, @Model.Id);">
+									<span>@T("Plugins.Payments.B2BCustomerAccount.ShoppingCart.KeepItemInCart")</span>
+								</button>
+								<button type="button" name="cancel" onclick="closePopup();return false;" value="@T("B2B.TermsAndConditionAccept.Cancel")" class="button-1 popup-button"><span>@T("B2B.TermsAndConditionAccept.Cancel")</span></button>
+							</div>
+							<input id="orderId" name="orderId" style="display:none;" />
+
+							<script asp-location="Footer">
+								function closePopup() {
+									$("#qouteOrderConvertConfirmAcceptDialog").dialog("destroy");
+									$("#orderId").val("")
+								}
+								function quoteOrderDetailspopUpPlaceOrder(popUpData, orderId) {
+									B2BAjaxCart.disableAddToCartButton();
+									B2BAjaxCart.disablePopUpAddToCartButton();
+									displayAjaxLoading(true);
+
+									if ($(popUpData).attr('id') == 'quoteOrderDetailsPopupClearCartButton') {
+										B2BAjaxCart.b2BClearCart(false)
+									}
+
+									var reorderActionUrl = "/ReOrder/" + orderId + "";
+									setLocation(reorderActionUrl);
+								}
+							</script>
+						</form>
+					</div>
+					@if (isProductForQuote)
+					{
+						<div class="terms-and-conditions-massage">
+							<div>@T("Order.Complete.ProductForQuote.message")</div>
+						</div>
+					}
+					else
+					{
+						<div class="actions">
+							@if (Model.IsReOrderAllowed)
+							{
+								if (isQuoteOrder)
+								{
+									if (!hasQuoteExpireDate)
+									{
+										<input type="button" value="@T("B2B.Quote.Reorder.NoData")" class="btn-disabled" />
+									}
+									else if (isQuoteAlreadyConverted)
+									{
+										<input type="button" value="@T("B2B.Quote.Reorder.AlreadyConverted")" class="btn-disabled" />
+									}
+									else if (isQuoteExpired)
+									{
+										<input type="button" value="@T("B2B.Quote.Reorder.Requote")" class="button-1 re-order-button quote-order-details-reorder-button" onclick="CheckItemsInCart('@Model.Id')" />
+									}
+									else
+									{
+										if (isQuoteRejectedOrFailed)
+										{
+											<input type="button" value="@T("B2B.Quote.Reorder.NewOrder")" class="button-1 re-order-button quote-order-details-reorder-button" onclick="CheckItemsInCart('@Model.Id')" />
+										}
+										else if (checkQuoteOrderStatus)
+										{
+											<input type="button" value="@T("B2B.Quote.Reorder.Convert")" class="button-1 re-order-button quote-order-details-reorder-button" onclick="CheckItemsInCart('@Model.Id')" />
+										}
+										else
+										{
+											<input type="button" value="@T("B2B.Quote.Reorder.Order")" class="button-1 re-order-button quote-order-details-reorder-button" onclick="CheckItemsInCart('@Model.Id')" />
+										}
+									}
+								}
+								else
+								{
+									<input type="button" value="@T("B2B.Order.Completed.Reorder")"
+										   class="button-1 re-order-button quote-order-details-reorder-button" onclick="CheckItemsInCart('@Model.Id')" />
+								}
+							}
+							@if (Model.IsReturnRequestAllowed && !isQuoteOrder)
+							{
+								<button type="button" class="button-2 return-items-button" onclick="setLocation('@Url.RouteUrl("ReturnRequest", new { orderId = Model.Id })')">
+									@T("Order.ReturnItems")
+								</button>
+							}
+						</div>
+					}
+				}
+			</div>
+
+		}
+		@await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.OrderDetailsPageBottom, additionalData = Model })
+	</div>
+</div>
+
+
+@if (isB2BUser || isB2CUser)
+{
+	<script asp-location="Footer">
+		function CheckItemsInCart(orderId) {
+			$.ajax({
+				cache: false,
+				type: "GET",
+				dataType: "json",
+				url: "/IsItemsInCart/",
+				success: function (response) {
+					if (!response.success) {
+						displayAjaxLoading(true);
+						var reorderActionUrl = "/ReOrder/" + orderId + "";
+						setLocation(reorderActionUrl);
+					}
+					else {
+						$("#orderId").val(orderId);
+						$("#qouteOrderListConvertConfirmAcceptDialog").dialog({
+							modal: true,
+							draggable: false,
+							closeOnEscape: true
+						});
+					}
+				},
+				error: function (jqXHR, textStatus, errorThrown) {
+					console.log("Error. Please Reload");
+				}
+			});
+		}
+	</script>
+}
+
+
+
+@if (isB2BUser)
+{
+	<script asp-location="Footer">
+		var ajaxB2BDataLoad = {
+			loadOrderItemB2BData: function (itemIds) {
+
+			var itemlist = {
+				nopOrderId: @Model.Id,
+				itemIds: itemIds
+			}
+			addAntiForgeryToken(itemlist);
+
+			$.ajax({
+				cache: true,
+				url: "@Url.RouteUrl("LoadB2BOrderItemData")",
+				type: 'POST',
+				data: itemlist,
+				dataType: "json",
+				success: function (response) {
+					if (response.Data) {
+						if (response.Data.IsQuoteOrder) {
+							$('.order-number').html('<strong>@T("B2B.Quote.Quote#")' + response.Data.ErpOrderNumber + '</strong>');
+							$('.order-status').html('@T("B2B.Quote.QuoteStatus"): ' + response.Data.ERPOrderStatus);
+						}
+						else {
+							console.log(response.Data.ErpOrderNumber);
+							$('.order-number').html('<strong>@T("Order.Order#")' + response.Data.ErpOrderNumber + '</strong>');
+							$('.order-status').html('@T("Order.OrderStatus"): ' + response.Data.ERPOrderStatus);
+						}
+						$('#total_weight').html("<span><strong>" + response.Data.TotalWeightValue + "</strong></span>");
+						for (var i = 0; i < response.Data.Items.length; i++) {
+							var itemId = response.Data.Items[i].NopOrderItemId;
+							$('#priceWithoutSavings_value_' + itemId).text(response.Data.Items[i].UnitPriceWithOutDiscountExcTax);
+							$('#discountPerUnit_value_' + itemId).text(response.Data.Items[i].DiscoustForPerUnitProductExcTax);
+
+							$('#itemweight_' + itemId).html("<label class='td-title'>Weight:</label> <span class='product-itemweight'>" + response.Data.Items[i].ItemWeightValue + "</span >");
+							$('#erpsalesuom_' + itemId).html("<label class='td-title'>ERPSalesUoM:</label> <span class='product-erpsalesuom'>" + response.Data.Items[i].ERPSalesUoM + "</span >");
+							$('#specialInstruction_' + itemId).html("<label class='td-title'>Special Instruction:</label> <span class='product-specialInstruction'>" + response.Data.Items[i].SpecialInstructions + "</span >");
+						}
+						$('#b2BOnlineOrderDiscountExcTax').text(response.Data.ErpOnlineOrderDiscountExcTax);
+						$('#totalPriceWithOutSavingsExcTax').text(response.Data.TotalPriceWithOutSavingsExcTax);
+					}
+				},
+				error: function () {
+					console.log("Can Not Load B2B Data");
+				}
+			});
+		}
+		};
+	</script>
+}
+else if (isB2CUser)
+{
+	var displayWeightInformation = b2BB2CFeaturesSettings.DisplayWeightInformation;
+	var enableOnlineSavings = b2BB2CFeaturesSettings.EnableOnlineSavings;
+
+	<input hidden id="nopOrderItemId" />
+
+	<script asp-location="Footer">
+
+		const groupBy = (array, key) => {
+			return array.reduce((result, currentValue) => {
+				(result[currentValue[key]] = result[currentValue[key]] || []).push(
+					currentValue
+				);
+				return result;
+			}, {});
+		};
+
+		var showSku = @Model.ShowSku.ToString().ToLower();
+		var showVendorName = @Model.ShowVendorName.ToString().ToLower();
+		var displayWeightInformation = @displayWeightInformation.ToString().ToLower();
+		var enableOnlineSavings = @enableOnlineSavings.ToString().ToLower();
+		var isERPOrder = @isERPOrder.ToString().ToLower();
+		var printMode = @Model.PrintMode.ToString().ToLower();
+		var warehouseName = "";
+		var deliveryDate = "";
+		var pickupInStore = @Model.PickupInStore.ToString().ToLower();
+
+		var ajaxB2CDataLoad = {
+			loadOrderItemB2CData: function (itemIds) {
+				var itemlist = {
+					nopOrderId: @Model.Id,
+					itemIds: itemIds
+				}
+				addAntiForgeryToken(itemlist);
+				$.ajax({
+					cache: true,
+					url: "@Url.RouteUrl("LoadB2BOrderItemData")",
+					type: 'POST',
+					data: itemlist,
+					dataType: "json",
+					success: function (response) {
+						if (response.Data) {
+							if (response.Data.IsQuoteOrder) {
+								$('.order-number').html('<strong>@T("B2B.Quote.Quote#")' + response.Data.ErpOrderNumber + '</strong>');
+								$('.order-status').html('@T("B2B.Quote.QuoteStatus"): ' + response.Data.ERPOrderStatus);
+							}
+							else {
+								$('.order-number').html('<strong>@T("Order.Order#")' + response.Data.ErpOrderNumber + '</strong>');
+								$('.order-status').html('@T("Order.OrderStatus"): ' + response.Data.ERPOrderStatus);
+							}
+
+							$('#b2BOnlineOrderDiscountExcTax').text(response.Data.ErpOnlineOrderDiscountExcTax);
+							$('#totalPriceWithOutSavingsExcTax').text(response.Data.TotalPriceWithOutSavingsExcTax);
+							$('#total_weight').html("<span><strong>" + response.Data.TotalWeightValue + "</strong></span>");
+
+
+							if (response.Data.Items.length > 0) {
+								var groupedItems = groupBy(response.Data.Items, 'WarehouseName');
+								var groupItemsCount = 0;
+								//console.log(groupedItems);
+								var nopOrderItems = @Html.Raw(JsonConvert.SerializeObject(Model.Items));
+
+								$.each(groupedItems, function (index, item) {
+									if(pickupInStore)
+									{
+										$('.b2c-order-items').append('<div class="warehouse-info"><div class="warehouse-name"><h2>@T("OrderItem.CollectionAddress")'
+											 + item[0].WarehouseDetails + '</h2></div><div class="delivery-date"><h3>' + item[0].DeliveryDate + '</h3></div></div>');
+									}
+									else{
+										$('.b2c-order-items').append('<div class="warehouse-info"><div class="warehouse-name"><h2>'
+											+ item[0].WarehouseName + '</h2></div><div class="delivery-date"><h3>' + item[0].DeliveryDate + '</h3></div></div>');
+									}
+
+									var tableData = '<div class="table-wrapper warehouse-info-data"><table id="warehouse-info-tbl-' + groupItemsCount + '"" class="data-table"></table></div>';
+									var headerRow = $("<tr/>");
+									if (showSku)
+										headerRow.append('<th class="sku">@T("Order.Product(s).SKU")</th>');
+									headerRow.append('<th class="name">@T("Order.Product(s).Name")</th>');
+
+									headerRow.append('<th class="on-special-product-data"></th>');
+
+									if (showVendorName)
+										headerRow.append('<th class="vendor">@T("Order.Product(s).VendorName")</th>');
+									if (displayWeightInformation)
+										headerRow.append('<th class="itemweight table-header">@T("Plugins.Payment.B2BCustomerAccount.Order.Product(s).Weight")</th>');
+
+									if (!isERPOrder)
+									{
+										headerRow.append('<th class="price table-header price-header">@T("Plugin.Misc.NopStation.B2BB2CFeatures.OrderSummery.Product(s).UnitPriceWithOutDiscount")</th>');
+										if (enableOnlineSavings)
+										{
+											headerRow.append('<th class="price table-header price-header">@T("Plugin.Misc.NopStation.B2BB2CFeatures.OrderSummery.Product(s).UnitPriceWithDiscount")</th>');
+										}
+									}
+									else
+										headerRow.append('<th class="price table-header price-header">@T("Order.Product(s).Price")</th>');
+
+									headerRow.append('<th class="erpsalesuom table-header">@T("Plugin.Misc.NopStation.B2BB2CFeatures.Order.Product(s).ERPSalesUoM")</th>');
+									headerRow.append('<th class="quantity table-header">@T("Order.Product(s).Quantity")</th>');
+									headerRow.append('<th class="total table-header">@T("Order.Product(s).Total")</th>');
+									headerRow.append('<th class="specialInstruction table-header">@T("Plugin.Misc.NopStation.B2BB2CFeatures.Order.Product(s).SpecialInstructions")</th>');
+
+									$('.b2c-order-items').append(tableData);
+									$("#warehouse-info-tbl-" + groupItemsCount + "").append("<thead/>");
+									$("#warehouse-info-tbl-" + groupItemsCount + " thead").append(headerRow);
+									//});
+									$("#warehouse-info-tbl-" + groupItemsCount + "").append("<tbody/>");
+									$.each(item, function (itemIndex, itemVal) {
+										var nopOrderItem = nopOrderItems.find(x => x.Id == itemVal.NopOrderItemId);
+										var productDiv = printMode ? nopOrderItem.ProductName : '<a href=' +
+											'@Url.RouteUrl("Product", new { SeName = "productsename" })'.replace('productsename', nopOrderItem.ProductSeName) + '>' + nopOrderItem.ProductName + '</a>';
+										if (parseInt(nopOrderItem.DownloadId) > 0)
+											productDiv = productDiv + '<div class="download"><a href=' +
+												'@Url.RouteUrl("GetDownload", new { orderItemId = "productorderitemid" })'.replace('productorderitemid', itemVal.OrderItemGuid) + '>@T("DownloadableProducts.Fields.Download")</a></div>';
+										if (parseInt(nopOrderItem.LicenseId) > 0)
+											productDiv = productDiv + '<div class="download license"><a href=' +
+												'@Url.RouteUrl("GetLicense", new { orderItemId = "productorderitemid" })'.replace('productorderitemid', itemVal.OrderItemGuid) + '>@T("DownloadableProducts.Fields.DownloadLicense")</a></div>';
+
+										var row = $("<tr/>");
+
+										if (showSku)
+											row.append('<td class="sku"><label class="td-title">@T("Order.Product(s).SKU"):</label><span class="sku-number">' + nopOrderItem.Sku + '</span></td>');
+
+										row.append('<td class="product">' + productDiv + '</td>');
+
+										var OnSpecialProduct = itemVal.CustomProperties['@B2BB2CFeaturesDefaults.ProductIsOnSpecial'];
+										var imageTag = '';
+
+										if (OnSpecialProduct)
+											imageTag = '<div class="on-special-product"><img src="@Url.Content(@B2BB2CFeaturesDefaults.ProductIsOnSpecialIconPath)" alt="Product On Special" /><span class="tooltip-text">@T("Plugin.Misc.NopStation.B2BB2CFeatures.SpecialProductMessage")</span></div>';
+
+										row.append('<td class="on-special-product-data">' + imageTag + '</td>');
+
+										if (showVendorName)
+											row.append('<td class="vendor">' + nopOrderItem.VendorName + '</td>');
+
+										if (displayWeightInformation)
+											row.append('<td class="itemweight wrap-cell" id="itemweight_' + itemVal.Id + '"><label class="td-title">Weight:</label><span class="product-itemweight">' + itemVal.ItemWeightValue + '</span></td>');
+
+
+										if (!isERPOrder) {
+											row.append('<td class="unit-price" id="priceWithoutSavings_' + itemVal.Id + '"><label class="td-title">@T("Plugin.Misc.NopStation.B2BB2CFeatures.OrderSummery.Product(s).UnitPriceWithOutDiscount"):' +
+												'</label><span class="product-unit-price id ="priceWithoutSavings_value_' + itemVal.Id + '">' + itemVal.UnitPriceWithOutDiscountExcTax + '</span></td>');
+											if (enableOnlineSavings)
+											{
+												row.append('<td class="unit-price"><label class="td-title">@T("Plugin.Misc.NopStation.B2BB2CFeatures.OrderSummery.Product(s).UnitPriceWithDiscount"):' +
+													'</label><span class="product-unit-price">' + nopOrderItem.UnitPrice + '</span></td>');
+											}
+										}
+										else
+											row.append('<td class="unit-price"><label class="td-title">@T("Order.Product(s).Price"):</label><span class="product-unit-price">' + nopOrderItem.UnitPrice + '</span></td>');
+
+										row.append('<td class="erpsalesuom wrap-cell" id="erpsalesuom_' + itemVal.Id + '"><label class="td-title">@T("Plugin.Misc.NopStation.B2BB2CFeatures.Order.Product(s).ERPSalesUoM"):' +
+											'</label><span class=product-erpsalesuom">' + itemVal.ERPSalesUoM + '</span></td>');
+										row.append('<td class="quantity wrap-cell"><label class="td-title">@T("Order.Product(s).Quantity"):</label><span class="product-quantity">' + itemVal.Quantity + '</span></td>');
+										row.append('<td class="total wrap-cell"><label class="td-title">@T("Order.Product(s).Total")</label><span class="product-subtotal">' + nopOrderItem.SubTotal + '</span></td>');
+										row.append('<td class="specialInstruction wrap-cell" id="specialInstruction_' + itemVal.Id + '"><label class="td-title">@T("Plugin.Misc.NopStation.B2BB2CFeatures.Order.Product(s).SpecialInstruction"):' +
+											'</label><span class="product-specialInstruction">' + itemVal.SpecialInstructions + '</span></td>');
+
+										$("#warehouse-info-tbl-" + groupItemsCount + " tbody").append(row);
+									});
+									groupItemsCount++;
+								});
+							}
+						}
+					},
+					error: function () {
+						console.log("Can Not Load B2B Data");
+					}
+				});
+			}
+		};
+	</script>
+}
+
+
+<div id="creditWarningDialog" class="custom-modal" title="@T("CompletedPage.CreditWarningDialog.Title")" style="display: none;">
+	<div id="credit-warning-message" class="popup-content"></div>
+	<div class="quote-order-confirm-buttons popup-button-wrapper">
+		<input type="button" name="cancel" onclick="closeCreditWarningPopup()" value="@T("B2B.TermsAndConditionAccept.Cancel")" class="button-1 popup-button" />
+	</div>
+	<script asp-location="Footer">
+		function closeCreditWarningPopup() {
+			$("#creditWarningDialog").dialog("destroy");
+		}
+	</script>
+</div>
+
+<div id="qouteOrderListConvertConfirmAcceptDialog" class="custom-modal" title="@T("Plugin.Misc.NopStation.B2BB2CFeatures.Order.ConfirmRemoveFromCart.Title")" style="display: none;">
+	<form asp-controller="OverridenOrder" asp-action="ReOrder" class="order-confirm-accept-form" method="post" enctype="multipart/form-data">
+		<div class="popup-content">
+			@T("Plugin.Misc.NopStation.B2BB2CFeatures.Order.ConfirmRemoveFromCart")
+		</div>
+
+		<div class="order-confirm-buttons popup-button-wrapper">
+			<button id="quoteOrderDetailsPopupClearCartButton" type="button" value="@T("Plugin.Misc.NopStation.B2BB2CFeatures.Orders.ConfirmAcceptDialog.ClearCart")"
+					class="button-1 popup-button popup-clearcart-btn qoute-order-details-popup-clear-cart-button" onclick="quoteOrderListpopUpPlaceOrder(this)">
+				<span>@T("Plugin.Misc.NopStation.B2BB2CFeatures.Orders.ConfirmAcceptDialog.ClearCart")</span>
+			</button>
+			<button type="button" name="addtocartbutton" value="@T("Plugin.Misc.NopStation.B2BB2CFeatures.ShoppingCart.KeepItemInCart")"
+					class="button-1 popup-button qoute-order-details-popup-add-to-cart-button" onclick="quoteOrderListpopUpPlaceOrder(this)">
+				<span>@T("Plugin.Misc.NopStation.B2BB2CFeatures.ShoppingCart.KeepItemInCart")</span>
+			</button>
+			<button type="button" name="cancel" onclick="closePopup()" value="@T("Plugin.Misc.NopStation.B2BB2CFeatures.Order.TermsAndConditionAccept.Cancel")" class="button-1 popup-button"><span>@T("Plugin.Misc.NopStation.B2BB2CFeatures.Order.TermsAndConditionAccept.Cancel")</span></button>
+		</div>
+		<input id="orderId" name="orderId" style="display:none;" />
+
+		<script asp-location="Footer">
+			function closePopup() {
+				$("#qouteOrderListConvertConfirmAcceptDialog").dialog("destroy");
+				$("#orderId").val("")
+			}
+
+			function clearCartAndReoder() {
+				var orderId = $("#orderId").val();
+				B2BAjaxCart.disableAddToCartButton(orderId);
+				B2BAjaxCart.disablePopUpAddToCartButton();
+				displayAjaxLoading(true);
+				B2BAjaxCart.b2BClearCart();
+				var reorderActionUrl = "/ReOrder/" + orderId + "";
+				setLocation(reorderActionUrl);
+			}
+
+			function quoteOrderListpopUpPlaceOrder(popUpData) {
+				var orderId = $('#orderId').val();
+				B2BAjaxCart.disableReorderButton(orderId);
+				B2BAjaxCart.disablePopUpAddToCartButton();
+				displayAjaxLoading(true);
+
+				if ($(popUpData).attr('id') == 'quoteOrderDetailsPopupClearCartButton') {
+					B2BAjaxCart.b2BClearCart(false);
+				}
+
+				var reorderActionUrl = "/ReOrder/" + orderId + "";
+				setLocation(reorderActionUrl);
+			}
+		</script>
+	</form>
+</div>
+
+<script asp-location="Footer">
+	$(document).ready(function () {
+		var nopOrderId = $('#orderId').val();
+		$.ajax({
+			cache: true,
+			type: "GET",
+			url: "@Url.Action("LoadB2BCheckoutCompletedData", "ErpCheckout")",
+			data: { nopOrderId: nopOrderId },
+			dataType: "json",
+			success: function (response) {
+				if (response.Data) {
+					if (response.Data.IsQuoteOrder) {
+						$('.details .order-number').html("<strong>@T("B2B.Checkout.QuoteNumber"): " + response.Data.ErpOrderNumber + "</strong>");
+						$("#templateName").val("Re-order from Order #" + response.Data.ErpOrderNumber);
+					}
+					else {
+						$('.details .order-number').html("<strong>@T("Checkout.OrderNumber"): " + response.Data.ErpOrderNumber + "</strong>");
+						$("#templateName").val("Re-order from Order #" + response.Data.ErpOrderNumber);
+					}
+
+					if (response.Data.IsErpIntegrationSuccess) {
+						$('.order-completed-page .page-title').html('<h1>@T("Checkout.ThankYou")</h1>');
+
+						if (response.Data.IsQuoteOrder) {
+							$('.order-completed .title').html("<strong>@T("B2B.Checkout.YourQuoteHasBeenSuccessfullyProcessed")</strong>");
+						}
+						else {
+							$('.order-completed .title').html("<strong>@T("Checkout.YourOrderHasBeenSuccessfullyProcessed")</strong>");
+						}
+					}
+					else {
+						$('.order-completed-page .page-title').html('<h1>@T("B2B.Checkout.Error")</h1>');
+						$('.order-completed .title').html('<div class="erp-error"><strong>' + response.Data.IntegrationError + '</strong></div>');
+					}
+
+					var data = response.Data;
+					// Show overspend warning dialog if needed
+					if (data != undefined && data.DisplayOverSpendWarningText) {
+						$("#credit-warning-message").text(data.OverSpendWarningText);
+						$("#creditWarningDialog").dialog({
+							modal: true,
+							draggable: false,
+							closeOnEscape: true
+						});
+						return;
+					}
+				}
+			},
+			error: function () {
+				console.log("Checkout data sync failed");
+			}
+		});
+	});
+
+	function reOrderLinkGenerator(orderId) {
+		$.ajax({
+			cache: false,
+			type: "GET",
+			dataType: "json",
+			url: "/IsItemsInCart/",
+			success: function (response) {
+				if (!response.success) {
+					B2BAjaxCart.disableReorderButton(orderId);
+					var reorderActionUrl = "/ReOrder/" + orderId + "";
+					setLocation(reorderActionUrl);
+				}
+				else {
+					$("#orderId").val(orderId);
+					$("#qouteOrderListConvertConfirmAcceptDialog").dialog({
+						modal: true,
+						draggable: false,
+						closeOnEscape: true
+					});
+				}
+			},
+			error: function (jqXHR, textStatus, errorThrown) {
+				console.log("Error. Please Reload");
+			}
+		});
+	}
+
+	function CheckItemsInCart(orderId) {
+		$.ajax({
+			cache: false,
+			type: "GET",
+			dataType: "json",
+			url: "/IsItemsInCart/",
+			success: function (response) {
+				if (!response.success) {
+					// B2BAjaxCart.disableAddToCartButton();
+					displayAjaxLoading(true);
+					var reorderActionUrl = "/ReOrder/" + orderId + "";
+					setLocation(reorderActionUrl);
+				}
+				else {
+					$("#orderId").val(orderId);
+					$("#qouteOrderListConvertConfirmAcceptDialog").dialog({
+						modal: true,
+						draggable: false,
+						closeOnEscape: true
+					});
+				}
+			},
+			error: function (jqXHR, textStatus, errorThrown) {
+				console.log("Error. Please Reload");
+			}
+		});
+	}
+</script>

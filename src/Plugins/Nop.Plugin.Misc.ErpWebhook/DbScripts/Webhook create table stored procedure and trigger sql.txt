@@ -1,0 +1,673 @@
+CREATE TABLE [dbo].[ErpAccountPricing](
+	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[IsActive] [bit] NOT NULL,
+	[CreatedOnUtc] [datetime2](7) NOT NULL,
+	[CreatedById] [int] NOT NULL,
+	[UpdatedOnUtc] [datetime2](7) NOT NULL,
+	[UpdatedById] [int] NOT NULL,
+	[IsDeleted] [bit] NOT NULL,
+	[IsUpdated] [bit] NOT NULL,
+	[AccountNumber] [nvarchar](max) NULL,
+	[SalesOrganisationCode] [nvarchar](max) NULL,
+	[Sku] [nvarchar](max) NULL,
+	[Price] [decimal](18, 2) NULL,
+	[ListPrice] [decimal](18, 2) NULL,
+	[DiscountPerc] [decimal](18, 2) NULL,
+	[PricingNotes] [nvarchar](max) NULL)
+	
+CREATE TABLE [dbo].[ErpB2BAccount](
+	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[IsActive] [bit] NOT NULL,
+	[CreatedOnUtc] [datetime2](7) NOT NULL,
+	[CreatedById] [int] NOT NULL,
+	[UpdatedOnUtc] [datetime2](7) NOT NULL,
+	[UpdatedById] [int] NOT NULL,
+	[IsDeleted] [bit] NOT NULL,
+	[IsUpdated] [bit] NOT NULL,
+	[AccountNumber] [nvarchar](50) NULL,
+	[AccountName] [nvarchar](100) NULL,
+	[B2BSalesOrganisationId] [int] NOT NULL,
+	[BillingAddressId] [int] NULL,
+	[BillingSuburb] [nvarchar](200) NULL,
+	[VatNumber] [nvarchar](50) NULL,
+	[CreditLimit] [decimal](18, 4) NOT NULL,
+	[CreditLimitAvailable] [decimal](18, 4) NOT NULL,
+	[CurrentBalance] [decimal](18, 4) NOT NULL,
+	[LastPaymentAmount] [decimal](18, 2) NULL,
+	[LastPaymentDate] [datetime2](7) NULL,
+	[AllowOverspend] [bit] NOT NULL,
+	[PreFilterFacets] [nvarchar](max) NULL,
+	[PaymentTypeCode] [nvarchar](10) NULL,
+	[AllowSwitchSalesOrg] [bit] NOT NULL,
+	[OverrideBackOrderingConfigSetting] [bit] NOT NULL,
+	[AllowAccountsBackOrdering] [bit] NOT NULL,
+	[OverrideAddressEditOnCheckoutConfigSetting] [bit] NOT NULL,
+	[AllowAccountsAddressEditOnCheckout] [bit] NOT NULL,
+	[OverrideStockDisplayFormatConfigSetting] [bit] NOT NULL,
+	[PercentageOfStockAllowed] [decimal](18, 4) NOT NULL,
+	[StockDisplayFormatTypeId] [int] NOT NULL,
+	[B2BAccountStatusTypeId] [int] NOT NULL,
+	[LastAccountRefresh] [datetime2](7) NULL,
+	[LastPriceRefresh] [datetime2](7) NULL,
+	[B2BPriceGroupCodeId] [int] NULL,
+	[TotalSavingsForthisYear] [decimal](18, 2) NULL,
+	[TotalSavingsForAllTime] [decimal](18, 2) NULL,
+	[TotalSavingsForthisYearUpdatedOnUtc] [datetime2](7) NULL,
+	[TotalSavingsForAllTimeUpdatedOnUtc] [datetime2](7) NULL,
+	[LastTimeOrderSyncOnUtc] [datetime2](7) NULL,
+	[PaymentTermsCode] [nvarchar](max) NULL,
+	[PaymentTermsDescription] [nvarchar](max) NULL)
+	
+	CREATE TABLE [dbo].[Erp_ShipToAddress](
+	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[IsActive] [bit] NOT NULL,
+	[CreatedOnUtc] [datetime2](7) NOT NULL,
+	[CreatedById] [int] NOT NULL,
+	[UpdatedOnUtc] [datetime2](7) NOT NULL,
+	[UpdatedById] [int] NOT NULL,
+	[IsDeleted] [bit] NOT NULL,
+	[IsUpdated] [bit] NOT NULL,
+	[ShipToCode] [nvarchar](50) NULL,
+	[ShipToName] [nvarchar](100) NULL,
+	[AddressId] [int] NOT NULL,
+	[Suburb] [nvarchar](200) NULL,
+	[ProvinceCode] [nvarchar](max) NULL,
+	[DeliveryNotes] [nvarchar](max) NULL,
+	[EmailAddresses] [nvarchar](max) NULL,
+	[B2BAccountId] [int] NOT NULL,
+	[B2BSalesOrganisationId] [int] NOT NULL,
+	[RepNumber] [nvarchar](max) NULL,
+	[RepFullName] [nvarchar](max) NULL,
+	[RepPhoneNumber] [nvarchar](max) NULL,
+	[RepEmail] [nvarchar](max) NULL,
+	[ShipToAddressCreatedByTypeId] [int] NOT NULL,
+	[OrderId] [int] NOT NULL)
+	
+	CREATE TABLE [dbo].[ErpDeliveryDates](
+	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[SalesOrgOrPlant] [nvarchar](max) NOT NULL,
+	[CutOffTime] [nvarchar](max) NOT NULL,
+	[City] [nvarchar](max) NOT NULL,
+	[AllWeekIndicator] [bit] NULL,
+	[Monday] [bit] NULL,
+	[Tuesday] [bit] NULL,
+	[Wednesday] [bit] NULL,
+	[Thursday] [bit] NULL,
+	[Friday] [bit] NULL,
+	[DelDate1] [datetime2](7) NULL,
+	[DelDate2] [datetime2](7) NULL,
+	[DelDate3] [datetime2](7) NULL,
+	[DelDate4] [datetime2](7) NULL,
+	[DelDate5] [datetime2](7) NULL,
+	[DelDate6] [datetime2](7) NULL,
+	[DelDate7] [datetime2](7) NULL,
+	[DelDate8] [datetime2](7) NULL,
+	[DelDate9] [datetime2](7) NULL,
+	[DelDate10] [datetime2](7) NULL,
+	[CreatedOn] [datetime2](7) NOT NULL,
+	[UpdatedOn] [datetime2](7) NOT NULL,
+	[Deleted] [bit] NOT NULL
+)
+
+CREATE TABLE [dbo].[ErpOrder](
+	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[IsActive] [bit] NOT NULL,
+	[CreatedOnUtc] [datetime2](7) NOT NULL,
+	[CreatedById] [int] NOT NULL,
+	[UpdatedOnUtc] [datetime2](7) NOT NULL,
+	[UpdatedById] [int] NOT NULL,
+	[IsDeleted] [bit] NOT NULL,
+	[IsUpdated] [bit] NOT NULL,
+	[AccountNumber] [nvarchar](max) NULL,
+	[SalesOrganisationCode] [nvarchar](max) NULL,
+	[OrderType] [nvarchar](max) NULL,
+	[OrderDate] [datetime2](7) NULL,
+	[QuoteExpiryDate] [datetime2](7) NULL,
+	[TotalExcl] [decimal](18, 2) NOT NULL,
+	[TotalIncl] [decimal](18, 2) NOT NULL,
+	[CustomerReference] [nvarchar](max) NULL,
+	[CustomNopOrderNumber] [nvarchar](max) NULL,
+	[OrderNumber] [nvarchar](max) NULL,
+	[ERPOrderStatus] [nvarchar](max) NULL,
+	[SubTotal] [decimal](18, 2) NOT NULL,
+	[VAT] [decimal](18, 2) NOT NULL,
+	[ShippingFees] [decimal](18, 2) NOT NULL,
+	[DeliveryDate] [datetime2](7) NULL,
+	[SpecialInstructions] [nvarchar](max) NULL,
+	[ShippingName] [nvarchar](max) NULL,
+	[ShippingPhone] [nvarchar](max) NULL,
+	[ShippingEmail] [nvarchar](max) NULL,
+	[ShippingAddress1] [nvarchar](max) NULL,
+	[ShippingAddress2] [nvarchar](max) NULL,
+	[ShippingCity] [nvarchar](max) NULL,
+	[ShippingPostalCode] [nvarchar](max) NULL,
+	[ShippingCountryCode] [nvarchar](max) NULL,
+	[ShippingProvince] [nvarchar](max) NULL,
+	[BillingName] [nvarchar](max) NULL,
+	[BillingPhone] [nvarchar](max) NULL,
+	[BillingEmail] [nvarchar](max) NULL,
+	[BillingAddress1] [nvarchar](max) NULL,
+	[BillingAddress2] [nvarchar](max) NULL,
+	[BillingCity] [nvarchar](max) NULL,
+	[BillingPostalCode] [nvarchar](max) NULL,
+	[BillingCountryCode] [nvarchar](max) NULL,
+	[BillingProvince] [nvarchar](max) NULL,
+	[DetailLinesJson] [nvarchar](max) NULL)
+	
+	
+	CREATE TABLE [dbo].[ErpProduct](
+	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[IsActive] [bit] NOT NULL,
+	[CreatedOnUtc] [datetime2](7) NOT NULL,
+	[CreatedById] [int] NOT NULL,
+	[UpdatedOnUtc] [datetime2](7) NOT NULL,
+	[UpdatedById] [int] NOT NULL,
+	[IsDeleted] [bit] NOT NULL,
+	[IsUpdated] [bit] NOT NULL,
+	[Sku] [nvarchar](max) NULL,
+	[ManufacturerPartNumber] [nvarchar](max) NULL,
+	[ShortDescription] [nvarchar](max) NULL,
+	[IsSpecial] [bit] NULL,
+	[FullDescription] [nvarchar](max) NULL,
+	[Height] [decimal](18, 2) NULL,
+	[Width] [decimal](18, 2) NULL,
+	[Length] [decimal](18, 2) NULL,
+	[Weight] [decimal](18, 2) NULL,
+	[SellingPriceA] [decimal](18, 2) NULL,
+	[InStockforLocNo] [decimal](18, 2) NULL,
+	[CategoriesJson] [nvarchar](max) NULL,
+	[SpecificationAttributesJson] [nvarchar](max) NULL,
+	[VendorName] [nvarchar](max) NULL,
+	[ManufacturerName] [nvarchar](max) NULL,
+	[ManufacturerDescription] [nvarchar](max) NULL)
+	
+	CREATE TABLE [dbo].[ErpStock](
+	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[IsActive] [bit] NOT NULL,
+	[CreatedOnUtc] [datetime2](7) NOT NULL,
+	[CreatedById] [int] NOT NULL,
+	[UpdatedOnUtc] [datetime2](7) NOT NULL,
+	[UpdatedById] [int] NOT NULL,
+	[IsDeleted] [bit] NOT NULL,
+	[IsUpdated] [bit] NOT NULL,
+	[Sku] [nvarchar](max) NULL,
+	[SalesOrganisationCode] [nvarchar](max) NULL,
+	[TotalOnHand] [int] NOT NULL,
+	[UOM] [nvarchar](max) NULL,
+	[Weight] [decimal](18, 2) NULL,
+	[WarehouseCode] [nvarchar](100) NULL)
+	
+	CREATE TABLE [dbo].[CustomPictureBinaryForERP](
+	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[NopPictureId] [int] NOT NULL,
+	[BinaryData] [varbinary](max) NULL,
+	[LastUpdatedOn] [datetime2](7) NULL)
+	
+	CREATE TABLE [dbo].[AllowedWebhookManagerIpAddresses](
+	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[IpAddress] [nvarchar](max) NULL)
+	
+ALTER TRIGGER [dbo].[ProductWarehouseInventory_UpdateDelete_Trigger]
+ON [dbo].[ProductWarehouseInventory]
+AFTER UPDATE, DELETE
+AS
+BEGIN
+    -- Check if rows were updated
+    IF EXISTS (SELECT * FROM inserted)
+    BEGIN
+        -- Check for rows with StockQuantity = 0
+        IF EXISTS (
+            SELECT 1
+            FROM inserted AS i
+            WHERE i.[StockQuantity] = 0
+        )
+        BEGIN
+			DECLARE @B2BSalesOrgId INT
+			--cursor
+			DECLARE cur1 CURSOR FOR
+				SELECT B2BSalesOrgId
+					FROM [B2BSalesOrgWarehouse]
+					WHERE NopWarehouseId = (Select WarehouseId from inserted)
+			
+			OPEN cur1
+			FETCH NEXT FROM cur1 INTO @B2BSalesOrgId
+			WHILE @@FETCH_STATUS = 0
+			BEGIN
+				-- Check if all sibling warehouses have stock quantity 0
+				IF NOT EXISTS (
+					SELECT 1
+					FROM [ProductWarehouseInventory] AS pwi
+					JOIN [B2BSalesOrgWarehouse] AS swo ON swo.NopWarehouseId = pwi.WarehouseId
+					WHERE pwi.ProductId = (Select ProductId from inserted)
+					AND swo.B2BSalesOrgId = @B2BSalesOrgId
+					AND pwi.StockQuantity > 0
+				)
+				BEGIN
+					-- Fetch mappings from Product_Category_Mapping table
+					DECLARE @UpdatedProductMappings TABLE (
+						[ProductId] INT,
+						[WarehouseId] INT,
+						[CategoryId] INT
+					)
+
+					-- Declare a temporary table to store deleted data
+					DECLARE @DeletedProductCategoryMapping TABLE (
+						[ProductId] INT,
+						[CategoryId] INT
+					)
+
+					INSERT INTO @UpdatedProductMappings ([ProductId], [WarehouseId], [CategoryId])
+					SELECT DISTINCT i.[ProductId], i.[WarehouseId], sc.[SpecialsCategoryId]
+					FROM inserted AS i
+					LEFT JOIN [B2BSalesOrgWarehouse] AS swo ON swo.NopWarehouseId = i.[WarehouseId] AND swo.B2BSalesOrgId = @B2BSalesOrgId
+					JOIN [B2BSalesOrganisation] AS sc ON sc.Id = swo.B2BSalesOrgId
+					WHERE i.[StockQuantity] = 0
+
+					-- Insert deleted data into the temporary table
+					INSERT INTO @DeletedProductCategoryMapping ([ProductId], [CategoryId])
+					SELECT pcm.[ProductId], pcm.[CategoryId]
+					FROM [dbo].[Product_Category_Mapping] pcm
+					JOIN @UpdatedProductMappings um ON pcm.[ProductId] = um.[ProductId] AND pcm.[CategoryId] = um.[CategoryId]
+			
+					-- Delete data from the original table
+					DELETE pcm
+					FROM [dbo].[Product_Category_Mapping] pcm
+					JOIN @UpdatedProductMappings um ON pcm.[ProductId] = um.[ProductId] AND pcm.[CategoryId] = um.[CategoryId]
+			
+					-- Now, @DeletedProductCategoryMapping contains the deleted data from [dbo].[Product_Category_Mapping]
+
+					--Send email
+					INSERT INTO [dbo].[QueuedEmail] ( PriorityId, [From], FromName, [To], ToName, ReplyTo, ReplyToName, CC, Bcc, [Subject], Body, AttachmentFilePath, AttachmentFileName, AttachedDownloadId, CreatedOnUtc, DontSendBeforeDateUtc, SentTries, SentOnUtc, EmailAccountId)
+					SELECT 5, 'ecommerce@macsteel.co.za', 'Macsteel''s Online Shop', 'ecommerce@macsteel.co.za', 'Macsteel''s Online Shop', NULL, NULL, '', NULL, 'Updated - Materials on special were out of stock and removed from the specials category', REPLACE(REPLACE('Material number: ' + p.SKU + ' was removed from specials category: ' + c.[Name], '''', ''''''), 'catname', c.[Name]), NULL, NULL, 0, GETDATE(), NULL, 0, NULL, 1
+					FROM @DeletedProductCategoryMapping um
+					JOIN [dbo].[Product] p ON p.Id = um.[ProductId]
+					JOIN [dbo].[Category] c ON c.Id = um.[CategoryId]
+				END
+				FETCH NEXT FROM cur1 INTO @B2BSalesOrgId
+			END
+			CLOSE cur1
+			DEALLOCATE cur1
+        END
+    END
+    
+    -- Check if rows were deleted
+    IF EXISTS (SELECT * FROM deleted)
+    BEGIN
+        IF NOT EXISTS (SELECT * FROM inserted)
+        BEGIN
+			DECLARE @B2BSalesOrgId2 INT
+			--cursor
+			DECLARE cur2 CURSOR FOR
+				SELECT B2BSalesOrgId
+					FROM [B2BSalesOrgWarehouse]
+					WHERE NopWarehouseId = (Select WarehouseId from deleted)
+			
+			OPEN cur2
+			FETCH NEXT FROM cur2 INTO @B2BSalesOrgId2
+			WHILE @@FETCH_STATUS = 0
+			BEGIN
+				-- Check if all sibling warehouses have stock quantity 0
+				IF NOT EXISTS (
+					SELECT 1
+					FROM [ProductWarehouseInventory] AS pwi
+					JOIN [B2BSalesOrgWarehouse] AS swo ON swo.NopWarehouseId = pwi.WarehouseId
+					WHERE pwi.ProductId = (Select ProductId from deleted)
+					AND swo.B2BSalesOrgId = @B2BSalesOrgId2
+					AND pwi.StockQuantity > 0
+				)
+				BEGIN
+					-- Fetch mappings from Product_Category_Mapping table
+					DECLARE @DeletedProductMappings TABLE (
+						[ProductId] INT,
+						[WarehouseId] INT,
+						[CategoryId] INT
+					)
+
+					-- Declare a temporary table to store deleted data
+					DECLARE @DeletedProductCategoryMappings TABLE (
+						[ProductId] INT,
+						[CategoryId] INT
+					)
+
+					INSERT INTO @DeletedProductMappings ([ProductId], [WarehouseId], [CategoryId])
+					SELECT DISTINCT d.[ProductId], d.[WarehouseId], sc.[SpecialsCategoryId]
+					FROM deleted AS d
+					LEFT JOIN [B2BSalesOrgWarehouse] AS swo ON swo.NopWarehouseId = d.[WarehouseId] AND swo.B2BSalesOrgId = @B2BSalesOrgId2
+					JOIN [B2BSalesOrganisation] AS sc ON sc.[Id] = swo.B2BSalesOrgId
+
+					-- Insert deleted data into the temporary table
+					INSERT INTO @DeletedProductCategoryMappings ([ProductId], [CategoryId])
+					SELECT pcm.[ProductId], pcm.[CategoryId]
+					FROM [dbo].[Product_Category_Mapping] pcm
+					JOIN @DeletedProductMappings um ON pcm.[ProductId] = um.[ProductId] AND pcm.[CategoryId] = um.[CategoryId]
+			
+					-- Delete data from the original table
+					DELETE pcm
+					FROM [dbo].[Product_Category_Mapping] pcm
+					JOIN @DeletedProductMappings um ON pcm.[ProductId] = um.[ProductId] AND pcm.[CategoryId] = um.[CategoryId]
+			
+					-- Now, @DeletedProductCategoryMappings contains the deleted data from [dbo].[Product_Category_Mapping]
+
+					--Send email
+					INSERT INTO [dbo].[QueuedEmail] (
+						PriorityId, [From], FromName, [To], ToName, ReplyTo, ReplyToName, CC, Bcc, [Subject],
+						Body, AttachmentFilePath, AttachmentFileName, AttachedDownloadId, CreatedOnUtc,
+						DontSendBeforeDateUtc, SentTries, SentOnUtc, EmailAccountId
+					)
+					SELECT 5, 'ecommerce@macsteel.co.za', 'Macsteel''s Online Shop', 'ecommerce@macsteel.co.za', 'Macsteel''s Online Shop', NULL, NULL, '', NULL, 'Deleted - Materials on special were out of stock and removed from the specials category', REPLACE(REPLACE('Material number: ' + p.SKU + ' was removed from specials category: ' + c.[Name], '''', ''''''), 'catname', c.[Name]), NULL, NULL, 0, GETDATE(), NULL, 0, NULL, 1
+					FROM @DeletedProductCategoryMappings dm
+					JOIN [dbo].[Product] p ON p.Id = dm.[ProductId]
+					JOIN [dbo].[Category] c ON c.Id = dm.[CategoryId]
+				END
+				FETCH NEXT FROM cur2 INTO @B2BSalesOrgId2
+			END
+			CLOSE cur2
+			DEALLOCATE cur2
+        END
+    END
+END
+
+ 
+ALTER PROCEDURE [dbo].[UpdateB2BAccountFromParallelTableErpB2BAccount]
+AS
+BEGIN
+    DECLARE @Id int,
+			@IsActive bit,
+            @CreatedOnUtc datetime2,
+            @CreatedById int,
+            @UpdatedOnUtc datetime2,
+            @UpdatedById int,
+            @IsDeleted bit,
+            @AccountNumber varchar(50),
+            @AccountName varchar(255),
+			@B2BSalesOrganisationId int,
+            @BillingAddressId int,
+            @BillingSuburb varchar(100),
+            @VatNumber varchar(50),
+            @CreditLimit decimal(18, 2),
+            @CreditLimitAvailable decimal(18, 2),
+            @CurrentBalance decimal(18, 2),
+            @LastPaymentAmount decimal(18, 2),
+            @LastPaymentDate datetime2,
+            @AllowOverspend bit,
+            @PreFilterFacets varchar(max),
+            @PaymentTypeCode varchar(50),
+            @AllowSwitchSalesOrg bit,
+            @OverrideBackOrderingConfigSetting bit,
+            @AllowAccountsBackOrdering bit,
+            @OverrideAddressEditOnCheckoutConfigSetting bit,
+            @AllowAccountsAddressEditOnCheckout bit,
+            @OverrideStockDisplayConfig  bit,
+            @PercentageOfStockAllowed decimal(18, 2),
+            @StockDisplayFormatTypeId int,
+            @B2BAccountStatusTypeId int,
+            @LastAccountRefresh datetime2,
+            @LastPriceRefresh datetime2,
+            @B2BPriceGroupCodeId int,
+            @TotalSavingsForthisYear decimal(18, 2),
+            @TotalSavingsForAllTime decimal(18, 2),
+            @TotalSavingsForthisYearUpdatedOnUtc datetime2,
+            @TotalSavingsForAllTimeUpdatedOnUtc datetime2,
+            @LastTimeOrderSyncOnUtc datetime2,
+            @PaymentTermsCode varchar(50),
+            @PaymentTermsDescription varchar(255),
+            @Comment varchar(255);
+
+    DECLARE cursor_UpdateB2BAccount CURSOR FOR
+    SELECT 
+		e.[Id],
+        e.[IsActive],
+        e.[CreatedOnUtc],
+        e.[CreatedById],
+        e.[UpdatedOnUtc],
+        e.[UpdatedById],
+        e.[IsDeleted],
+        e.[AccountNumber],
+        e.[AccountName],
+		e.[B2BSalesOrganisationId],
+        e.[BillingAddressId],
+        e.[BillingSuburb],
+        e.[VatNumber],
+        e.[CreditLimit],
+        e.[CreditLimitAvailable],
+        e.[CurrentBalance],
+        e.[LastPaymentAmount],
+        e.[LastPaymentDate],
+        e.[AllowOverspend],
+        e.[PreFilterFacets],
+        e.[PaymentTypeCode],
+        e.[AllowSwitchSalesOrg],
+        e.[OverrideBackOrderingConfigSetting],
+        e.[AllowAccountsBackOrdering],
+        e.[OverrideAddressEditOnCheckoutConfigSetting],
+        e.[AllowAccountsAddressEditOnCheckout],
+        e.[OverrideStockDisplayConfig],
+        e.[PercentageOfStockAllowed],
+        e.[StockDisplayFormatTypeId],
+        e.[B2BAccountStatusTypeId],
+        e.[LastAccountRefresh],
+        e.[LastPriceRefresh],
+        e.[B2BPriceGroupCodeId],
+        e.[TotalSavingsForthisYear],
+        e.[TotalSavingsForAllTime],
+        e.[TotalSavingsForthisYearUpdatedOnUtc],
+        e.[TotalSavingsForAllTimeUpdatedOnUtc],
+        e.[LastTimeOrderSyncOnUtc],
+        e.[PaymentTermsCode],
+        e.[PaymentTermsDescription]
+    FROM [dbo].[Parallel_ErpAccount] e WITH (NOLOCK)
+    WHERE e.[IsUpdated] = 0;
+
+    OPEN cursor_UpdateB2BAccount;
+    FETCH NEXT FROM cursor_UpdateB2BAccount INTO 
+        @Id, @IsActive, @CreatedOnUtc, @CreatedById, @UpdatedOnUtc, @UpdatedById, @IsDeleted,
+        @AccountNumber, @AccountName,@B2BSalesOrganisationId, @BillingAddressId, @BillingSuburb, @VatNumber,
+        @CreditLimit, @CreditLimitAvailable, @CurrentBalance, @LastPaymentAmount,
+        @LastPaymentDate, @AllowOverspend, @PreFilterFacets, @PaymentTypeCode,
+        @AllowSwitchSalesOrg, @OverrideBackOrderingConfigSetting, @AllowAccountsBackOrdering,
+        @OverrideAddressEditOnCheckoutConfigSetting, @AllowAccountsAddressEditOnCheckout,
+        @OverrideStockDisplayConfig , @PercentageOfStockAllowed,
+        @StockDisplayFormatTypeId, @B2BAccountStatusTypeId, @LastAccountRefresh,
+        @LastPriceRefresh, @B2BPriceGroupCodeId, @TotalSavingsForthisYear,
+        @TotalSavingsForAllTime, @TotalSavingsForthisYearUpdatedOnUtc,
+        @TotalSavingsForAllTimeUpdatedOnUtc, @LastTimeOrderSyncOnUtc, @PaymentTermsCode,
+        @PaymentTermsDescription;
+
+    WHILE @@FETCH_STATUS = 0
+    BEGIN
+        IF EXISTS (
+            SELECT 1 
+            FROM [Erp_Account] 
+            WHERE [AccountNumber] = @AccountNumber
+                AND [ErpSalesOrgId] = @B2BSalesOrganisationId
+        )
+        BEGIN
+            -- Update existing record
+            UPDATE [Erp_Account]
+            SET [IsActive] = @IsActive,
+                [CreatedOnUtc] = @CreatedOnUtc,
+                [CreatedById] = @CreatedById,
+                [UpdatedOnUtc] = @UpdatedOnUtc,
+                [UpdatedById] = @UpdatedById,
+                [IsDeleted] = @IsDeleted,
+                [AccountName] = @AccountName,
+                [BillingAddressId] = @BillingAddressId,
+                [BillingSuburb] = @BillingSuburb,
+                [VatNumber] = @VatNumber,
+                [CreditLimit] = @CreditLimit,
+                [CreditLimitAvailable] = @CreditLimitAvailable,
+                [CurrentBalance] = @CurrentBalance,
+                [LastPaymentAmount] = @LastPaymentAmount,
+                [LastPaymentDate] = @LastPaymentDate,
+                [AllowOverspend] = @AllowOverspend,
+                [PreFilterFacets] = @PreFilterFacets,
+                [PaymentTypeCode] = @PaymentTypeCode,
+                [AllowSwitchSalesOrg] = @AllowSwitchSalesOrg,
+                [OverrideBackOrderingConfigSetting] = @OverrideBackOrderingConfigSetting,
+                [AllowAccountsBackOrdering] = @AllowAccountsBackOrdering,
+                [OverrideAddressEditOnCheckoutConfigSetting] = @OverrideAddressEditOnCheckoutConfigSetting,
+                [AllowAccountsAddressEditOnCheckout] = @AllowAccountsAddressEditOnCheckout,
+                [OverrideStockDisplayFormatConfigSetting] = @OverrideStockDisplayConfig ,
+                [PercentageOfStockAllowed] = @PercentageOfStockAllowed,
+                [StockDisplayFormatTypeId] = @StockDisplayFormatTypeId,
+                [ErpAccountStatusTypeId] = @B2BAccountStatusTypeId,
+                [LastErpAccountSyncDate] = @LastAccountRefresh,
+                [LastPriceRefresh] = @LastPriceRefresh,
+                [B2BPriceGroupCodeId] = @B2BPriceGroupCodeId,
+                [TotalSavingsForthisYear] = @TotalSavingsForthisYear,
+                [TotalSavingsForAllTime] = @TotalSavingsForAllTime,
+                [TotalSavingsForthisYearUpdatedOnUtc] = @TotalSavingsForthisYearUpdatedOnUtc,
+                [TotalSavingsForAllTimeUpdatedOnUtc] = @TotalSavingsForAllTimeUpdatedOnUtc,
+                [LastTimeOrderSyncOnUtc] = @LastTimeOrderSyncOnUtc,
+                [PaymentTermsCode] = @PaymentTermsCode,
+                [PaymentTermsDescription] = @PaymentTermsDescription,
+                [Comment] = CONCAT('Updated from Webhook - ', GETUTCDATE())
+            WHERE [AccountNumber] = @AccountNumber
+                AND [ErpSalesOrgId] = @B2BSalesOrganisationId;
+
+		Update [dbo].[Parallel_ErpAccount] set IsUpdated = 1 Where Id = @Id
+        END
+        ELSE
+        BEGIN
+            -- Insert new record
+            INSERT INTO [Erp_Account] (
+                [IsActive],
+                [CreatedOnUtc],
+                [CreatedById],
+                [UpdatedOnUtc],
+                [UpdatedById],
+                [IsDeleted],
+                [AccountNumber],
+                [AccountName],
+                [ErpSalesOrgId],
+                [BillingAddressId],
+                [BillingSuburb],
+                [VatNumber],
+                [CreditLimit],
+                [CreditLimitAvailable],
+                [CurrentBalance],
+                [LastPaymentAmount],
+                [LastPaymentDate],
+                [AllowOverspend],
+                [PreFilterFacets],
+                [PaymentTypeCode],
+                [AllowSwitchSalesOrg],
+                [OverrideBackOrderingConfigSetting],
+                [AllowAccountsBackOrdering],
+                [OverrideAddressEditOnCheckoutConfigSetting],
+                [AllowAccountsAddressEditOnCheckout],
+                [OverrideStockDisplayFormatConfigSetting],
+                [PercentageOfStockAllowed],
+                [StockDisplayFormatTypeId],
+                [ErpAccountStatusTypeId],
+                [LastErpAccountSyncDate],
+                [LastPriceRefresh],
+                [B2BPriceGroupCodeId],
+                [TotalSavingsForthisYear],
+                [TotalSavingsForAllTime],
+                [TotalSavingsForthisYearUpdatedOnUtc],
+                [TotalSavingsForAllTimeUpdatedOnUtc],
+                [LastTimeOrderSyncOnUtc],
+                [PaymentTermsCode],
+                [PaymentTermsDescription],
+                [Comment]
+            )
+            VALUES (
+                @IsActive,
+                @CreatedOnUtc,
+                @CreatedById,
+                @UpdatedOnUtc,
+                @UpdatedById,
+                @IsDeleted,
+                @AccountNumber,
+                @AccountName,
+                @B2BSalesOrganisationId,
+                @BillingAddressId,
+                @BillingSuburb,
+                @VatNumber,
+                @CreditLimit,
+                @CreditLimitAvailable,
+                @CurrentBalance,
+                @LastPaymentAmount,
+                @LastPaymentDate,
+                @AllowOverspend,
+                @PreFilterFacets,
+                @PaymentTypeCode,
+                @AllowSwitchSalesOrg,
+                @OverrideBackOrderingConfigSetting,
+                @AllowAccountsBackOrdering,
+                @OverrideAddressEditOnCheckoutConfigSetting,
+                @AllowAccountsAddressEditOnCheckout,
+                @OverrideStockDisplayConfig ,
+                @PercentageOfStockAllowed,
+                @StockDisplayFormatTypeId,
+                @B2BAccountStatusTypeId,
+                @LastAccountRefresh,
+                @LastPriceRefresh,
+                @B2BPriceGroupCodeId,
+                @TotalSavingsForthisYear,
+                @TotalSavingsForAllTime,
+                @TotalSavingsForthisYearUpdatedOnUtc,
+                @TotalSavingsForAllTimeUpdatedOnUtc,
+                @LastTimeOrderSyncOnUtc,
+                @PaymentTermsCode,
+                @PaymentTermsDescription,
+                CONCAT('Inserted from Webhook - ', GETUTCDATE())
+            );
+			Update [dbo].[Parallel_ErpAccount] set IsUpdated = 1 Where Id = @Id
+        END
+
+        FETCH NEXT FROM cursor_UpdateB2BAccount INTO 
+            @Id, @IsActive, @CreatedOnUtc, @CreatedById, @UpdatedOnUtc, @UpdatedById, @IsDeleted,
+            @AccountNumber, @AccountName, @B2BSalesOrganisationId, @BillingAddressId, @BillingSuburb, @VatNumber,
+            @CreditLimit, @CreditLimitAvailable, @CurrentBalance, @LastPaymentAmount,
+            @LastPaymentDate, @AllowOverspend, @PreFilterFacets, @PaymentTypeCode,
+            @AllowSwitchSalesOrg, @OverrideBackOrderingConfigSetting, @AllowAccountsBackOrdering,
+            @OverrideAddressEditOnCheckoutConfigSetting, @AllowAccountsAddressEditOnCheckout,
+            @OverrideStockDisplayConfig , @PercentageOfStockAllowed,
+            @StockDisplayFormatTypeId, @B2BAccountStatusTypeId, @LastAccountRefresh,
+            @LastPriceRefresh, @B2BPriceGroupCodeId, @TotalSavingsForthisYear,
+            @TotalSavingsForAllTime, @TotalSavingsForthisYearUpdatedOnUtc,
+            @TotalSavingsForAllTimeUpdatedOnUtc, @LastTimeOrderSyncOnUtc, @PaymentTermsCode,
+            @PaymentTermsDescription;
+    END;
+
+    CLOSE cursor_UpdateB2BAccount;
+    DEALLOCATE cursor_UpdateB2BAccount;
+END;
+GO
+
+
+CREATE PROCEDURE [dbo].[UpdateB2BPerAccountPricingFromParallelTableErpAccountPricing]
+AS
+BEGIN
+    -- This is a no-op (no operation) stored procedure.
+    -- It performs no actions.
+    RETURN;
+END;
+GO
+
+CREATE PROCEDURE [dbo].[UpdateErpStockFromParallelTableParallel_ErpStock]
+AS
+BEGIN
+    -- This is a no-op (no operation) stored procedure.
+    -- It performs no actions.
+    RETURN;
+END;
+GO
+
+CREATE PROCEDURE [dbo].[UpdateOrderFromParallelTableErpOrder]
+AS
+BEGIN
+    -- This is a no-op (no operation) stored procedure.
+    -- It performs no actions.
+    RETURN;
+END;
+
+CREATE PROCEDURE [dbo].[UpdateProductFromParallelTableErpProduct]
+AS
+BEGIN
+    -- This is a no-op (no operation) stored procedure.
+    -- It performs no actions.
+    RETURN;
+END;

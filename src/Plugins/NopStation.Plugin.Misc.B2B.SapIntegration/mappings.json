@@ -1,0 +1,161 @@
+{
+  "specificationAttributes": [
+    {
+      "from": "Grade",
+      "to": "Grade",
+      "AttributeType": "Option",
+      "AllowFiltering": true,
+      "ShowOnProductPage": true
+    },
+    {
+      "from": "External Material Group",
+      "to": "External Material Group",
+      "AttributeType": "CustomText",
+      "AllowFiltering": false,
+      "ShowOnProductPage": true
+    },
+    {
+      "from": "Sales Organisation",
+      "to": "Sales Organisation",
+      "AttributeType": "CustomText",
+      "AllowFiltering": false,
+      "ShowOnProductPage": false
+    },
+    {
+      "from": "Specials",
+      "to": "Specials",
+      "AttributeType": "CustomText",
+      "AllowFiltering": false,
+      "ShowOnProductPage": false
+    },
+    {
+      "from": "UOM",
+      "to": "UOM",
+      "AttributeType": "Option",
+      "AllowFiltering": false,
+      "ShowOnProductPage": true
+    },
+    {
+      "from": "Size",
+      "to": "Size",
+      "AttributeType": "Option",
+      "AllowFiltering": true,
+      "ShowOnProductPage": true
+    },
+    {
+      "from": "Face Finish",
+      "to": "Face Finish",
+      "AttributeType": "Option",
+      "AllowFiltering": true,
+      "ShowOnProductPage": true
+    },
+    {
+      "from": "Other",
+      "to": "Other",
+      "AttributeType": "Option",
+      "AllowFiltering": true,
+      "ShowOnProductPage": true
+    },
+    {
+      "from": "Nominal bore",
+      "to": "Nominal Bore",
+      "AttributeType": "Option",
+      "AllowFiltering": true,
+      "ShowOnProductPage": true
+    },
+    {
+      "from": "Flute NF/BF",
+      "to": "Flute Type",
+      "AttributeType": "Option",
+      "AllowFiltering": true,
+      "ShowOnProductPage": true
+    },
+    {
+      "from": "Schedule/Thickness",
+      "to": "Schedule / Thickness",
+      "AttributeType": "Option",
+      "AllowFiltering": true,
+      "ShowOnProductPage": true
+    },
+    {
+      "from": "Thickness",
+      "to": "Thickness",
+      "AttributeType": "Option",
+      "AllowFiltering": true,
+      "ShowOnProductPage": true
+    },
+    {
+      "from": "Length",
+      "to": "Length",
+      "AttributeType": "Option",
+      "AllowFiltering": true,
+      "ShowOnProductPage": true
+    },
+    {
+      "from": "Prefilter",
+      "to": "Prefilter",
+      "AttributeType": "CustomText",
+      "AllowFiltering": false,
+      "ShowOnProductPage": false
+    },
+    {
+      "from": "Color",
+      "to": "Color",
+      "AttributeType": "Option",
+      "AllowFiltering": true,
+      "ShowOnProductPage": true
+    }
+  ],
+  "taxCategories": [
+    {
+      "from": "DEFAULT",
+      "to": 1
+    },
+    {
+      "from": "",
+      "to": 1
+    }
+  ],
+  "documentTypes": { // DocumentTypeId: 10 - Invoice; 20 - Payment; 30 - AccountingDoc; 40 - Document; 50 - CreditMemo; 60 - GrossInv; 70 - NetInv; 80 - BillingTransfer; 90 - G/L Document; 100 -Macsteel Cust Int ;
+    "AB": {
+      "DisplayName": "AccountingDoc",
+      "DocumentTypeId": 30
+    },
+    "DA": {
+      "DisplayName": "AccountingDoc",
+      "DocumentTypeId": 40
+    },
+    "DG": {
+      "DisplayName": "AccountingDoc",
+      "DocumentTypeId": 50
+    },
+    "DR": {
+      "DisplayName": "AccountingDoc",
+      "DocumentTypeId": 10
+    },
+    "DZ": {
+      "DisplayName": "Payment",
+      "DocumentTypeId": 20
+    },
+    "RE": {
+      "DisplayName": "VendorInvoice",
+      "DocumentTypeId": 60
+    },
+    "RN": {
+      "DisplayName": "Invoice – Net",
+      "DocumentTypeId": 70
+    },
+    "RV": {
+      "DisplayName": "Invoice",
+      "DocumentTypeId": 80
+    },
+    "SA": {
+      "DisplayName": "AccountingDoc",
+      "DocumentTypeId": 90
+    },
+    "ZC": {
+      "DisplayName": "Interest Charged",
+      "DocumentTypeId": 100
+    }
+  }
+}

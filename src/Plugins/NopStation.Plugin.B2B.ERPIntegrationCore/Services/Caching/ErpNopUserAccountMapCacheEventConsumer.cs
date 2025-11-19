@@ -1,0 +1,14 @@
+﻿using System.Threading.Tasks;
+using Nop.Services.Caching;
+using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
+
+namespace NopStation.Plugin.B2B.ERPIntegrationCore.Services.Caching;
+public class ErpNopUserAccountMapCacheEventConsumer : CacheEventConsumer<ErpNopUserAccountMap>
+{
+    protected override async Task ClearCacheAsync(ErpNopUserAccountMap entity, EntityEventType entityEventType)
+    {
+        await RemoveAsync(ERPIntegrationCoreDefaults.ErpNopUserAccountMapByErpUserCacheKey, entity.ErpUserId);
+        await RemoveAsync(ERPIntegrationCoreDefaults.ErpNopUserAccountMapByErpAccountCacheKey, entity.ErpAccountId);
+        await RemoveAsync(ERPIntegrationCoreDefaults.ErpNopUserAccountMapByErpAccountAndErpUserCacheKey, entity.ErpAccountId, entity.ErpUserId);
+    }
+}

@@ -1,0 +1,26 @@
+workflow:
+  name: "Pipeline started at $CI_COMMIT_BRANCH branch"
+  rules:
+    - if: $CI_COMMIT_BRANCH == "clients/macsteel/develop" || $CI_COMMIT_BRANCH == "clients/macsteel/production" || $CI_COMMIT_BRANCH == "clients/macsteel/test"
+      when: always
+
+include:
+  - local: gitlab-ci-live-deploy.yml
+    rules:
+      - if: $CI_COMMIT_REF_NAME == "clients/macsteel/develop"
+  - local: gitlab-ci-test-deploy.yml
+    rules:
+      - if: $CI_COMMIT_REF_NAME == "clients/macsteel/test"
+
+variables:
+  AUTHOR: $CI_COMMIT_AUTHOR
+
+default_job:
+  stage: .pre
+  script:
+    - echo "Deployment started by '$AUTHOR'"
+  rules:
+    - if: $CI_COMMIT_BRANCH == "clients/macsteel/develop" || $CI_COMMIT_BRANCH == "clients/macsteel/production" || $CI_COMMIT_BRANCH == "clients/macsteel/test"
+      when: always
+  tags:
+    - b2b-test-server 

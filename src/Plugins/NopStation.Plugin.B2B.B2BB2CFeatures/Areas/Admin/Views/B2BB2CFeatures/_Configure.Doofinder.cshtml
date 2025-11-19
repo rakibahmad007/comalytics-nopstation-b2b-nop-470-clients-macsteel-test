@@ -1,0 +1,13 @@
+@model ConfigurationModel
+
+<div class="card-body">
+    <div class="form-group row">
+        <div class="col-md-3">
+            <nop-label asp-for="DooFinderHashId" />
+        </div>
+        <div class="col-md-9">
+            <nop-editor asp-for="DooFinderHashId" />
+            <span asp-validation-for="DooFinderHashId"></span>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,240 @@
+﻿@model HeaderLinksModel
+@using Nop.Core
+@using Nop.Core.Domain.Customers
+@using Nop.Services.Configuration
+@using Nop.Services.Customers
+@using Nop.Services.Directory
+@using Nop.Services.Security
+@using NopStation.Plugin.B2B.ERPIntegrationCore
+@using NopStation.Plugin.B2B.B2BB2CFeatures
+@using NopStation.Plugin.B2B.B2BB2CFeatures.Contexts
+@using NopStation.Plugin.B2B.ERPIntegrationCore.Services
+@using NopStation.Plugin.B2B.ERPIntegrationCore.Infrastructure
+
+@inject IWebHelper webHelper
+@inject IStoreContext storeContext
+@inject ISettingService settingService
+@inject ICustomerService customerService
+@inject B2BB2CFeaturesSettings b2BB2CFeaturesSettings
+@inject IErpAccountService erpAccountService
+@inject IPriceFormatter priceFormatter
+@inject IPermissionService permissionService
+
+@{
+    var storeScope = await storeContext.GetActiveStoreScopeConfigurationAsync();
+    var customer = await workContext.GetCurrentCustomerAsync();
+    var erpAccount = await erpAccountService.GetActiveErpAccountByCustomerIdAsync(customer.Id);
+    int storeId = (await storeContext.GetCurrentStoreAsync()).Id;
+    bool compareProductsEnabled = await settingService.GetSettingByKeyAsync("catalogsettings.compareproductsenabled", true, storeId, true);
+    bool shouldShowLoginFormInHeader = await settingService.GetSettingByKeyAsync("EmporiumThemeSettings.ShowLoginFormInHeader", false, storeId, true);
+
+    var controllerName = Url.ActionContext.RouteData.Values["controller"].ToString();
+    var actionName = Url.ActionContext.RouteData.Values["action"].ToString();
+
+    var isLoginPage = controllerName.Equals("customer", StringComparison.InvariantCultureIgnoreCase) &&
+                      actionName.Equals("login", StringComparison.InvariantCultureIgnoreCase);
+
+    bool isUserSignedIn = EngineContext.Current.Resolve<IHttpContextAccessor>().HttpContext.User.Identity.IsAuthenticated;
+
+    var hasErpAccount = erpAccount != null;
+	var CustomerInfoUrl = hasErpAccount ? Url.RouteUrl("ErpAccountInvoices") : Url.RouteUrl("CustomerInfo");
+
+    /*if (hasErpAccount)
+    {
+        if (await permissionService.AuthorizeAsync(ErpPermissionProvider.DisplayB2BOrders))
+        {
+            CustomerInfoUrl = Url.RouteUrl("ErpAccountOrders");
+        }
+        else if (await permissionService.AuthorizeAsync(ErpPermissionProvider.DisplayB2BQuotes))
+        {
+            CustomerInfoUrl = Url.RouteUrl("ErpQuoteOrderList");
+        }
+    }*/
+
+    var themeName = await themeContext.GetWorkingThemeNameAsync();
+    NopHtml.AppendCssFileParts($"~/Plugins/NopStation.Plugin.B2B.B2BB2CFeatures/Themes/{themeName}/Content/css/styles.css");
+    NopHtml.AppendCssFileParts($"~/Plugins/NopStation.Plugin.B2B.B2BB2CFeatures/Themes/{themeName}/Content/css/styles2.css");
+}
+
+<style>
+    @@media (min-width: 1024px) {
+        .header-links-desktop {
+            display: none !important;
+        }
+
+        .header-links-mobile {
+            display: block !important;
+        }
+    }
+
+    .header-links-mobile {
+    display: none !important;
+    }
+</style>
+
+<div class="header-links">
+    <ul>
+        @await Component.InvokeAsync("Widget", new { widgetZone = B2BB2CFeaturesDefaults.CustomZoneForB2CShipToAddressSelector })
+
+        @await Component.InvokeAsync("Widget", new { widgetZone = PublicWidgetZones.HeaderLinksBefore })
+
+        @if (Model.IsAuthenticated && isUserSignedIn)
+        {
+            <li class="header-links-mobile">
+                <a href="@CustomerInfoUrl" class="ico-account opener">@T("Account.MyAccount")</a>
+                <div class="profile-menu-box">
+                    <div class="close-side-menu">
+                        <span class="close-side-menu-text">@Model.CustomerName</span>
+                        <span class="close-side-menu-btn">@T("SevenSpikes.Themes.Common.CloseMenu")</span>
+                    </div>
+                    <a href="@CustomerInfoUrl" class="ico-account">@T("Account.MyAccount")</a>
+                    @if (Model.AllowPrivateMessages)
+                    {
+                        <a href="@Url.RouteUrl("PrivateMessages", new { tab = "" })" class="ico-inbox">
+                            <span class="inbox-label">@T("PrivateMessages.Inbox")</span>
+                            <span class="inbox-unread">@Model.UnreadPrivateMessages</span>
+                        </a>
+                    }
+                    <a href="@Url.RouteUrl("Logout")" class="ico-logout">@T("Account.Logout")</a>
+                </div>
+            </li>
+            <li>
+                <a href="@CustomerInfoUrl" class="ico-account">@T("Account.MyAccount")</a>
+            </li>
+        }
+        else
+        {
+            <li class="header-links-mobile" id="header-links-mobile">
+                <a href="@Url.RouteUrl("CustomerInfo")" class="ico-account opener" data-loginUrl="@Url.Action("Login", "Customer")">@T("Account.MyAccount")</a>
+                <div class="profile-menu-box @if (shouldShowLoginFormInHeader && !isLoginPage){<text>login-form-in-header</text>}">
+                    <div class="close-side-menu">
+                        <span class="close-side-menu-text">@T("Account.MyAccount")</span>
+                        <span class="close-side-menu-btn">@T("SevenSpikes.Themes.Common.CloseMenu")</span>
+                    </div>
+                    <div class="header-form-holder">
+                        <a onclick="registerButtonClick()" data-toggle="modal" data-target="#registrationTypeDialog" class="ico-register">
+                            @T("Account.Register")
+                        </a>
+                        <a href="@Url.RouteUrl("Login")" class="ico-login">@T("Account.Login")</a>
+                    </div>
+                </div>
+            </li>
+        }
+        @if (compareProductsEnabled)
+        {
+            <li><a href="@Url.RouteUrl("CompareProducts")" class="ico-compare">@T("Products.Compare.List")</a></li>
+        }
+
+        @if (isUserSignedIn && Model.WishlistEnabled && hasErpAccount)
+        {
+            <li>
+                <a href="@Url.RouteUrl("Wishlist")" class="ico-wishlist">
+                    <span class="wishlist-label">@T("Wishlist")</span>
+                    <span class="wishlist-qty">@T("Wishlist.HeaderQuantity", Model.WishlistItems)</span>
+                </a>
+            </li>            
+        }
+
+        @await Component.InvokeAsync("Widget", new { widgetZone = PublicWidgetZones.HeaderLinksAfter })
+
+        @if (Model.IsAuthenticated && isUserSignedIn)
+        {
+            <li><a href="@Url.RouteUrl("Logout")" class="ico-logout">@T("Account.Logout")</a></li>
+        }
+        else
+        {
+            <li>
+                <a onclick="registerButtonClick()" data-toggle="modal" data-target="#registrationTypeDialog" class="ico-register">
+                    @T("account.register.button")
+                </a>
+                <div id="registrationTypeDialog" class="custom-modal registration-type-dialog" title="@T("NopStation.Plugin.B2B.B2BB2CFeatures.Register.Notification.Title")" style="display: none;">
+                    <div class="dialog-center-register popup-content">
+                            @T("Plugins.Payments.B2BCustomerAccount.Register.Notification.Description")
+                    </div>
+                    <div class="register-confirm-buttons popup-button-wrapper">
+                        <button type="button" class="button-1 popup-button" onclick="redirectToB2BRegister()"><span>@T("NopStation.Plugin.B2B.B2BB2CFeatures.Register.Notification.Yes")</span></button>
+                        <button type="button" class="button-1 popup-button" onclick="redirectToB2CRegister()"><span>@T("NopStation.Plugin.B2B.B2BB2CFeatures.Register.Notification.No")</span></button>
+                    </div>
+                    <script asp-location="Footer">
+                        function redirectToB2BRegister() {
+                            window.location.href = "@Url.RouteUrl("B2BRegister")";
+                        }
+                        function redirectToB2CRegister() {
+                            window.location.href = "@Url.RouteUrl("B2CRegister")";
+                        }
+                    </script>
+                </div>
+                <script asp-location="Footer">
+                    function registerButtonClick() {
+                        $("#header-links-mobile").hide();
+                        $("#registrationTypeDialog").dialog({
+                            modal: true,
+                            draggable: false,
+                            closeOnEscape: true
+                        });
+                    }
+                </script>
+            </li>
+            <li>
+                <a href="@Url.RouteUrl("Login")" class="ico-login">@T("Account.Login")</a>
+            </li>
+        }
+    </ul>
+    @if (Model.ShoppingCartEnabled)
+    {
+        <div class="mobile-flyout-wrapper">
+            <div class="close-side-menu">
+                <span class="close-side-menu-text">@T("SevenSpikes.Themes.Emporium.Common.ShoppingCart")</span>
+                <span class="close-side-menu-btn">@T("SevenSpikes.Themes.Emporium.Common.Close")</span>
+            </div>
+            @await Component.InvokeAsync("FlyoutShoppingCart")
+        </div>
+    }
+
+    @if (Model.AllowPrivateMessages && !string.IsNullOrEmpty(Model.AlertMessage))
+    {
+        <script asp-location="Footer">
+            $(document).ready(function () {
+                displayPopupNotification('@Html.Raw(JavaScriptEncoder.Default.Encode(Model.AlertMessage))', 'success', false);
+            });
+        </script>
+    }
+    @if (Model.ShoppingCartEnabled)
+    {
+        <script asp-location="Footer">
+            $(document).ready(function () {
+                $('.header').on('mouseenter', '#topcartlink', function () {
+                    clearTimeout(timeoutFlyout_cart);
+                    $('.flyout-cart').addClass('active');
+                });
+                $('.header').on('mouseleave', '#topcartlink', function () {
+                    clearTimeout(timeoutFlyout_cart);
+                    $('.flyout-cart').addClass('active');
+                    removeActiveClassFromFlyout_cart(1000);
+                });
+                $('.header').on('mouseenter', '.flyout-cart', function () {
+                    clearTimeout(timeoutFlyout_cart);
+                    $('.flyout-cart').addClass('active');
+                });
+                $('.header').on('mouseleave', '.flyout-cart', function () {
+                    $('.flyout-cart').addClass('active');
+                    removeActiveClassFromFlyout_cart(1000);
+                });
+            });
+        </script>
+    }
+    <div class="logInToUpdateCartDialog custom-modal" title="@T("Common.Notification")" style="display: none;">
+        <div class="dialog-center-logintoupdatecart popup-content">
+            @T("NopStation.Plugin.B2B.B2BB2CFeatures.LogInToBuy")
+        </div>
+        <div class="log-in-to-update-cart-button popup-button-wrapper">
+            <button type="button" name="accept" onclick="renderToLoginPage()" value="@T("common.ok")" class="button-1 popup-button"><span>@T("common.ok")</span></button>
+        </div>
+        <script asp-location="Footer">
+            function renderToLoginPage()
+            {
+                location.replace("/login");
+            }
+        </script>
+    </div>
+</div>

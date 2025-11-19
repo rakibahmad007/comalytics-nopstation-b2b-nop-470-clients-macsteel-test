@@ -1,0 +1,21 @@
+﻿@model DomainModel
+
+@{
+    const string hideInfoBlockAttributeName = "Domain.HideInfoBlock";
+    var hideInfoBlock = await genericAttributeService.GetAttributeAsync<bool>(await workContext.GetCurrentCustomerAsync(), hideInfoBlockAttributeName);
+}
+
+<div asp-validation-summary="All"></div>
+<input asp-for="Id" type="hidden" />
+<section class="content">
+    <div class="container-fluid">
+        <div class="form-horizontal">
+            <nop-cards id="domains-cards">
+                <nop-card asp-name="domain-info" asp-icon="fa fa-info" asp-title="@T("Plugins.Comalytics.DomainFilter.Domain.Info")"
+                          asp-hide-block-attribute-name="@hideInfoBlockAttributeName" asp-hide="@hideInfoBlock" asp-advanced="false">
+                    @await Html.PartialAsync("_CreateOrUpdate.Info.cshtml", Model)
+                </nop-card>
+            </nop-cards>
+        </div>
+    </div>
+</section>
